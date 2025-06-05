@@ -24,8 +24,10 @@ if TYPE_CHECKING:
 class StatusProcesso(Enum):
     """Status possíveis para um processo"""
     AGUARDANDO_DOWNLOAD = "AGUARDANDO_DOWNLOAD"
+    DOWNLOAD_COMPLETO = "DOWNLOAD_COMPLETO"
+    UPLOAD_SAT_REALIZADO = "UPLOAD_SAT_REALIZADO"
+    # Status relacionados às execuções (serão implementados no módulo de execuções)
     DOWNLOAD_EM_ANDAMENTO = "DOWNLOAD_EM_ANDAMENTO"
-    DOWNLOAD_CONCLUIDO = "DOWNLOAD_CONCLUIDO"
     DOWNLOAD_FALHOU = "DOWNLOAD_FALHOU"
     AGUARDANDO_APROVACAO = "AGUARDANDO_APROVACAO"
     APROVADO = "APROVADO"
@@ -211,12 +213,19 @@ class Processo(BaseModel):
     def pode_ser_aprovado(self) -> bool:
         """Verifica se o processo pode ser aprovado"""
         return (
-            self.status_processo in [
-                StatusProcesso.AGUARDANDO_APROVACAO.value,
-                StatusProcesso.DOWNLOAD_CONCLUIDO.value
-            ] and
+            self.status_processo == StatusProcesso.DOWNLOAD_COMPLETO.value and
             (self.caminho_s3_fatura is not None or self.upload_manual)
         )
+    
+    @property
+    def pode_enviar_sat(self) -> bool:
+        """Verifica se o processo pode ser enviado para o SAT"""
+        return self.status_processo == StatusProcesso.APROVADO.value
+    
+    @property
+    def tem_fatura_para_visualizar(self) -> bool:
+        """Verifica se há fatura disponível para visualização"""
+        return bool(self.caminho_s3_fatura or self.url_fatura)
 
     @property
     def tem_fatura_disponivel(self) -> bool:
@@ -259,6 +268,12 @@ class Processo(BaseModel):
     def atualizar_status(self, novo_status: StatusProcesso) -> None:
         """Atualiza o status do processo"""
         self.status_processo = novo_status.value
+    
+    def enviar_para_sat(self) -> None:
+        """Marca o processo como enviado para o SAT"""
+        self.status_processo = StatusProcesso.UPLOAD_SAT_REALIZADO.value
+        self.enviado_para_sat = True
+        self.data_envio_sat = datetime.now()
 
     @classmethod
     def criar_mes_ano_atual(cls) -> str:

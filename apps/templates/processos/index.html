@@ -123,14 +123,16 @@
                                                             <td>
                                                                 {% if processo.status_processo == 'AGUARDANDO_DOWNLOAD' %}
                                                                     <span class="badge badge-light-warning">Aguardando Download</span>
+                                                                {% elif processo.status_processo == 'DOWNLOAD_COMPLETO' %}
+                                                                    <span class="badge badge-light-primary">Download Completo</span>
+                                                                {% elif processo.status_processo == 'UPLOAD_SAT_REALIZADO' %}
+                                                                    <span class="badge badge-success">Upload SAT Realizado</span>
                                                                 {% elif processo.status_processo == 'DOWNLOAD_EM_ANDAMENTO' %}
                                                                     <span class="badge badge-warning">Download em Andamento</span>
-                                                                {% elif processo.status_processo == 'DOWNLOAD_CONCLUIDO' %}
-                                                                    <span class="badge badge-light-primary">Download Concluído</span>
                                                                 {% elif processo.status_processo == 'AGUARDANDO_APROVACAO' %}
                                                                     <span class="badge badge-warning">Aguardando Aprovação</span>
                                                                 {% elif processo.status_processo == 'APROVADO' %}
-                                                                    <span class="badge badge-success">Aprovado</span>
+                                                                    <span class="badge badge-info">Aprovado - Pronto para SAT</span>
                                                                 {% elif processo.status_processo == 'CONCLUIDO' %}
                                                                     <span class="badge badge-success">Concluído</span>
                                                                 {% elif processo.status_processo == 'REJEITADO' %}
@@ -162,6 +164,23 @@
                                                                        class="btn btn-sm btn-outline-primary" title="Visualizar">
                                                                         <i class="feather icon-eye"></i>
                                                                     </a>
+                                                                    
+                                                                    {% if processo.pode_ser_aprovado %}
+                                                                        <button type="button" class="btn btn-sm btn-success" 
+                                                                                onclick="visualizarFaturaParaAprovacao('{{ processo.id }}')" 
+                                                                                title="Visualizar Fatura para Aprovação">
+                                                                            <i class="feather icon-check-circle"></i> Aprovar
+                                                                        </button>
+                                                                    {% endif %}
+                                                                    
+                                                                    {% if processo.pode_enviar_sat %}
+                                                                        <button type="button" class="btn btn-sm btn-info" 
+                                                                                onclick="enviarParaSAT('{{ processo.id }}')" 
+                                                                                title="Enviar para SAT">
+                                                                            <i class="feather icon-upload"></i> Enviar SAT
+                                                                        </button>
+                                                                    {% endif %}
+                                                                    
                                                                     {% if not processo.esta_concluido %}
                                                                     <a href="{{ url_for('processos_bp.editar', id=processo.id) }}" 
                                                                        class="btn btn-sm btn-outline-warning" title="Editar">
@@ -276,8 +295,45 @@
 {% block javascripts %}
 <script>
 $(document).ready(function() {
-    // Máscara para o campo Mês/Ano
-    $('#mes_ano').mask('00/0000', {placeholder: 'MM/AAAA'});
+    // Máscara para o campo Mês/Ano (se campo existir)
+    if ($('#mes_ano').length) {
+        // Remover máscara por enquanto devido a erro de biblioteca
+        // $('#mes_ano').mask('00/0000', {placeholder: 'MM/AAAA'});
+    }
 });
+
+// Função para visualizar fatura e aprovar
+function visualizarFaturaParaAprovacao(processoId) {
+    // Modal para visualização da fatura e aprovação
+    if (confirm('Deseja visualizar a fatura para aprovação?\n\nEm seguida você será redirecionado para a tela de aprovação.')) {
+        // Por enquanto redireciona para a tela de detalhes onde implementaremos a aprovação
+        window.location.href = '/processos/visualizar/' + processoId + '?acao=aprovar';
+    }
+}
+
+// Função para enviar para SAT
+function enviarParaSAT(processoId) {
+    if (confirm('Confirma o envio desta fatura para o SAT?\n\nEsta ação não pode ser desfeita.')) {
+        // Fazer requisição AJAX para envio
+        $.ajax({
+            url: '/processos/enviar-sat/' + processoId,
+            type: 'POST',
+            data: {
+                'csrf_token': $('input[name="csrf_token"]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('Fatura enviada para o SAT com sucesso!');
+                    location.reload(); // Recarrega a página para atualizar status
+                } else {
+                    alert('Erro ao enviar para SAT: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('Erro ao enviar para SAT. Tente novamente.');
+            }
+        });
+    }
+}
 </script>
 {% endblock javascripts %}

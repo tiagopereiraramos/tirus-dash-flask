@@ -59,15 +59,21 @@
                                                     <p class="mb-3">
                                                         {% if processo.status_processo == 'AGUARDANDO_DOWNLOAD' %}
                                                             <span class="badge badge-light-warning">Aguardando Download</span>
-                                                        {% elif processo.status_processo == 'DOWNLOAD_CONCLUIDO' %}
-                                                            <span class="badge badge-light-primary">Download Concluído</span>
+                                                        {% elif processo.status_processo == 'DOWNLOAD_COMPLETO' %}
+                                                            <span class="badge badge-light-primary">Download Completo</span>
+                                                        {% elif processo.status_processo == 'UPLOAD_SAT_REALIZADO' %}
+                                                            <span class="badge badge-success">Upload SAT Realizado</span>
                                                         {% elif processo.status_processo == 'AGUARDANDO_APROVACAO' %}
                                                             <span class="badge badge-warning">Aguardando Aprovação</span>
                                                         {% elif processo.status_processo == 'APROVADO' %}
-                                                            <span class="badge badge-success">Aprovado</span>
+                                                            <span class="badge badge-info">Aprovado - Pronto para SAT</span>
                                                         {% elif processo.status_processo == 'CONCLUIDO' %}
                                                             <span class="badge badge-success">Concluído</span>
+                                                        {% elif processo.status_processo == 'REJEITADO' %}
+                                                            <span class="badge badge-danger">Rejeitado</span>
                                                         {% else %}
+                                                            <span class="badge badge-light">{{ processo.status_processo }}</span>
+                                                        {% endif %}% else %}
                                                             <span class="badge badge-secondary">{{ processo.status_processo }}</span>
                                                         {% endif %}
                                                     </p>
@@ -111,6 +117,102 @@
                                         <div class="card-body">
                                             {% if execucoes %}
                                             <div class="table-responsive">
+
+
+                                    <!-- Seção de Aprovação de Fatura -->
+                                    {% if processo.pode_ser_aprovado %}
+                                    <div class="card mt-4">
+                                        <div class="card-header bg-warning">
+                                            <h5 class="text-white mb-0">
+                                                <i class="feather icon-alert-circle"></i>
+                                                Aprovação de Fatura Necessária
+                                            </h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="alert alert-info">
+                                                <i class="feather icon-info"></i>
+                                                <strong>Atenção:</strong> Esta fatura foi baixada com sucesso e está aguardando aprovação manual.
+                                                Visualize o arquivo e confirme se está correto antes de aprovar.
+                                            </div>
+                                            
+                                            {% if processo.tem_fatura_para_visualizar %}
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <button type="button" class="btn btn-outline-primary btn-block" 
+                                                            onclick="visualizarFatura('{{ processo.id }}')">
+                                                        <i class="feather icon-file-text"></i> Visualizar Fatura (PDF)
+                                                    </button>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <button type="button" class="btn btn-outline-info btn-block" 
+                                                            onclick="baixarFatura('{{ processo.id }}')">
+                                                        <i class="feather icon-download"></i> Baixar Fatura
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <hr>
+                                            
+                                            <form id="formAprovacao" onsubmit="aprovarFatura(event, '{{ processo.id }}')">
+                                                <div class="form-group">
+                                                    <label for="observacoes_aprovacao">Observações da Aprovação:</label>
+                                                    <textarea class="form-control" id="observacoes_aprovacao" name="observacoes" rows="3" 
+                                                              placeholder="Digite observações sobre a aprovação (opcional)"></textarea>
+                                                </div>
+                                                
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <button type="submit" class="btn btn-success btn-block">
+                                                            <i class="feather icon-check"></i> Aprovar Fatura
+                                                        </button>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <button type="button" class="btn btn-danger btn-block" 
+                                                                onclick="rejeitarFatura('{{ processo.id }}')">
+                                                            <i class="feather icon-x"></i> Rejeitar Fatura
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                            {% else %}
+                                            <div class="alert alert-warning">
+                                                <i class="feather icon-alert-triangle"></i>
+                                                Fatura não encontrada para visualização. Verifique se o download foi realizado corretamente.
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Seção de Envio para SAT -->
+                                    {% if processo.pode_enviar_sat %}
+                                    <div class="card mt-4">
+                                        <div class="card-header bg-info">
+                                            <h5 class="text-white mb-0">
+                                                <i class="feather icon-upload"></i>
+                                                Pronto para Envio ao SAT
+                                            </h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="alert alert-success">
+                                                <i class="feather icon-check-circle"></i>
+                                                <strong>Fatura Aprovada!</strong> Esta fatura foi aprovada e está pronta para ser enviada ao SAT.
+                                            </div>
+                                            
+                                            {% if processo.aprovador %}
+                                            <p><strong>Aprovado por:</strong> {{ processo.aprovador.nome_completo }}</p>
+                                            <p><strong>Data da aprovação:</strong> {{ processo.data_aprovacao.strftime('%d/%m/%Y %H:%M') }}</p>
+                                            {% endif %}
+                                            
+                                            <button type="button" class="btn btn-info btn-lg btn-block" 
+                                                    onclick="enviarParaSATDetalhes('{{ processo.id }}')">
+                                                <i class="feather icon-upload"></i> Enviar para SAT
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+
                                                 <table class="table table-hover">
                                                     <thead>
                                                         <tr>
@@ -294,3 +396,93 @@
 {% endblock content %}
 
 {% block javascripts %}{% endblock javascripts %}
+
+
+<script>
+// Função para visualizar fatura em PDF
+function visualizarFatura(processoId) {
+    // Mock - em produção aqui abrirá o PDF em nova aba
+    alert('Mock: Abrindo visualização da fatura em PDF...\n\nEm produção, aqui será aberta uma nova aba com o arquivo PDF da fatura.');
+    // window.open('/processos/fatura-pdf/' + processoId, '_blank');
+}
+
+// Função para baixar fatura
+function baixarFatura(processoId) {
+    // Mock - em produção aqui fará download do arquivo
+    alert('Mock: Iniciando download da fatura...\n\nEm produção, aqui será feito o download direto do arquivo PDF.');
+    // window.location.href = '/processos/download-fatura/' + processoId;
+}
+
+// Função para aprovar fatura
+function aprovarFatura(event, processoId) {
+    event.preventDefault();
+    
+    const observacoes = document.getElementById('observacoes_aprovacao').value;
+    
+    if (confirm('Confirma a aprovação desta fatura?\n\nApós a aprovação, ela ficará disponível para envio ao SAT.')) {
+        $.ajax({
+            url: '/processos/aprovar/' + processoId,
+            type: 'POST',
+            data: {
+                'observacoes': observacoes,
+                'csrf_token': $('input[name="csrf_token"]').val()
+            },
+            success: function(response) {
+                alert('Fatura aprovada com sucesso!');
+                location.reload();
+            },
+            error: function() {
+                alert('Erro ao aprovar fatura. Tente novamente.');
+            }
+        });
+    }
+}
+
+// Função para rejeitar fatura
+function rejeitarFatura(processoId) {
+    const motivo = prompt('Digite o motivo da rejeição:');
+    
+    if (motivo && motivo.trim() !== '') {
+        $.ajax({
+            url: '/processos/rejeitar/' + processoId,
+            type: 'POST',
+            data: {
+                'observacoes': motivo,
+                'csrf_token': $('input[name="csrf_token"]').val()
+            },
+            success: function(response) {
+                alert('Fatura rejeitada.');
+                location.reload();
+            },
+            error: function() {
+                alert('Erro ao rejeitar fatura. Tente novamente.');
+            }
+        });
+    }
+}
+
+// Função para enviar para SAT na página de detalhes
+function enviarParaSATDetalhes(processoId) {
+    if (confirm('Confirma o envio desta fatura para o SAT?\n\nEsta ação não pode ser desfeita.')) {
+        $.ajax({
+            url: '/processos/enviar-sat/' + processoId,
+            type: 'POST',
+            data: {
+                'csrf_token': $('input[name="csrf_token"]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('Fatura enviada para o SAT com sucesso!');
+                    location.reload();
+                } else {
+                    alert('Erro ao enviar para SAT: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('Erro ao enviar para SAT. Tente novamente.');
+            }
+        });
+    }
+}
+</script>
+

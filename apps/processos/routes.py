@@ -395,6 +395,42 @@ def criar_processos_mensais():
     return render_template('processos/criar_mensais.html', form=form)
 
 
+@bp.route('/enviar-sat/<id>', methods=['POST'])
+@verify_user_jwt
+def enviar_sat(id):
+    """Envia processo para o SAT (mock por enquanto)"""
+    
+    try:
+        processo = db.session.query(Processo).filter(Processo.id == id).first_or_404()
+        
+        # Verificar se pode ser enviado para SAT
+        if not processo.pode_enviar_sat:
+            return jsonify({
+                'success': False,
+                'message': 'Este processo não pode ser enviado para o SAT no status atual.'
+            }), 400
+        
+        # Mock do envio para SAT - em produção aqui será chamado o RPA
+        processo.enviar_para_sat()
+        
+        db.session.commit()
+        
+        logger.info(f"Processo enviado para SAT (mock): {processo.id}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Fatura enviada para o SAT com sucesso!'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao enviar processo {id} para SAT: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Erro interno do servidor.'
+        }), 500
+
+
 @bp.route('/api/estatisticas')
 @verify_user_jwt
 def api_estatisticas():
@@ -414,7 +450,7 @@ def api_estatisticas():
         
         # Processos pendentes de aprovação
         pendentes_aprovacao = db.session.query(Processo)\
-            .filter(Processo.status_processo == StatusProcesso.AGUARDANDO_APROVACAO.value)\
+            .filter(Processo.status_processo == StatusProcesso.DOWNLOAD_COMPLETO.value)\
             .count()
         
         # Processos do mês atual
