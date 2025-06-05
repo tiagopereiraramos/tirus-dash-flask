@@ -1,5 +1,8 @@
 import logging
 from datetime import datetime
+from typing import Optional, List, Dict, Any
+from dataclasses import dataclass
+
 from flask import render_template, redirect, url_for, flash, request, jsonify, current_app
 from sqlalchemy import and_, or_, desc
 from sqlalchemy.orm import joinedload
@@ -12,87 +15,115 @@ from apps.authentication.util import verify_user_jwt
 
 logger = logging.getLogger(__name__)
 
+@dataclass
+class ProcessoFiltros:
+    """Classe para organizar filtros de processos"""
+    busca: Optional[str] = None
+    status: Optional[str] = None
+    mes_ano: Optional[str] = None
+    operadora_id: Optional[str] = None
 
-@bp.route('/')
-@verify_user_jwt
-def index():
-    """Lista todos os processos com filtros e paginação"""
+    @classmethod
+    def from_request_args(cls, args) -> 'ProcessoFiltros':
+        """Cria instância a partir dos argumentos da requisição"""
+        return cls(
+            busca=args.get('busca', '').strip() or None,
+            status=args.get('status', '').strip() or None,
+            mes_ano=args.get('mes_ano', '').strip() or None,
+            operadora_id=args.get('operadora', '').strip() or None
+        )
 
-    try:
-        # Paginação
-        page = request.args.get('page', 1, type=int)
-        per_page = 10
+class ProcessoService:
+    """Serviço para operações com processos"""
 
-        # Parâmetros de filtro
-        busca = request.args.get('busca', '')
-        status = request.args.get('status', '')
-        mes_ano = request.args.get('mes_ano', '')
-        operadora_id = request.args.get('operadora', '')
+    @staticmethod
+    def buscar_clientes_por_termo(termo: str) -> List[int]:
+        """Busca IDs de clientes por termo de pesquisa"""
+        cliente_ids = set()
 
-        # Query inicial sem joins complexos
-        query = Processo.query
+        # Buscar clientes por nome/cnpj
+        clientes_encontrados = Cliente.query.filter(
+            or_(
+                Cliente.razao_social.like(f'%{termo}%'),
+                Cliente.nome_sat.like(f'%{termo}%'),
+                Cliente.cnpj.like(f'%{termo}%')
+            )
+        ).all()
 
-        # Aplicar filtros de forma simples e direta
-        if busca and busca.strip():
-            busca = busca.strip()
-            # Primeiro buscar IDs de clientes válidos
-            cliente_ids_list = []
-            
-            # Buscar clientes por nome/cnpj
-            clientes_encontrados = Cliente.query.filter(
-                or_(
-                    Cliente.razao_social.like(f'%{busca}%'),
-                    Cliente.nome_sat.like(f'%{busca}%'),
-                    Cliente.cnpj.like(f'%{busca}%')
-                )
-            ).all()
-            
-            for cliente in clientes_encontrados:
-                cliente_ids_list.append(cliente.id)
-            
-            # Buscar clientes por operadora
-            operadoras_encontradas = Operadora.query.filter(
-                Operadora.nome.like(f'%{busca}%')
-            ).all()
-            
-            for operadora in operadoras_encontradas:
-                clientes_op = Cliente.query.filter_by(operadora_id=operadora.id).all()
-                for cliente in clientes_op:
-                    if cliente.id not in cliente_ids_list:
-                        cliente_ids_list.append(cliente.id)
-            
-            # Aplicar filtro por cliente IDs
-            if cliente_ids_list:
-                query = query.filter(Processo.cliente_id.in_(cliente_ids_list))
+        for cliente in clientes_encontrados:
+            cliente_ids.add(cliente.id)
+
+        # Buscar clientes por operadora
+        operadoras_encontradas = Operadora.query.filter(
+            Operadora.nome.like(f'%{termo}%')
+        ).all()
+
+        for operadora in operadoras_encontradas:
+            clientes_op = Cliente.query.filter_by(operadora_id=operadora.id).all()
+            for cliente in clientes_op:
+                cliente_ids.add(cliente.id)
+
+        return list(cliente_ids)
+
+    @staticmethod
+    def aplicar_filtros(query, filtros: ProcessoFiltros):
+        """Aplica filtros à query de processos"""
+
+        if filtros.busca:
+            cliente_ids = ProcessoService.buscar_clientes_por_termo(filtros.busca)
+            if cliente_ids:
+                query = query.filter(Processo.cliente_id.in_(cliente_ids))
             else:
-                # Nenhum cliente encontrado - retornar vazio
+                # Retorna query vazia se nenhum cliente foi encontrado
                 query = query.filter(Processo.id.is_(None))
 
-        if status and status.strip():
-            query = query.filter(Processo.status_processo == status.strip())
+        if filtros.status:
+            query = query.filter(Processo.status_processo == filtros.status)
 
-        if mes_ano and mes_ano.strip():
-            query = query.filter(Processo.mes_ano == mes_ano.strip())
+        if filtros.mes_ano:
+            query = query.filter(Processo.mes_ano == filtros.mes_ano)
 
-        if operadora_id and operadora_id.strip():
-            # Buscar clientes da operadora
-            clientes_da_operadora = Cliente.query.filter_by(operadora_id=operadora_id.strip()).all()
+        if filtros.operadora_id:
+            clientes_da_operadora = Cliente.query.filter_by(
+                operadora_id=filtros.operadora_id
+            ).all()
+
             if clientes_da_operadora:
                 operadora_cliente_ids = [c.id for c in clientes_da_operadora]
                 query = query.filter(Processo.cliente_id.in_(operadora_cliente_ids))
             else:
                 query = query.filter(Processo.id.is_(None))
 
-        # Ordenação e paginação
+        return query
+
+@bp.route('/')
+@verify_user_jwt
+def index():
+    """Lista todos os processos com filtros e paginação"""
+    try:
+        # Paginação
+        page = request.args.get('page', 1, type=int)
+        per_page = 10
+
+        # Parâmetros de filtro
+        filtros = ProcessoFiltros.from_request_args(request.args)
+
+        # Query inicial
+        query = Processo.query
+
+        # Aplicar filtros
+        query = ProcessoService.aplicar_filtros(query, filtros)
+
+        # Ordenação
         query = query.order_by(Processo.data_atualizacao.desc())
-        
+
+        # Paginação
         processos = query.paginate(
             page=page,
             per_page=per_page,
             error_out=False
         )
 
-        # Formulário de filtros
         form = ProcessoFiltroForm(request.args)
 
         return render_template(
@@ -102,10 +133,10 @@ def index():
         )
 
     except Exception as e:
-        logger.error("Erro ao carregar processos: %s", str(e))
+        # Correção principal: usar f-string ou str() para evitar problemas de formatação
+        logger.error(f"Erro ao carregar processos: {str(e)}")
         flash('Erro ao carregar processos. Tente novamente.', 'danger')
         return redirect(url_for('home_blueprint.index'))
-
 
 @bp.route('/novo', methods=['GET', 'POST'])
 @verify_user_jwt
@@ -116,12 +147,11 @@ def novo():
 
     if form.validate_on_submit():
         try:
-            # Validar formato mês/ano
             if not Processo.validar_formato_mes_ano(form.mes_ano.data):
                 flash('Formato de mês/ano inválido. Use MM/AAAA.', 'danger')
                 return render_template('processos/form.html', form=form, titulo="Novo Processo")
 
-            # Verificar se já existe processo para este cliente/mês/ano
+            # Verificar duplicatas
             processo_existente = db.session.query(Processo).filter(
                 and_(
                     Processo.cliente_id == form.cliente_id.data,
@@ -133,7 +163,7 @@ def novo():
                 flash('Já existe um processo para este cliente no mês/ano informado.', 'danger')
                 return render_template('processos/form.html', form=form, titulo="Novo Processo")
 
-            # Criar novo processo
+            # Criar processo
             processo = Processo(
                 cliente_id=form.cliente_id.data,
                 mes_ano=form.mes_ano.data,
@@ -161,7 +191,6 @@ def novo():
 
     return render_template('processos/form.html', form=form, titulo="Novo Processo")
 
-
 @bp.route('/visualizar/<id>')
 @verify_user_jwt
 def visualizar(id):
@@ -175,7 +204,6 @@ def visualizar(id):
         .filter(Processo.id == id)\
         .first_or_404()
 
-    # Buscar execuções ordenadas por data (query separada devido ao lazy="dynamic")
     execucoes = db.session.query(Execucao)\
         .filter(Execucao.processo_id == id)\
         .order_by(desc(Execucao.data_inicio))\
@@ -187,7 +215,6 @@ def visualizar(id):
         execucoes=execucoes
     )
 
-
 @bp.route('/editar/<id>', methods=['GET', 'POST'])
 @verify_user_jwt
 def editar(id):
@@ -198,12 +225,11 @@ def editar(id):
 
     if form.validate_on_submit():
         try:
-            # Validar formato mês/ano
             if not Processo.validar_formato_mes_ano(form.mes_ano.data):
                 flash('Formato de mês/ano inválido. Use MM/AAAA.', 'danger')
                 return render_template('processos/form.html', form=form, titulo="Editar Processo")
 
-            # Verificar se mudou cliente/mês e se já existe outro processo
+            # Verificar duplicatas (excluindo o processo atual)
             if (form.cliente_id.data != str(processo.cliente_id) or 
                 form.mes_ano.data != processo.mes_ano):
 
@@ -219,7 +245,7 @@ def editar(id):
                     flash('Já existe um processo para este cliente no mês/ano informado.', 'danger')
                     return render_template('processos/form.html', form=form, titulo="Editar Processo")
 
-            # Atualizar dados
+            # Atualizar processo
             processo.cliente_id = form.cliente_id.data
             processo.mes_ano = form.mes_ano.data
             processo.status_processo = form.status_processo.data
@@ -244,7 +270,6 @@ def editar(id):
 
     return render_template('processos/form.html', form=form, titulo="Editar Processo")
 
-
 @bp.route('/excluir/<id>', methods=['POST'])
 @verify_user_jwt
 def excluir(id):
@@ -253,7 +278,6 @@ def excluir(id):
     try:
         processo = db.session.query(Processo).filter(Processo.id == id).first_or_404()
 
-        # Verificar se pode ser excluído (não está em status final)
         status_protegidos = [
             StatusProcesso.APROVADO.value,
             StatusProcesso.ENVIADO_SAT.value,
@@ -280,7 +304,6 @@ def excluir(id):
 
     return redirect(url_for('processos_bp.index'))
 
-
 @bp.route('/aprovar/<string:id>', methods=['POST'])
 @verify_user_jwt
 def aprovar(id):
@@ -289,7 +312,6 @@ def aprovar(id):
     try:
         processo = db.session.query(Processo).filter(Processo.id == id).first_or_404()
 
-        # Verificar se pode ser aprovado
         if not processo.pode_ser_aprovado:
             if request.is_json or request.headers.get('Content-Type') == 'application/json':
                 return jsonify({
@@ -300,7 +322,6 @@ def aprovar(id):
                 flash('Este processo não pode ser aprovado no status atual.', 'warning')
                 return redirect(url_for('processos_bp.visualizar', id=id))
 
-        # Pegar observações do formulário ou JSON
         observacoes = None
         if request.is_json:
             data = request.get_json()
@@ -308,8 +329,7 @@ def aprovar(id):
         else:
             observacoes = request.form.get('observacoes', '').strip()
 
-        # Aprovar processo (TODO: implementar usuario_id real)
-        usuario_id = "00000000-0000-0000-0000-000000000000"  # TODO: pegar do JWT/sessão
+        usuario_id = "00000000-0000-0000-0000-000000000000"
         processo.aprovar(usuario_id, observacoes)
 
         db.session.commit()
@@ -328,7 +348,7 @@ def aprovar(id):
     except Exception as e:
         db.session.rollback()
         logger.error(f"Erro ao aprovar processo {id}: {str(e)}")
-        
+
         if request.is_json or request.headers.get('Content-Type') == 'application/json':
             return jsonify({
                 'success': False,
@@ -338,7 +358,6 @@ def aprovar(id):
             flash('Erro ao aprovar processo.', 'danger')
             return redirect(url_for('processos_bp.visualizar', id=id))
 
-
 @bp.route('/rejeitar/<string:id>', methods=['POST'])
 @verify_user_jwt
 def rejeitar(id):
@@ -347,7 +366,6 @@ def rejeitar(id):
     try:
         processo = db.session.query(Processo).filter(Processo.id == id).first_or_404()
 
-        # Pegar observações do formulário ou JSON
         observacoes = None
         if request.is_json:
             data = request.get_json()
@@ -355,7 +373,6 @@ def rejeitar(id):
         else:
             observacoes = request.form.get('observacoes', '').strip()
 
-        # Verificar se há observações
         if not observacoes:
             if request.is_json or request.headers.get('Content-Type') == 'application/json':
                 return jsonify({
@@ -366,7 +383,6 @@ def rejeitar(id):
                 flash('Motivo da rejeição é obrigatório.', 'warning')
                 return redirect(url_for('processos_bp.visualizar', id=id))
 
-        # Verificar se está pendente de aprovação
         if not processo.esta_pendente_aprovacao:
             if request.is_json or request.headers.get('Content-Type') == 'application/json':
                 return jsonify({
@@ -377,7 +393,6 @@ def rejeitar(id):
                 flash('Este processo não está pendente de aprovação.', 'warning')
                 return redirect(url_for('processos_bp.visualizar', id=id))
 
-        # Rejeitar processo
         processo.rejeitar(observacoes)
 
         db.session.commit()
@@ -396,7 +411,7 @@ def rejeitar(id):
     except Exception as e:
         db.session.rollback()
         logger.error(f"Erro ao rejeitar processo {id}: {str(e)}")
-        
+
         if request.is_json or request.headers.get('Content-Type') == 'application/json':
             return jsonify({
                 'success': False,
@@ -405,7 +420,6 @@ def rejeitar(id):
         else:
             flash('Erro ao rejeitar processo.', 'danger')
             return redirect(url_for('processos_bp.visualizar', id=id))
-
 
 @bp.route('/criar-processos-mensais', methods=['GET', 'POST'])
 @verify_user_jwt
@@ -416,12 +430,10 @@ def criar_processos_mensais():
 
     if form.validate_on_submit():
         try:
-            # Validar formato mês/ano
             if not Processo.validar_formato_mes_ano(form.mes_ano.data):
                 flash('Formato de mês/ano inválido. Use MM/AAAA.', 'danger')
                 return render_template('processos/criar_mensais.html', form=form)
 
-            # Query de clientes
             query_clientes = db.session.query(Cliente)\
                 .join(Operadora)\
                 .filter(
@@ -429,18 +441,15 @@ def criar_processos_mensais():
                     Operadora.status_ativo == True
                 )
 
-            # Filtrar por operadora se especificada
             if form.operadora_id.data:
                 query_clientes = query_clientes.filter(Cliente.operadora_id == form.operadora_id.data)
 
             clientes = query_clientes.all()
 
-            # Contadores
             processos_criados = 0
             processos_ja_existentes = 0
 
             for cliente in clientes:
-                # Verificar se já existe processo para este cliente/mês/ano
                 processo_existente = db.session.query(Processo).filter(
                     and_(
                         Processo.cliente_id == cliente.id,
@@ -452,7 +461,6 @@ def criar_processos_mensais():
                     processos_ja_existentes += 1
                     continue
 
-                # Criar novo processo
                 processo = Processo(
                     cliente_id=cliente.id,
                     mes_ano=form.mes_ano.data,
@@ -485,7 +493,6 @@ def criar_processos_mensais():
 
     return render_template('processos/criar_mensais.html', form=form)
 
-
 @bp.route('/enviar-sat/<string:id>', methods=['POST'])
 @verify_user_jwt
 def enviar_sat(id):
@@ -494,14 +501,12 @@ def enviar_sat(id):
     try:
         processo = db.session.query(Processo).filter(Processo.id == id).first_or_404()
 
-        # Verificar se pode ser enviado para SAT
         if not processo.pode_enviar_sat:
             return jsonify({
                 'success': False,
                 'message': 'Este processo não pode ser enviado para o SAT no status atual.'
             }), 400
 
-        # Mock do envio para SAT - em produção aqui será chamado o RPA
         processo.enviar_para_sat()
 
         db.session.commit()
@@ -521,17 +526,14 @@ def enviar_sat(id):
             'message': 'Erro interno do servidor.'
         }), 500
 
-
 @bp.route('/api/estatisticas')
 @verify_user_jwt
 def api_estatisticas():
     """API para estatísticas do dashboard"""
 
     try:
-        # Total de processos
         total_processos = db.session.query(Processo).count()
 
-        # Processos por status
         status_counts = {}
         for status in StatusProcesso:
             count = db.session.query(Processo)\
@@ -539,12 +541,10 @@ def api_estatisticas():
                 .count()
             status_counts[status.value] = count
 
-        # Processos pendentes de aprovação
         pendentes_aprovacao = db.session.query(Processo)\
             .filter(Processo.status_processo == StatusProcesso.DOWNLOAD_COMPLETO.value)\
             .count()
 
-        # Processos do mês atual
         mes_atual = Processo.criar_mes_ano_atual()
         processos_mes_atual = db.session.query(Processo)\
             .filter(Processo.mes_ano == mes_atual)\
@@ -560,4 +560,3 @@ def api_estatisticas():
     except Exception as e:
         logger.error(f"Erro ao buscar estatísticas: {str(e)}")
         return jsonify({'error': 'Erro interno'}), 500
-
