@@ -1,0 +1,228 @@
+
+{% extends "layouts/base.html" %}
+
+{% block title %}Detalhes da Operadora - {{ operadora.nome }}{% endblock %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="pc-container">
+    <div class="pc-content">
+        <!-- [ breadcrumb ] start -->
+        <div class="page-header">
+            <div class="page-block">
+                <div class="row align-items-center">
+                    <div class="col-md-12">
+                        <div class="page-header-title">
+                            <h2 class="mb-0">Detalhes da Operadora</h2>
+                        </div>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a href="{{ url_for('home_bp.index') }}">
+                                    <i class="feather icon-home"></i>
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item">
+                                <a href="{{ url_for('operadoras_bp.index') }}">Operadoras</a>
+                            </li>
+                            <li class="breadcrumb-item active" aria-current="page">{{ operadora.nome }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- [ breadcrumb ] end -->
+        
+        <!-- [ Main Content ] start -->
+        <div class="row">
+            <!-- Informações Principais -->
+            <div class="col-xl-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>
+                            <i class="feather icon-wifi"></i> {{ operadora.nome }}
+                            {% if operadora.status_ativo %}
+                                <span class="badge bg-success ms-2">Ativo</span>
+                            {% else %}
+                                <span class="badge bg-danger ms-2">Inativo</span>
+                            {% endif %}
+                        </h5>
+                        <div class="card-header-right">
+                            <a href="{{ url_for('operadoras_bp.editar', operadora_id=operadora.id) }}" 
+                               class="btn btn-primary btn-sm">
+                                <i class="feather icon-edit"></i> Editar
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Código Identificador</h6>
+                                <p class="mb-3">
+                                    <span class="badge bg-info f-16">{{ operadora.codigo }}</span>
+                                </p>
+                                
+                                <h6 class="text-muted">Possui RPA Homologado</h6>
+                                <p class="mb-3">
+                                    {% if operadora.possui_rpa %}
+                                        <span class="badge bg-success">
+                                            <i class="feather icon-check"></i> Sim, possui RPA
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning">
+                                            <i class="feather icon-upload"></i> Upload Manual
+                                        </span>
+                                    {% endif %}
+                                </p>
+                                
+                                {% if operadora.classe_rpa %}
+                                    <h6 class="text-muted">Classe do RPA</h6>
+                                    <p class="mb-3">
+                                        <code>{{ operadora.classe_rpa }}</code>
+                                    </p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Data de Criação</h6>
+                                <p class="mb-3">{{ operadora.data_criacao.strftime('%d/%m/%Y às %H:%M') }}</p>
+                                
+                                <h6 class="text-muted">Última Atualização</h6>
+                                <p class="mb-3">{{ operadora.data_atualizacao.strftime('%d/%m/%Y às %H:%M') }}</p>
+                                
+                                {% if operadora.url_portal %}
+                                    <h6 class="text-muted">Portal da Operadora</h6>
+                                    <p class="mb-3">
+                                        <a href="{{ operadora.url_portal }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                            <i class="feather icon-external-link"></i> Acessar Portal
+                                        </a>
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if operadora.instrucoes_acesso %}
+                            <hr>
+                            <h6 class="text-muted">Instruções de Acesso</h6>
+                            <div class="alert alert-light">
+                                <i class="feather icon-book-open"></i>
+                                {{ operadora.instrucoes_acesso|nl2br }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Estatísticas e Ações -->
+            <div class="col-xl-4">
+                <!-- Estatísticas de Clientes -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="feather icon-users"></i> Clientes Vinculados</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h4 class="text-c-blue">{{ total_clientes }}</h4>
+                                <p class="text-muted mb-0">Total</p>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-c-green">{{ clientes_ativos }}</h4>
+                                <p class="text-muted mb-0">Ativos</p>
+                            </div>
+                        </div>
+                        
+                        {% if total_clientes > 0 %}
+                            <hr>
+                            <a href="#" class="btn btn-outline-primary btn-sm w-100">
+                                <i class="feather icon-list"></i> Ver Clientes
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Ações Rápidas -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="feather icon-zap"></i> Ações Rápidas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('operadoras_bp.editar', operadora_id=operadora.id) }}" 
+                               class="btn btn-primary">
+                                <i class="feather icon-edit"></i> Editar Operadora
+                            </a>
+                            
+                            <form method="POST" 
+                                  action="{{ url_for('operadoras_bp.toggle_status', operadora_id=operadora.id) }}" 
+                                  style="display: inline;">
+                                <button type="submit" 
+                                        class="btn btn-{% if operadora.status_ativo %}warning{% else %}success{% endif %} w-100"
+                                        onclick="return confirm('Tem certeza que deseja {% if operadora.status_ativo %}desativar{% else %}ativar{% endif %} esta operadora?')">
+                                    <i class="feather icon-{% if operadora.status_ativo %}pause{% else %}play{% endif %}"></i>
+                                    {% if operadora.status_ativo %}Desativar{% else %}Ativar{% endif %} Operadora
+                                </button>
+                            </form>
+                            
+                            {% if total_clientes == 0 %}
+                                <form method="POST" 
+                                      action="{{ url_for('operadoras_bp.excluir', operadora_id=operadora.id) }}" 
+                                      style="display: inline;">
+                                    <button type="submit" 
+                                            class="btn btn-danger w-100"
+                                            onclick="return confirm('Tem certeza que deseja excluir esta operadora? Esta ação não pode ser desfeita.')">
+                                        <i class="feather icon-trash-2"></i> Excluir Operadora
+                                    </button>
+                                </form>
+                            {% else %}
+                                <button type="button" 
+                                        class="btn btn-danger w-100" 
+                                        disabled 
+                                        title="Não é possível excluir operadora com clientes vinculados">
+                                    <i class="feather icon-trash-2"></i> Excluir Operadora
+                                </button>
+                                <small class="text-muted">
+                                    <i class="feather icon-info"></i> 
+                                    Remova todos os clientes antes de excluir
+                                </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Configuração RPA -->
+                {% if operadora.possui_rpa %}
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="feather icon-cpu"></i> Configuração RPA</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if operadora.get_configuracao_rpa() %}
+                                {% set config = operadora.get_configuracao_rpa() %}
+                                <small class="text-muted">Classe:</small>
+                                <p><code>{{ config.classe_rpa }}</code></p>
+                                
+                                <small class="text-muted">Timeout Padrão:</small>
+                                <p>{{ config.timeout_padrao }}s</p>
+                                
+                                <small class="text-muted">Tentativas Máximas:</small>
+                                <p>{{ config.tentativas_maximas }}</p>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="feather icon-alert-triangle"></i>
+                                    Configuração de RPA não encontrada
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <!-- [ Main Content ] end -->
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %}
