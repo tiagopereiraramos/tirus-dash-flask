@@ -93,53 +93,53 @@
 
                         <!-- Dados Principais -->
                         <div class="row">
-                            <div class="col-md-6">
-                                <h6 class="text-muted">Dados da Empresa</h6>
-                                <table class="table table-borderless">
-                                    <tr>
-                                        <td><strong>Razão Social:</strong></td>
-                                        <td>{{ cliente.razao_social }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Nome no SAT:</strong></td>
-                                        <td>{{ cliente.nome_sat }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>CNPJ:</strong></td>
-                                        <td><span class="font-monospace">{{ cliente.cnpj }}</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Hash Única:</strong></td>
-                                        <td><span class="font-monospace small">{{ cliente.hash_unico }}</span></td>
-                                    </tr>
-                                </table>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <h6 class="text-muted">Operadora e Serviço</h6>
-                                <table class="table table-borderless">
-                                    <tr>
-                                        <td><strong>Operadora:</strong></td>
-                                        <td>
-                                            <span class="badge bg-info">{{ cliente.operadora.codigo }}</span>
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">Dados da Empresa</h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Razão Social:</label>
+                                        <p class="mb-0">{{ cliente.razao_social }}</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Nome no SAT:</label>
+                                        <p class="mb-0">{{ cliente.nome_sat }}</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">CNPJ:</label>
+                                        <p class="mb-0"><span class="font-monospace">{{ cliente.cnpj }}</span></p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Hash Única:</label>
+                                        <p class="mb-0"><span class="font-monospace small text-muted">{{ cliente.hash_unico }}</span></p>
+                                    </div>
+                                </div>
+                                
+                                <hr class="my-4">
+                                
+                                <h6 class="text-muted mb-3">Operadora e Serviço</h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Operadora:</label>
+                                        <p class="mb-0">
+                                            <span class="badge bg-info me-2">{{ cliente.operadora.codigo }}</span>
                                             {{ cliente.operadora.nome }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Serviço:</strong></td>
-                                        <td>{{ cliente.servico }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Unidade:</strong></td>
-                                        <td>{{ cliente.unidade }}</td>
-                                    </tr>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Serviço:</label>
+                                        <p class="mb-0">{{ cliente.servico }}</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Unidade:</label>
+                                        <p class="mb-0">{{ cliente.unidade }}</p>
+                                    </div>
                                     {% if cliente.filtro %}
-                                    <tr>
-                                        <td><strong>Filtro:</strong></td>
-                                        <td>{{ cliente.filtro }}</td>
-                                    </tr>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Filtro:</label>
+                                        <p class="mb-0">{{ cliente.filtro }}</p>
+                                    </div>
                                     {% endif %}
-                                </table>
+                                </div>
                             </div>
                         </div>
 
@@ -171,29 +171,29 @@
                     <div class="card-body">
                         <div class="row">
                             {% if cliente.login_portal %}
-                            <div class="col-md-4">
-                                <h6 class="text-muted">Login do Portal</h6>
-                                <p class="font-monospace">{{ cliente.login_portal }}</p>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Login do Portal:</label>
+                                <p class="mb-0 font-monospace">{{ cliente.login_portal }}</p>
                             </div>
                             {% endif %}
                             
                             {% if cliente.senha_portal %}
-                            <div class="col-md-4">
-                                <h6 class="text-muted">Senha do Portal</h6>
-                                <p>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Senha do Portal:</label>
+                                <div class="d-flex align-items-center">
                                     <span id="senhaOculta">••••••••</span>
                                     <span id="senhaVisivel" style="display: none;" class="font-monospace">{{ cliente.senha_portal }}</span>
                                     <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleSenha()">
                                         <i class="feather icon-eye" id="iconeSenha"></i>
                                     </button>
-                                </p>
+                                </div>
                             </div>
                             {% endif %}
                             
                             {% if cliente.cpf %}
-                            <div class="col-md-4">
-                                <h6 class="text-muted">CPF</h6>
-                                <p class="font-monospace">{{ cliente.cpf }}</p>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">CPF:</label>
+                                <p class="mb-0 font-monospace">{{ cliente.cpf }}</p>
                             </div>
                             {% endif %}
                         </div>

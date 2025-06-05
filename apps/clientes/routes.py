@@ -19,11 +19,15 @@ from apps import db
 @bp.route('/')
 @login_required
 def index():
-    """Lista todos os clientes com filtros"""
+    """Lista todos os clientes com filtros e paginação"""
 
     # Formulário de filtros
     form_filtro = FiltroClienteForm()
 
+    # Parâmetros de paginação
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)  # 20 clientes por página
+    
     # Query base com join na operadora
     query = Cliente.query.join(Operadora)
 
@@ -65,11 +69,17 @@ def index():
     # Ordenação
     query = query.order_by(Cliente.razao_social)
 
-    # Buscar todos os clientes para a lista
-    clientes = query.all()
+    # Paginação
+    pagination = query.paginate(
+        page=page, 
+        per_page=per_page, 
+        error_out=False
+    )
+    
+    clientes = pagination.items
 
-    # Estatísticas para cards
-    total_clientes = len(clientes)
+    # Estatísticas para cards (consultas separadas para performance)
+    total_clientes = Cliente.query.count()
     clientes_ativos = Cliente.query.filter_by(status_ativo=True).count()
     clientes_com_rpa = Cliente.query.join(Operadora).filter(
         and_(Cliente.status_ativo == True, Operadora.possui_rpa == True)
@@ -81,6 +91,7 @@ def index():
     return render_template(
         'clientes/index.html',
         clientes=clientes,
+        pagination=pagination,
         form_filtro=form_filtro,
         total_clientes=total_clientes,
         clientes_ativos=clientes_ativos,
