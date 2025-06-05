@@ -140,13 +140,12 @@ def visualizar(id):
     processo = db.session.query(Processo)\
         .options(
             joinedload(Processo.cliente).joinedload(Cliente.operadora),
-            joinedload(Processo.aprovador),
-            joinedload(Processo.execucoes)
+            joinedload(Processo.aprovador)
         )\
         .filter(Processo.id == id)\
         .first_or_404()
     
-    # Buscar execuções ordenadas por data
+    # Buscar execuções ordenadas por data (query separada devido ao lazy="dynamic")
     execucoes = db.session.query(Execucao)\
         .filter(Execucao.processo_id == id)\
         .order_by(desc(Execucao.data_inicio))\
