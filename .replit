@@ -7,10 +7,6 @@ channel = "stable-24_05"
 [deployment]
 run = ["sh", "-c", "python undefined"]
 
-[[ports]]
-localPort = 5000
-externalPort = 80
-
 [workflows]
 runButton = "Flask App"
 
@@ -22,3 +18,7 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python run.py"
+
+[[ports]]
+localPort = 5000
+externalPort = 80
