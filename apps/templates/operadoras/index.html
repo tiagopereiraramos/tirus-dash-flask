@@ -1,0 +1,308 @@
+
+{% extends "layouts/base.html" %}
+
+{% block title %} Operadoras {% endblock %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="pc-container">
+    <div class="pc-content">
+        <!-- [ breadcrumb ] start -->
+        <div class="page-header">
+            <div class="page-block">
+                <div class="row align-items-center">
+                    <div class="col-md-12">
+                        <div class="page-header-title">
+                            <h2 class="mb-0">Gerenciamento de Operadoras</h2>
+                        </div>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a href="{{ url_for('home_bp.index') }}">
+                                    <i class="feather icon-home"></i>
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item active" aria-current="page">Operadoras</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- [ breadcrumb ] end -->
+        
+        <!-- [ Main Content ] start -->
+        <div class="row">
+            <!-- Cards de Estatísticas -->
+            <div class="col-xl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-8">
+                                <h4 class="text-c-yellow">{{ total_operadoras }}</h4>
+                                <h6 class="text-muted m-b-0">Total de Operadoras</h6>
+                            </div>
+                            <div class="col-4 text-right">
+                                <i class="feather icon-bar-chart-2 f-28"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-8">
+                                <h4 class="text-c-green">{{ operadoras_ativas }}</h4>
+                                <h6 class="text-muted m-b-0">Operadoras Ativas</h6>
+                            </div>
+                            <div class="col-4 text-right">
+                                <i class="feather icon-check-circle f-28"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-8">
+                                <h4 class="text-c-blue">{{ operadoras_com_rpa }}</h4>
+                                <h6 class="text-muted m-b-0">Com RPA</h6>
+                            </div>
+                            <div class="col-4 text-right">
+                                <i class="feather icon-cpu f-28"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-8">
+                                <h4 class="text-c-red">{{ operadoras_sem_rpa }}</h4>
+                                <h6 class="text-muted m-b-0">Sem RPA</h6>
+                            </div>
+                            <div class="col-4 text-right">
+                                <i class="feather icon-upload f-28"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filtros -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Filtros de Busca</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="GET" action="{{ url_for('operadoras_bp.index') }}">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    {{ form_filtro.nome.label(class="form-label") }}
+                                    {{ form_filtro.nome() }}
+                                </div>
+                                <div class="col-md-3">
+                                    {{ form_filtro.codigo.label(class="form-label") }}
+                                    {{ form_filtro.codigo() }}
+                                </div>
+                                <div class="col-md-2">
+                                    {{ form_filtro.status.label(class="form-label") }}
+                                    {{ form_filtro.status() }}
+                                </div>
+                                <div class="col-md-2">
+                                    {{ form_filtro.rpa.label(class="form-label") }}
+                                    {{ form_filtro.rpa() }}
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary me-2">
+                                        <i class="feather icon-search"></i> Filtrar
+                                    </button>
+                                    <a href="{{ url_for('operadoras_bp.index') }}" class="btn btn-secondary">
+                                        <i class="feather icon-x"></i> Limpar
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabela de Operadoras -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5>Lista de Operadoras</h5>
+                        <a href="{{ url_for('operadoras_bp.nova') }}" class="btn btn-primary">
+                            <i class="feather icon-plus"></i> Nova Operadora
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        {% if operadoras.items %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Nome</th>
+                                            <th>Código</th>
+                                            <th>RPA</th>
+                                            <th>Status</th>
+                                            <th>Portal</th>
+                                            <th>Data Criação</th>
+                                            <th width="200">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for operadora in operadoras.items %}
+                                            <tr>
+                                                <td>
+                                                    <strong>{{ operadora.nome }}</strong>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-info">{{ operadora.codigo }}</span>
+                                                </td>
+                                                <td>
+                                                    {% if operadora.possui_rpa %}
+                                                        <span class="badge bg-success">
+                                                            <i class="feather icon-check"></i> Possui RPA
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="badge bg-warning">
+                                                            <i class="feather icon-upload"></i> Upload Manual
+                                                        </span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if operadora.status_ativo %}
+                                                        <span class="badge bg-success">Ativo</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger">Inativo</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if operadora.url_portal %}
+                                                        <a href="{{ operadora.url_portal }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                            <i class="feather icon-external-link"></i>
+                                                        </a>
+                                                    {% else %}
+                                                        <span class="text-muted">-</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {{ operadora.data_criacao.strftime('%d/%m/%Y') }}
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <a href="{{ url_for('operadoras_bp.visualizar', operadora_id=operadora.id) }}" 
+                                                           class="btn btn-outline-info" title="Visualizar">
+                                                            <i class="feather icon-eye"></i>
+                                                        </a>
+                                                        <a href="{{ url_for('operadoras_bp.editar', operadora_id=operadora.id) }}" 
+                                                           class="btn btn-outline-primary" title="Editar">
+                                                            <i class="feather icon-edit"></i>
+                                                        </a>
+                                                        <form method="POST" 
+                                                              action="{{ url_for('operadoras_bp.toggle_status', operadora_id=operadora.id) }}" 
+                                                              style="display: inline;">
+                                                            <button type="submit" 
+                                                                    class="btn btn-outline-{% if operadora.status_ativo %}warning{% else %}success{% endif %}" 
+                                                                    title="{% if operadora.status_ativo %}Desativar{% else %}Ativar{% endif %}"
+                                                                    onclick="return confirm('Tem certeza que deseja {% if operadora.status_ativo %}desativar{% else %}ativar{% endif %} esta operadora?')">
+                                                                <i class="feather icon-{% if operadora.status_ativo %}pause{% else %}play{% endif %}"></i>
+                                                            </button>
+                                                        </form>
+                                                        <form method="POST" 
+                                                              action="{{ url_for('operadoras_bp.excluir', operadora_id=operadora.id) }}" 
+                                                              style="display: inline;">
+                                                            <button type="submit" 
+                                                                    class="btn btn-outline-danger" 
+                                                                    title="Excluir"
+                                                                    onclick="return confirm('Tem certeza que deseja excluir esta operadora? Esta ação não pode ser desfeita.')">
+                                                                <i class="feather icon-trash-2"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Paginação -->
+                            {% if operadoras.pages > 1 %}
+                                <nav aria-label="Paginação">
+                                    <ul class="pagination justify-content-center">
+                                        {% if operadoras.has_prev %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('operadoras_bp.index', page=operadoras.prev_num, **request.args) }}">
+                                                    <i class="feather icon-chevron-left"></i>
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                        
+                                        {% for page_num in operadoras.iter_pages() %}
+                                            {% if page_num %}
+                                                {% if page_num != operadoras.page %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('operadoras_bp.index', page=page_num, **request.args) }}">
+                                                            {{ page_num }}
+                                                        </a>
+                                                    </li>
+                                                {% else %}
+                                                    <li class="page-item active">
+                                                        <span class="page-link">{{ page_num }}</span>
+                                                    </li>
+                                                {% endif %}
+                                            {% else %}
+                                                <li class="page-item disabled">
+                                                    <span class="page-link">...</span>
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        {% if operadoras.has_next %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('operadoras_bp.index', page=operadoras.next_num, **request.args) }}">
+                                                    <i class="feather icon-chevron-right"></i>
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            {% endif %}
+                            
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="feather icon-inbox f-40 text-muted"></i>
+                                <h5 class="mt-3">Nenhuma operadora encontrada</h5>
+                                <p class="text-muted">Nenhuma operadora corresponde aos filtros aplicados.</p>
+                                <a href="{{ url_for('operadoras_bp.nova') }}" class="btn btn-primary">
+                                    <i class="feather icon-plus"></i> Cadastrar Primeira Operadora
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- [ Main Content ] end -->
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %}

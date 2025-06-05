@@ -55,4 +55,12 @@ def create_app(config):
     register_blueprints(app)
     app.register_blueprint(github_blueprint, url_prefix="/login")    
     configure_database(app)
+    
+    # Sample DB
+    from apps.home import routes
+    app.register_blueprint(routes.home_bp)
+
+    # Blueprint de Operadoras
+    from apps.operadoras import bp as operadoras_bp
+    app.register_blueprint(operadoras_bp)
     return app
