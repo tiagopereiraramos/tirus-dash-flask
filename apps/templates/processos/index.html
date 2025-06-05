@@ -1,4 +1,7 @@
+` tags.
 
+```
+<replit_final_file>
 {% extends "layouts/base.html" %}
 
 {% block title %} Processos {% endblock %}
@@ -28,59 +31,62 @@
                         </div>
                     </div>
                     <!-- [ breadcrumb ] end -->
-                    
+
                     <div class="main-body">
                         <div class="page-wrapper">
                             <!-- [ Main Content ] start -->
                             <div class="row">
                                 <div class="col-sm-12">
+                                    <!-- Filtros -->
                                     <div class="card">
                                         <div class="card-header">
-                                            <div class="row align-items-center">
-                                                <div class="col-md-6">
-                                                    <h5>Gestão de Processos</h5>
-                                                    <span class="d-block m-t-5">
-                                                        Controle total do workflow de faturas com aprovação obrigatória
-                                                    </span>
-                                                </div>
-                                                <div class="col-md-6 text-right">
-                                                    <a href="{{ url_for('processos_bp.novo') }}" class="btn btn-primary btn-sm">
-                                                        <i class="feather icon-plus"></i> Novo Processo
-                                                    </a>
-                                                    <a href="{{ url_for('processos_bp.criar_processos_mensais') }}" class="btn btn-success btn-sm ml-2">
-                                                        <i class="feather icon-calendar"></i> Criar Processos Mensais
-                                                    </a>
-                                                </div>
-                                            </div>
+                                            <h5>Filtros de Busca</h5>
                                         </div>
-                                        
-                                        <!-- Filtros -->
-                                        <div class="card-body border-bottom">
-                                            <form method="GET" class="row align-items-end">
-                                                <div class="col-md-3">
-                                                    {{ form.busca.label(class="form-label") }}
-                                                    {{ form.busca(class="form-control") }}
-                                                </div>
-                                                <div class="col-md-2">
-                                                    {{ form.status.label(class="form-label") }}
-                                                    {{ form.status(class="form-control") }}
-                                                </div>
-                                                <div class="col-md-2">
-                                                    {{ form.mes_ano.label(class="form-label") }}
-                                                    {{ form.mes_ano(class="form-control") }}
-                                                </div>
-                                                <div class="col-md-3">
-                                                    {{ form.operadora.label(class="form-label") }}
-                                                    {{ form.operadora(class="form-control") }}
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <button type="submit" class="btn btn-primary btn-block">
-                                                        <i class="feather icon-search"></i> Filtrar
-                                                    </button>
+                                        <div class="card-body">
+                                            <form method="GET">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        {{ form.busca.label(class="form-label") }}
+                                                        {{ form.busca(class="form-control") }}
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        {{ form.status.label(class="form-label") }}
+                                                        {{ form.status(class="form-control") }}
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        {{ form.mes_ano.label(class="form-label") }}
+                                                        {{ form.mes_ano(class="form-control") }}
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        {{ form.operadora.label(class="form-label") }}
+                                                        {{ form.operadora(class="form-control") }}
+                                                    </div>
+                                                    <div class="col-md-2 d-flex align-items-end">
+                                                        <button type="submit" class="btn btn-primary mr-2">
+                                                            <i class="feather icon-search"></i> Buscar
+                                                        </button>
+                                                        <a href="{{ url_for('processos_bp.index') }}" class="btn btn-secondary">
+                                                            <i class="feather icon-x"></i> Limpar
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             </form>
                                         </div>
-                                        
+                                    </div>
+
+                                    <!-- Ações -->
+                                    <div class="card">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h5>Lista de Processos</h5>
+                                            <div>
+                                                <a href="{{ url_for('processos_bp.novo') }}" class="btn btn-primary">
+                                                    <i class="feather icon-plus"></i> Novo Processo
+                                                </a>
+                                                <a href="{{ url_for('processos_bp.criar_processos_mensais') }}" class="btn btn-success ml-2">
+                                                    <i class="feather icon-calendar"></i> Criar Mensais
+                                                </a>
+                                            </div>
+                                        </div>
                                         <div class="card-body p-0">
                                             {% if processos.items %}
                                             <div class="table-responsive">
@@ -93,17 +99,16 @@
                                                             <th>Status</th>
                                                             <th>Valor</th>
                                                             <th>Vencimento</th>
-                                                            <th>Aprovação</th>
-                                                            <th>Atualização</th>
-                                                            <th class="text-center">Ações</th>
+                                                            <th>Criado</th>
+                                                            <th>Ações</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         {% for processo in processos.items %}
                                                         <tr>
                                                             <td>
-                                                                <div class="d-inline-block align-middle">
-                                                                    <h6 class="m-b-0">{{ processo.cliente.razao_social }}</h6>
+                                                                <div>
+                                                                    <h6 class="mb-1">{{ processo.cliente.razao_social }}</h6>
                                                                     <p class="m-b-0 text-muted">{{ processo.cliente.cnpj }}</p>
                                                                 </div>
                                                             </td>
@@ -119,27 +124,17 @@
                                                                 {% if processo.status_processo == 'AGUARDANDO_DOWNLOAD' %}
                                                                     <span class="badge badge-light-warning">Aguardando Download</span>
                                                                 {% elif processo.status_processo == 'DOWNLOAD_EM_ANDAMENTO' %}
-                                                                    <span class="badge badge-light-info">Download em Andamento</span>
+                                                                    <span class="badge badge-warning">Download em Andamento</span>
                                                                 {% elif processo.status_processo == 'DOWNLOAD_CONCLUIDO' %}
                                                                     <span class="badge badge-light-primary">Download Concluído</span>
-                                                                {% elif processo.status_processo == 'DOWNLOAD_FALHOU' %}
-                                                                    <span class="badge badge-light-danger">Download Falhou</span>
                                                                 {% elif processo.status_processo == 'AGUARDANDO_APROVACAO' %}
                                                                     <span class="badge badge-warning">Aguardando Aprovação</span>
                                                                 {% elif processo.status_processo == 'APROVADO' %}
                                                                     <span class="badge badge-success">Aprovado</span>
-                                                                {% elif processo.status_processo == 'REJEITADO' %}
-                                                                    <span class="badge badge-danger">Rejeitado</span>
-                                                                {% elif processo.status_processo == 'ENVIANDO_SAT' %}
-                                                                    <span class="badge badge-light-info">Enviando SAT</span>
-                                                                {% elif processo.status_processo == 'ENVIADO_SAT' %}
-                                                                    <span class="badge badge-light-success">Enviado SAT</span>
-                                                                {% elif processo.status_processo == 'FALHA_ENVIO_SAT' %}
-                                                                    <span class="badge badge-light-danger">Falha Envio SAT</span>
                                                                 {% elif processo.status_processo == 'CONCLUIDO' %}
                                                                     <span class="badge badge-success">Concluído</span>
-                                                                {% elif processo.status_processo == 'CANCELADO' %}
-                                                                    <span class="badge badge-secondary">Cancelado</span>
+                                                                {% elif processo.status_processo == 'REJEITADO' %}
+                                                                    <span class="badge badge-danger">Rejeitado</span>
                                                                 {% else %}
                                                                     <span class="badge badge-light">{{ processo.status_processo }}</span>
                                                                 {% endif %}
@@ -159,118 +154,21 @@
                                                                 {% endif %}
                                                             </td>
                                                             <td>
-                                                                {% if processo.aprovador %}
-                                                                    <small class="text-success">
-                                                                        <i class="feather icon-check"></i>
-                                                                        {{ processo.data_aprovacao.strftime('%d/%m/%Y') if processo.data_aprovacao }}
-                                                                    </small>
-                                                                {% elif processo.esta_pendente_aprovacao %}
-                                                                    <small class="text-warning">
-                                                                        <i class="feather icon-clock"></i> Pendente
-                                                                    </small>
-                                                                {% else %}
-                                                                    <span class="text-muted">-</span>
-                                                                {% endif %}
+                                                                <small>{{ processo.data_criacao.strftime('%d/%m/%Y %H:%M') }}</small>
                                                             </td>
                                                             <td>
-                                                                <small class="text-muted">
-                                                                    {{ processo.data_atualizacao.strftime('%d/%m/%Y %H:%M') }}
-                                                                </small>
-                                                            </td>
-                                                            <td class="text-center">
-                                                                <div class="btn-group btn-group-sm" role="group">
+                                                                <div class="btn-group">
                                                                     <a href="{{ url_for('processos_bp.visualizar', id=processo.id) }}" 
-                                                                       class="btn btn-outline-primary btn-sm" 
-                                                                       title="Visualizar">
+                                                                       class="btn btn-sm btn-outline-primary" title="Visualizar">
                                                                         <i class="feather icon-eye"></i>
                                                                     </a>
-                                                                    
                                                                     {% if not processo.esta_concluido %}
                                                                     <a href="{{ url_for('processos_bp.editar', id=processo.id) }}" 
-                                                                       class="btn btn-outline-warning btn-sm" 
-                                                                       title="Editar">
+                                                                       class="btn btn-sm btn-outline-warning" title="Editar">
                                                                         <i class="feather icon-edit"></i>
                                                                     </a>
                                                                     {% endif %}
-                                                                    
-                                                                    {% if processo.pode_ser_aprovado %}
-                                                                    <button type="button" 
-                                                                            class="btn btn-outline-success btn-sm" 
-                                                                            data-toggle="modal" 
-                                                                            data-target="#modalAprovar{{ processo.id }}"
-                                                                            title="Aprovar">
-                                                                        <i class="feather icon-check"></i>
-                                                                    </button>
-                                                                    {% endif %}
-                                                                    
-                                                                    {% if not processo.esta_aprovado and not processo.esta_concluido %}
-                                                                    <button type="button" 
-                                                                            class="btn btn-outline-danger btn-sm" 
-                                                                            data-toggle="modal" 
-                                                                            data-target="#modalExcluir{{ processo.id }}"
-                                                                            title="Excluir">
-                                                                        <i class="feather icon-trash-2"></i>
-                                                                    </button>
-                                                                    {% endif %}
                                                                 </div>
-                                                                
-                                                                <!-- Modal Aprovar -->
-                                                                {% if processo.pode_ser_aprovado %}
-                                                                <div class="modal fade" id="modalAprovar{{ processo.id }}" tabindex="-1" role="dialog">
-                                                                    <div class="modal-dialog" role="document">
-                                                                        <div class="modal-content">
-                                                                            <div class="modal-header">
-                                                                                <h5 class="modal-title">Aprovar Processo</h5>
-                                                                                <button type="button" class="close" data-dismiss="modal">
-                                                                                    <span>&times;</span>
-                                                                                </button>
-                                                                            </div>
-                                                                            <form method="POST" action="{{ url_for('processos_bp.aprovar', id=processo.id) }}">
-                                                                                <div class="modal-body">
-                                                                                    <p>Deseja aprovar o processo de <strong>{{ processo.cliente.razao_social }}</strong> para <strong>{{ processo.mes_ano }}</strong>?</p>
-                                                                                    <div class="form-group">
-                                                                                        <label for="observacoes">Observações (opcional)</label>
-                                                                                        <textarea name="observacoes" class="form-control" rows="3" placeholder="Observações sobre a aprovação..."></textarea>
-                                                                                    </div>
-                                                                                    <input type="hidden" name="acao" value="aprovar">
-                                                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                                                                </div>
-                                                                                <div class="modal-footer">
-                                                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                                                                    <button type="submit" class="btn btn-success">Aprovar</button>
-                                                                                </div>
-                                                                            </form>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                {% endif %}
-                                                                
-                                                                <!-- Modal Excluir -->
-                                                                {% if not processo.esta_aprovado and not processo.esta_concluido %}
-                                                                <div class="modal fade" id="modalExcluir{{ processo.id }}" tabindex="-1" role="dialog">
-                                                                    <div class="modal-dialog" role="document">
-                                                                        <div class="modal-content">
-                                                                            <div class="modal-header">
-                                                                                <h5 class="modal-title">Confirmar Exclusão</h5>
-                                                                                <button type="button" class="close" data-dismiss="modal">
-                                                                                    <span>&times;</span>
-                                                                                </button>
-                                                                            </div>
-                                                                            <div class="modal-body">
-                                                                                <p>Deseja realmente excluir o processo de <strong>{{ processo.cliente.razao_social }}</strong> para <strong>{{ processo.mes_ano }}</strong>?</p>
-                                                                                <p class="text-danger"><small>Esta ação não pode ser desfeita.</small></p>
-                                                                            </div>
-                                                                            <div class="modal-footer">
-                                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                                                                <form method="POST" action="{{ url_for('processos_bp.excluir', id=processo.id) }}" class="d-inline">
-                                                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                                                                    <button type="submit" class="btn btn-danger">Excluir</button>
-                                                                                </form>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                {% endif %}
                                                             </td>
                                                         </tr>
                                                         {% endfor %}
@@ -288,7 +186,7 @@
                                             </div>
                                             {% endif %}
                                         </div>
-                                        
+
                                         <!-- Paginação -->
                                         {% if processos.pages > 1 %}
                                         <div class="card-footer d-flex justify-content-between align-items-center">
@@ -296,19 +194,17 @@
                                                 <small class="text-muted">
                                                     Mostrando {{ processos.per_page * (processos.page - 1) + 1 }} a 
                                                     {{ processos.per_page * processos.page if processos.page < processos.pages else processos.total }} 
-                                                    de {{ processos.total }} registros
+                                                    de {{ processos.total }} processos
                                                 </small>
                                             </div>
-                                            <div>
+                                            <nav>
                                                 <ul class="pagination pagination-sm mb-0">
                                                     <!-- Primeira página -->
                                                     {% if processos.has_prev %}
                                                         {% set args_sem_page = request.args.copy() %}
                                                         {% set _ = args_sem_page.pop('page', None) %}
                                                         <li class="page-item">
-                                                            <a class="page-link" href="{{ url_for('processos_bp.index', page=1, **args_sem_page) }}" aria-label="Primeira">
-                                                                <span aria-hidden="true">&laquo;</span>
-                                                            </a>
+                                                            <a class="page-link" href="{{ url_for('processos_bp.index', page=1, **args_sem_page) }}">&laquo;</a>
                                                         </li>
                                                         <li class="page-item">
                                                             <a class="page-link" href="{{ url_for('processos_bp.index', page=processos.prev_num, **args_sem_page) }}">Anterior</a>
@@ -341,7 +237,7 @@
                                                             </li>
                                                         {% endif %}
                                                     {% endfor %}
-                                                    
+
                                                     <!-- Última página -->
                                                     {% if processos.has_next %}
                                                         {% set args_sem_page = request.args.copy() %}
@@ -350,9 +246,7 @@
                                                             <a class="page-link" href="{{ url_for('processos_bp.index', page=processos.next_num, **args_sem_page) }}">Próximo</a>
                                                         </li>
                                                         <li class="page-item">
-                                                            <a class="page-link" href="{{ url_for('processos_bp.index', page=processos.pages, **args_sem_page) }}" aria-label="Última">
-                                                                <span aria-hidden="true">&raquo;</span>
-                                                            </a>
+                                                            <a class="page-link" href="{{ url_for('processos_bp.index', page=processos.pages, **args_sem_page) }}">&raquo;</a>
                                                         </li>
                                                     {% else %}
                                                         <li class="page-item disabled">
@@ -363,7 +257,7 @@
                                                         </li>
                                                     {% endif %}
                                                 </ul>
-                                            </div>
+                                            </nav>
                                         </div>
                                         {% endif %}
                                     </div>
@@ -379,4 +273,11 @@
 
 {% endblock content %}
 
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+<script>
+$(document).ready(function() {
+    // Máscara para o campo Mês/Ano
+    $('#mes_ano').mask('00/0000', {placeholder: 'MM/AAAA'});
+});
+</script>
+{% endblock javascripts %}
