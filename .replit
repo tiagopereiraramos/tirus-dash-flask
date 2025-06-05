@@ -6,3 +6,15 @@ channel = "stable-24_05"
 
 [deployment]
 run = ["sh", "-c", "python undefined"]
+
+[workflows]
+runButton = "Flask App"
+
+[[workflows.workflow]]
+name = "Flask App"
+author = 41010346
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run.py"
