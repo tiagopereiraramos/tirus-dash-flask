@@ -250,69 +250,130 @@ def excluir(id):
     return redirect(url_for('processos_bp.index'))
 
 
-@bp.route('/aprovar/<id>', methods=['POST'])
+@bp.route('/aprovar/<string:id>', methods=['POST'])
 @verify_user_jwt
 def aprovar(id):
     """Aprovar processo"""
 
-    form = AprovacaoForm()
+    try:
+        processo = db.session.query(Processo).filter(Processo.id == id).first_or_404()
 
-    if form.validate_on_submit():
-        try:
-            processo = db.session.query(Processo).filter(Processo.id == id).first_or_404()
-
-            # Verificar se pode ser aprovado
-            if not processo.pode_ser_aprovado:
+        # Verificar se pode ser aprovado
+        if not processo.pode_ser_aprovado:
+            if request.is_json or request.headers.get('Content-Type') == 'application/json':
+                return jsonify({
+                    'success': False,
+                    'message': 'Processo não pode ser aprovado no status atual.'
+                }), 400
+            else:
                 flash('Este processo não pode ser aprovado no status atual.', 'warning')
                 return redirect(url_for('processos_bp.visualizar', id=id))
 
-            # Aprovar processo (precisa implementar usuario_id real)
-            usuario_id = "00000000-0000-0000-0000-000000000000"  # TODO: pegar do JWT/sessão
-            processo.aprovar(usuario_id, form.observacoes.data)
+        # Pegar observações do formulário ou JSON
+        observacoes = None
+        if request.is_json:
+            data = request.get_json()
+            observacoes = data.get('observacoes', '').strip() if data else ''
+        else:
+            observacoes = request.form.get('observacoes', '').strip()
 
-            db.session.commit()
+        # Aprovar processo (TODO: implementar usuario_id real)
+        usuario_id = "00000000-0000-0000-0000-000000000000"  # TODO: pegar do JWT/sessão
+        processo.aprovar(usuario_id, observacoes)
 
-            logger.info(f"Processo aprovado: {processo.id}")
+        db.session.commit()
+
+        logger.info(f"Processo aprovado: {processo.id}")
+
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return jsonify({
+                'success': True,
+                'message': 'Fatura aprovada com sucesso!'
+            })
+        else:
             flash('Processo aprovado com sucesso!', 'success')
+            return redirect(url_for('processos_bp.visualizar', id=id))
 
-        except Exception as e:
-            db.session.rollback()
-            logger.error(f"Erro ao aprovar processo {id}: {str(e)}")
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao aprovar processo {id}: {str(e)}")
+        
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return jsonify({
+                'success': False,
+                'message': 'Erro interno do servidor.'
+            }), 500
+        else:
             flash('Erro ao aprovar processo.', 'danger')
+            return redirect(url_for('processos_bp.visualizar', id=id))
 
-    return redirect(url_for('processos_bp.visualizar', id=id))
 
-
-@bp.route('/rejeitar/<id>', methods=['POST'])
+@bp.route('/rejeitar/<string:id>', methods=['POST'])
 @verify_user_jwt
 def rejeitar(id):
     """Rejeitar processo"""
 
-    form = AprovacaoForm()
+    try:
+        processo = db.session.query(Processo).filter(Processo.id == id).first_or_404()
 
-    if form.validate_on_submit():
-        try:
-            processo = db.session.query(Processo).filter(Processo.id == id).first_or_404()
+        # Pegar observações do formulário ou JSON
+        observacoes = None
+        if request.is_json:
+            data = request.get_json()
+            observacoes = data.get('observacoes', '').strip() if data else ''
+        else:
+            observacoes = request.form.get('observacoes', '').strip()
 
-            # Verificar se está pendente de aprovação
-            if not processo.esta_pendente_aprovacao:
+        # Verificar se há observações
+        if not observacoes:
+            if request.is_json or request.headers.get('Content-Type') == 'application/json':
+                return jsonify({
+                    'success': False,
+                    'message': 'Motivo da rejeição é obrigatório.'
+                }), 400
+            else:
+                flash('Motivo da rejeição é obrigatório.', 'warning')
+                return redirect(url_for('processos_bp.visualizar', id=id))
+
+        # Verificar se está pendente de aprovação
+        if not processo.esta_pendente_aprovacao:
+            if request.is_json or request.headers.get('Content-Type') == 'application/json':
+                return jsonify({
+                    'success': False,
+                    'message': 'Este processo não está pendente de aprovação.'
+                }), 400
+            else:
                 flash('Este processo não está pendente de aprovação.', 'warning')
                 return redirect(url_for('processos_bp.visualizar', id=id))
 
-            # Rejeitar processo
-            processo.rejeitar(form.observacoes.data)
+        # Rejeitar processo
+        processo.rejeitar(observacoes)
 
-            db.session.commit()
+        db.session.commit()
 
-            logger.info(f"Processo rejeitado: {processo.id}")
+        logger.info(f"Processo rejeitado: {processo.id}")
+
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return jsonify({
+                'success': True,
+                'message': 'Fatura rejeitada com sucesso!'
+            })
+        else:
             flash('Processo rejeitado.', 'info')
+            return redirect(url_for('processos_bp.visualizar', id=id))
 
-        except Exception as e:
-            db.session.rollback()
-            logger.error(f"Erro ao rejeitar processo {id}: {str(e)}")
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao rejeitar processo {id}: {str(e)}")
+        
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            return jsonify({
+                'success': False,
+                'message': 'Erro interno do servidor.'
+            }), 500
+        else:
             flash('Erro ao rejeitar processo.', 'danger')
-
-    return redirect(url_for('processos_bp.visualizar', id=id))
+            return redirect(url_for('processos_bp.visualizar', id=id))
 
 
 @bp.route('/criar-processos-mensais', methods=['GET', 'POST'])
@@ -394,7 +455,7 @@ def criar_processos_mensais():
     return render_template('processos/criar_mensais.html', form=form)
 
 
-@bp.route('/enviar-sat/<id>', methods=['POST'])
+@bp.route('/enviar-sat/<string:id>', methods=['POST'])
 @verify_user_jwt
 def enviar_sat(id):
     """Envia processo para o SAT (mock por enquanto)"""
@@ -469,112 +530,3 @@ def api_estatisticas():
         logger.error(f"Erro ao buscar estatísticas: {str(e)}")
         return jsonify({'error': 'Erro interno'}), 500
 
-@bp.route('/aprovar/<string:id>', methods=['POST'])
-@verify_user_jwt
-def aprovar(id: str):
-    """Aprovar uma fatura"""
-    try:
-        processo = db.session.query(Processo)\
-            .filter(Processo.id == id)\
-            .first_or_404()
-
-        if not processo.pode_ser_aprovado:
-            return jsonify({
-                'success': False,
-                'message': 'Processo não pode ser aprovado no status atual.'
-            }), 400
-
-        observacoes = request.form.get('observacoes', '').strip()
-
-        # Aqui você pegaria o ID do usuário logado
-        # Por enquanto usando um mock
-        usuario_id = '123e4567-e89b-12d3-a456-426614174000'  # Mock - deve vir do usuário logado
-
-        processo.aprovar(usuario_id, observacoes)
-        db.session.commit()
-
-        logger.info(f"Processo aprovado: {id}")
-
-        return jsonify({
-            'success': True,
-            'message': 'Fatura aprovada com sucesso!'
-        })
-
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Erro ao aprovar processo {id}: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': 'Erro interno do servidor.'
-        }), 500
-
-
-@bp.route('/rejeitar/<string:id>', methods=['POST'])
-@verify_user_jwt
-def rejeitar(id: str):
-    """Rejeitar uma fatura"""
-    try:
-        processo = db.session.query(Processo)\
-            .filter(Processo.id == id)\
-            .first_or_404()
-
-        observacoes = request.form.get('observacoes', '').strip()
-        if not observacoes:
-            return jsonify({
-                'success': False,
-                'message': 'Motivo da rejeição é obrigatório.'
-            }), 400
-
-        processo.rejeitar(observacoes)
-        db.session.commit()
-
-        logger.info(f"Processo rejeitado: {id}")
-
-        return jsonify({
-            'success': True,
-            'message': 'Fatura rejeitada com sucesso!'
-        })
-
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Erro ao rejeitar processo {id}: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': 'Erro interno do servidor.'
-        }), 500
-
-
-@bp.route('/enviar-sat/<string:id>', methods=['POST'])
-@verify_user_jwt
-def enviar_sat(id: str):
-    """Enviar fatura para o SAT"""
-    try:
-        processo = db.session.query(Processo)\
-            .filter(Processo.id == id)\
-            .first_or_404()
-
-        if not processo.pode_enviar_sat:
-            return jsonify({
-                'success': False,
-                'message': 'Processo não pode ser enviado para SAT no status atual.'
-            }), 400
-
-        # Aqui seria chamado o RPA do SAT
-        # Por enquanto apenas marcamos como enviado
-        processo.enviar_para_sat()
-        db.session.commit()
-
-        logger.info(f"Processo enviado para SAT: {id}")
-
-        return jsonify({
-            'success': True,
-            'message': 'Fatura enviada para o SAT com sucesso!'
-        })
-
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Erro ao enviar processo para SAT {id}: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': 'Erro interno do servidor.'
-        }), 500
