@@ -8,7 +8,7 @@ from wtforms import StringField, BooleanField, TextAreaField, URLField, SelectFi
 from wtforms.validators import DataRequired, Length, Optional, ValidationError
 from wtforms.widgets import TextArea
 
-from apps.models import Operadora
+from apps.models import Operadoraa
 
 
 class OperadoraForm(FlaskForm):
@@ -104,6 +104,9 @@ class OperadoraForm(FlaskForm):
             if hasattr(self, '_obj') and self._obj and self._obj.id != operadora_existente.id:
                 raise ValidationError('Este nome já está sendo usado por outra operadora.')
             elif not hasattr(self, '_obj') or not self._obj:
+                raise ValidationError('Este nome já está sendo usado por outra operadora.')d != operadora_existente.id:
+                raise ValidationError('Este nome já está sendo usado por outra operadora.')
+            elif not hasattr(self, '_obj') or not self._obj:
                 raise ValidationError('Este nome já está sendo usado por outra operadora.')
 
 
@@ -147,5 +150,7 @@ class FiltroOperadoraForm(FlaskForm):
         ],
         render_kw={
             'class': 'form-select'
+        }
+    )ass': 'form-select'
         }
     )
