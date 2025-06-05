@@ -36,13 +36,13 @@
                                 <span class="pcoded-mtext">Clientes</span>
                             </a>
                         </li>
-                <li data-username="Processos" 
-                    class="nav-item {% if 'processos' in segment %} active {% endif %}">
-                    <a href="#" class="nav-link">
-                        <span class="pcoded-micon"><i class="feather icon-file-text"></i></span>
-                        <span class="pcoded-mtext">Processos</span>
-                    </a>
-                </li>
+                        <li data-username="Processos" 
+                            class="nav-item {% if 'processos' in segment %} active {% endif %}">
+                            <a href="{{ url_for('processos_bp.index') }}" class="nav-link">
+                                <span class="pcoded-micon"><i class="feather icon-file-text"></i></span>
+                                <span class="pcoded-mtext">Processos</span>
+                            </a>
+                        </li>
                 <li data-username="Execucoes" 
                     class="nav-item {% if 'execucoes' in segment %} active {% endif %}">
                     <a href="#" class="nav-link">

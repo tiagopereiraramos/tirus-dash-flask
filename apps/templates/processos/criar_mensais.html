@@ -1,0 +1,170 @@
+
+{% extends "layouts/base.html" %}
+
+{% block title %} Criar Processos Mensais {% endblock %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+    <div class="pcoded-main-container">
+        <div class="pcoded-wrapper">
+            <div class="pcoded-content">
+                <div class="pcoded-inner-content">
+                    <!-- [ breadcrumb ] start -->
+                    <div class="page-header">
+                        <div class="page-block">
+                            <div class="row align-items-center">
+                                <div class="col-md-12">
+                                    <div class="page-header-title">
+                                        <h5 class="m-b-10">Criar Processos Mensais</h5>
+                                    </div>
+                                    <ul class="breadcrumb">
+                                        <li class="breadcrumb-item"><a href="{{ url_for('home_blueprint.index') }}"><i class="feather icon-home"></i></a></li>
+                                        <li class="breadcrumb-item"><a href="{{ url_for('processos_bp.index') }}">Processos</a></li>
+                                        <li class="breadcrumb-item active">Criar Processos Mensais</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- [ breadcrumb ] end -->
+                    
+                    <div class="main-body">
+                        <div class="page-wrapper">
+                            <!-- [ Main Content ] start -->
+                            <div class="row justify-content-center">
+                                <div class="col-lg-8">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5>Criação Automática de Processos Mensais</h5>
+                                            <span class="d-block m-t-5">
+                                                Crie processos automaticamente para todos os clientes ativos de uma vez só
+                                            </span>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="alert alert-info">
+                                                <h6 class="alert-heading">
+                                                    <i class="feather icon-info"></i> Como funciona?
+                                                </h6>
+                                                <p class="mb-0">
+                                                    Esta funcionalidade criará um processo para cada cliente ativo, no mês/ano especificado.
+                                                    Clientes que já possuem processo para o período serão ignorados.
+                                                </p>
+                                            </div>
+                                            
+                                            <form method="POST" novalidate>
+                                                {{ form.hidden_tag() }}
+                                                
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            {{ form.mes_ano.label(class="form-label") }}
+                                                            {{ form.mes_ano(class="form-control" + (" is-invalid" if form.mes_ano.errors else "")) }}
+                                                            {% if form.mes_ano.errors %}
+                                                                <div class="invalid-feedback">
+                                                                    {% for error in form.mes_ano.errors %}
+                                                                        {{ error }}
+                                                                    {% endfor %}
+                                                                </div>
+                                                            {% endif %}
+                                                            <small class="form-text text-muted">
+                                                                Formato: MM/AAAA (ex: 06/2025)
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            {{ form.operadora_id.label(class="form-label") }}
+                                                            {{ form.operadora_id(class="form-control" + (" is-invalid" if form.operadora_id.errors else "")) }}
+                                                            {% if form.operadora_id.errors %}
+                                                                <div class="invalid-feedback">
+                                                                    {% for error in form.operadora_id.errors %}
+                                                                        {{ error }}
+                                                                    {% endfor %}
+                                                                </div>
+                                                            {% endif %}
+                                                            <small class="form-text text-muted">
+                                                                Deixe em branco para criar para todas as operadoras
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <div class="alert alert-warning">
+                                                            <h6 class="alert-heading">
+                                                                <i class="feather icon-alert-triangle"></i> Atenção
+                                                            </h6>
+                                                            <ul class="mb-0">
+                                                                <li>Apenas clientes ativos de operadoras ativas serão incluídos</li>
+                                                                <li>Processos já existentes para o período não serão duplicados</li>
+                                                                <li>Todos os processos criados terão status "Aguardando Download"</li>
+                                                                <li>Esta ação não pode ser desfeita em lote</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <hr>
+                                                        <div class="d-flex justify-content-between">
+                                                            <a href="{{ url_for('processos_bp.index') }}" class="btn btn-light">
+                                                                <i class="feather icon-arrow-left"></i> Voltar
+                                                            </a>
+                                                            <button type="submit" class="btn btn-success">
+                                                                <i class="feather icon-calendar"></i> Criar Processos Mensais
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Informações Adicionais -->
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5>Informações Úteis</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6>Workflow Padrão:</h6>
+                                                    <ol class="pl-3">
+                                                        <li>Processo criado</li>
+                                                        <li>Download automático (RPA)</li>
+                                                        <li>Aguarda aprovação</li>
+                                                        <li>Envio para SAT</li>
+                                                        <li>Processo concluído</li>
+                                                    </ol>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6>Status Possíveis:</h6>
+                                                    <ul class="pl-3">
+                                                        <li><span class="badge badge-light-warning">Aguardando Download</span></li>
+                                                        <li><span class="badge badge-light-info">Download em Andamento</span></li>
+                                                        <li><span class="badge badge-warning">Aguardando Aprovação</span></li>
+                                                        <li><span class="badge badge-success">Aprovado</span></li>
+                                                        <li><span class="badge badge-light-success">Enviado SAT</span></li>
+                                                        <li><span class="badge badge-success">Concluído</span></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- [ Main Content ] end -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %}

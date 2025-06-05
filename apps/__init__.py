@@ -67,4 +67,8 @@ def create_app(config):
     # Clientes Blueprint
     from apps.clientes import bp as clientes_bp
     app.register_blueprint(clientes_bp)
+
+    #Processos Blueprint
+    from apps.processos import bp as processos_bp
+    app.register_blueprint(processos_bp)
     return app
