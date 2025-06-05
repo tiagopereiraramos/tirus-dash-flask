@@ -19,38 +19,44 @@ def index():
     """Lista todos os processos com filtros e paginação"""
 
     try:
-        # Começar com query básica usando options para carregar relacionamentos
-        query = db.session.query(Processo).options(
-            joinedload(Processo.cliente).joinedload(Cliente.operadora)
-        )
+        # Query base simples
+        query = db.session.query(Processo)
 
-        # Obter parâmetros dos filtros
+        # Parâmetros de filtro
         busca = request.args.get('busca', '').strip()
-        status = request.args.get('status', '').strip() 
+        status = request.args.get('status', '').strip()
         mes_ano = request.args.get('mes_ano', '').strip()
         operadora_id = request.args.get('operadora', '').strip()
 
-        # Aplicar filtros de forma segura
+        # Aplicar filtros um por vez de forma segura
         if busca:
-            # Usar subquery para busca em campos relacionados
-            subquery_cliente = db.session.query(Cliente.id).filter(
+            # Buscar por ID de clientes que contenham o termo
+            clientes_busca = db.session.query(Cliente.id).filter(
                 or_(
-                    Cliente.razao_social.ilike('%' + busca + '%'),
-                    Cliente.nome_sat.ilike('%' + busca + '%'),
-                    Cliente.cnpj.ilike('%' + busca + '%')
+                    Cliente.razao_social.contains(busca),
+                    Cliente.nome_sat.contains(busca),
+                    Cliente.cnpj.contains(busca)
                 )
-            ).subquery()
+            ).all()
             
-            subquery_operadora = db.session.query(Cliente.id).join(Operadora).filter(
-                Operadora.nome.ilike('%' + busca + '%')
-            ).subquery()
+            clientes_ids = [c.id for c in clientes_busca]
             
-            query = query.filter(
-                or_(
-                    Processo.cliente_id.in_(subquery_cliente),
-                    Processo.cliente_id.in_(subquery_operadora)
-                )
-            )
+            # Buscar também por operadora
+            operadoras_busca = db.session.query(Operadora.id).filter(
+                Operadora.nome.contains(busca)
+            ).all()
+            
+            if operadoras_busca:
+                clientes_por_operadora = db.session.query(Cliente.id).filter(
+                    Cliente.operadora_id.in_([op.id for op in operadoras_busca])
+                ).all()
+                clientes_ids.extend([c.id for c in clientes_por_operadora])
+            
+            if clientes_ids:
+                query = query.filter(Processo.cliente_id.in_(clientes_ids))
+            else:
+                # Se não encontrou nenhum cliente, retornar query vazia
+                query = query.filter(Processo.id == None)
 
         if status:
             query = query.filter(Processo.status_processo == status)
@@ -59,11 +65,13 @@ def index():
             query = query.filter(Processo.mes_ano == mes_ano)
 
         if operadora_id:
-            # Usar subquery para filtro por operadora
-            subquery_operadora_filter = db.session.query(Cliente.id).filter(
+            clientes_operadora = db.session.query(Cliente.id).filter(
                 Cliente.operadora_id == operadora_id
-            ).subquery()
-            query = query.filter(Processo.cliente_id.in_(subquery_operadora_filter))
+            ).all()
+            if clientes_operadora:
+                query = query.filter(Processo.cliente_id.in_([c.id for c in clientes_operadora]))
+            else:
+                query = query.filter(Processo.id == None)
 
         # Ordenação
         query = query.order_by(desc(Processo.data_atualizacao))
@@ -77,6 +85,12 @@ def index():
             per_page=per_page,
             error_out=False
         )
+
+        # Carregar relacionamentos manualmente para evitar problemas
+        for processo in processos.items:
+            # Forçar carregamento dos relacionamentos
+            _ = processo.cliente
+            _ = processo.cliente.operadora
 
         # Formulário de filtros
         form = ProcessoFiltroForm(request.args)
