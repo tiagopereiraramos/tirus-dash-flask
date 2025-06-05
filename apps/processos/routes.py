@@ -19,78 +19,78 @@ def index():
     """Lista todos os processos com filtros e paginação"""
 
     try:
-        # Query base simples
-        query = db.session.query(Processo)
-
-        # Parâmetros de filtro
-        busca = request.args.get('busca', '').strip()
-        status = request.args.get('status', '').strip()
-        mes_ano = request.args.get('mes_ano', '').strip()
-        operadora_id = request.args.get('operadora', '').strip()
-
-        # Aplicar filtros um por vez de forma segura
-        if busca:
-            # Buscar por ID de clientes que contenham o termo
-            clientes_busca = db.session.query(Cliente.id).filter(
-                or_(
-                    Cliente.razao_social.contains(busca),
-                    Cliente.nome_sat.contains(busca),
-                    Cliente.cnpj.contains(busca)
-                )
-            ).all()
-            
-            clientes_ids = [c.id for c in clientes_busca]
-            
-            # Buscar também por operadora
-            operadoras_busca = db.session.query(Operadora.id).filter(
-                Operadora.nome.contains(busca)
-            ).all()
-            
-            if operadoras_busca:
-                clientes_por_operadora = db.session.query(Cliente.id).filter(
-                    Cliente.operadora_id.in_([op.id for op in operadoras_busca])
-                ).all()
-                clientes_ids.extend([c.id for c in clientes_por_operadora])
-            
-            if clientes_ids:
-                query = query.filter(Processo.cliente_id.in_(clientes_ids))
-            else:
-                # Se não encontrou nenhum cliente, retornar query vazia
-                query = query.filter(Processo.id == None)
-
-        if status:
-            query = query.filter(Processo.status_processo == status)
-
-        if mes_ano:
-            query = query.filter(Processo.mes_ano == mes_ano)
-
-        if operadora_id:
-            clientes_operadora = db.session.query(Cliente.id).filter(
-                Cliente.operadora_id == operadora_id
-            ).all()
-            if clientes_operadora:
-                query = query.filter(Processo.cliente_id.in_([c.id for c in clientes_operadora]))
-            else:
-                query = query.filter(Processo.id == None)
-
-        # Ordenação
-        query = query.order_by(desc(Processo.data_atualizacao))
-
         # Paginação
         page = request.args.get('page', 1, type=int)
         per_page = 10
 
+        # Parâmetros de filtro
+        busca = request.args.get('busca', '')
+        status = request.args.get('status', '')
+        mes_ano = request.args.get('mes_ano', '')
+        operadora_id = request.args.get('operadora', '')
+
+        # Query inicial sem joins complexos
+        query = Processo.query
+
+        # Aplicar filtros de forma simples e direta
+        if busca and busca.strip():
+            busca = busca.strip()
+            # Primeiro buscar IDs de clientes válidos
+            cliente_ids_list = []
+            
+            # Buscar clientes por nome/cnpj
+            clientes_encontrados = Cliente.query.filter(
+                or_(
+                    Cliente.razao_social.like(f'%{busca}%'),
+                    Cliente.nome_sat.like(f'%{busca}%'),
+                    Cliente.cnpj.like(f'%{busca}%')
+                )
+            ).all()
+            
+            for cliente in clientes_encontrados:
+                cliente_ids_list.append(cliente.id)
+            
+            # Buscar clientes por operadora
+            operadoras_encontradas = Operadora.query.filter(
+                Operadora.nome.like(f'%{busca}%')
+            ).all()
+            
+            for operadora in operadoras_encontradas:
+                clientes_op = Cliente.query.filter_by(operadora_id=operadora.id).all()
+                for cliente in clientes_op:
+                    if cliente.id not in cliente_ids_list:
+                        cliente_ids_list.append(cliente.id)
+            
+            # Aplicar filtro por cliente IDs
+            if cliente_ids_list:
+                query = query.filter(Processo.cliente_id.in_(cliente_ids_list))
+            else:
+                # Nenhum cliente encontrado - retornar vazio
+                query = query.filter(Processo.id.is_(None))
+
+        if status and status.strip():
+            query = query.filter(Processo.status_processo == status.strip())
+
+        if mes_ano and mes_ano.strip():
+            query = query.filter(Processo.mes_ano == mes_ano.strip())
+
+        if operadora_id and operadora_id.strip():
+            # Buscar clientes da operadora
+            clientes_da_operadora = Cliente.query.filter_by(operadora_id=operadora_id.strip()).all()
+            if clientes_da_operadora:
+                operadora_cliente_ids = [c.id for c in clientes_da_operadora]
+                query = query.filter(Processo.cliente_id.in_(operadora_cliente_ids))
+            else:
+                query = query.filter(Processo.id.is_(None))
+
+        # Ordenação e paginação
+        query = query.order_by(Processo.data_atualizacao.desc())
+        
         processos = query.paginate(
             page=page,
             per_page=per_page,
             error_out=False
         )
-
-        # Carregar relacionamentos manualmente para evitar problemas
-        for processo in processos.items:
-            # Forçar carregamento dos relacionamentos
-            _ = processo.cliente
-            _ = processo.cliente.operadora
 
         # Formulário de filtros
         form = ProcessoFiltroForm(request.args)
@@ -102,7 +102,7 @@ def index():
         )
 
     except Exception as e:
-        logger.error(f"Erro ao carregar processos: {str(e)}")
+        logger.error("Erro ao carregar processos: %s", str(e))
         flash('Erro ao carregar processos. Tente novamente.', 'danger')
         return redirect(url_for('home_blueprint.index'))
 
