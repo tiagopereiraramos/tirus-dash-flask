@@ -300,7 +300,7 @@
 <script>
 function confirmarExclusao(operadoraId, nomeOperadora) {
     document.getElementById('nomeOperadora').textContent = nomeOperadora;
-    document.getElementById('formExclusao').action = '/operadoras/' + operadoraId + '/excluir';
+    document.getElementById('formExclusao').action = '/operadoras/excluir/' + operadoraId;
     $('#modalExclusao').modal('show');
 }
 

@@ -30,9 +30,10 @@
     <!-- vendor css -->
     <link rel="stylesheet" href="{{ config.ASSETS_ROOT }}/css/style.css">
     <!-- dark mode css -->
-    <link rel="stylesheet" href="{{ config.ASSETS_ROOT }}/css/dark.css">
+    <link rel="stylesheet" href="{{ config.ASSETS_ROOT }}/css/dark.css" id="main-style-link">
 
-    <!-- Specific CSS goes HERE -->
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     {% block stylesheets %}{% endblock stylesheets %}
 
 </head>
@@ -54,8 +55,11 @@
     {% block content %}{% endblock content %}
 
     {% include 'includes/scripts.html' %}
+    <script src="{{ config.ASSETS_ROOT }}/js/pcoded.min.js"></script>
+    <script src="{{ config.ASSETS_ROOT }}/js/dark-mode.js"></script>
 
-    <!-- Specific Page JS goes HERE  -->
+    <!-- Toastr JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     {% block javascripts %}{% endblock javascripts %}
 
 </body>
