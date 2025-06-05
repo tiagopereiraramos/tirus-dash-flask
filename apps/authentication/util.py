@@ -49,8 +49,8 @@ def verify_user_jwt(f):
             flash('Você precisa estar logado para acessar esta página.', 'warning')
             return redirect(url_for('authentication_blueprint.login'))
         
-        # Verifica se o usuário está ativo
-        if not current_user.status_ativo:
+        # Verifica se o usuário está ativo (usando o campo correto do modelo Users)
+        if hasattr(current_user, 'active') and not current_user.active:
             flash('Sua conta está inativa. Entre em contato com o administrador.', 'danger')
             return redirect(url_for('authentication_blueprint.login'))
         
