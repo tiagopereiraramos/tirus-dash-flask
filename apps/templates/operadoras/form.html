@@ -7,15 +7,15 @@
 
 {% block content %}
 
-<div class="pc-container">
-    <div class="pc-content">
+<div class="pcoded-main-container">
+    <div class="pcoded-content">
         <!-- [ breadcrumb ] start -->
         <div class="page-header">
             <div class="page-block">
                 <div class="row align-items-center">
                     <div class="col-md-12">
                         <div class="page-header-title">
-                            <h2 class="mb-0">{{ title }}</h2>
+                            <h5 class="m-b-10">{{ title }}</h5>
                         </div>
                         <ul class="breadcrumb">
                             <li class="breadcrumb-item">
@@ -38,7 +38,7 @@
         
         <!-- [ Main Content ] start -->
         <div class="row">
-            <div class="col-md-12">
+            <div class="col-xl-8">
                 <div class="card">
                     <div class="card-header">
                         <h5>
@@ -68,7 +68,7 @@
                             <div class="row">
                                 <!-- Nome da Operadora -->
                                 <div class="col-md-6">
-                                    <div class="mb-3">
+                                    <div class="form-group">
                                         {{ form.nome.label(class="form-label") }}
                                         {{ form.nome(class="form-control" + (" is-invalid" if form.nome.errors else "")) }}
                                         {% if form.nome.errors %}
@@ -78,12 +78,16 @@
                                                 {% endfor %}
                                             </div>
                                         {% endif %}
+                                        <small class="form-text text-muted">
+                                            <i class="feather icon-info"></i> 
+                                            Nome da operadora de telecomunicações
+                                        </small>
                                     </div>
                                 </div>
                                 
                                 <!-- Código Identificador -->
                                 <div class="col-md-6">
-                                    <div class="mb-3">
+                                    <div class="form-group">
                                         {{ form.codigo.label(class="form-label") }}
                                         {{ form.codigo(class="form-control" + (" is-invalid" if form.codigo.errors else "")) }}
                                         {% if form.codigo.errors %}
@@ -93,18 +97,18 @@
                                                 {% endfor %}
                                             </div>
                                         {% endif %}
-                                        <div class="form-text">
-                                            <i class="feather icon-info"></i> 
+                                        <small class="form-text text-muted">
+                                            <i class="feather icon-code"></i> 
                                             Código único para identificar a operadora (ex: EMB, VIV, OI)
-                                        </div>
+                                        </small>
                                     </div>
                                 </div>
                             </div>
                             
                             <div class="row">
                                 <!-- URL do Portal -->
-                                <div class="col-md-12">
-                                    <div class="mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-group">
                                         {{ form.url_portal.label(class="form-label") }}
                                         {{ form.url_portal(class="form-control" + (" is-invalid" if form.url_portal.errors else "")) }}
                                         {% if form.url_portal.errors %}
@@ -114,18 +118,16 @@
                                                 {% endfor %}
                                             </div>
                                         {% endif %}
-                                        <div class="form-text">
+                                        <small class="form-text text-muted">
                                             <i class="feather icon-link"></i> 
                                             URL de acesso ao portal da operadora (opcional)
-                                        </div>
+                                        </small>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <div class="row">
+                                
                                 <!-- Classe do RPA -->
-                                <div class="col-md-12">
-                                    <div class="mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-group">
                                         {{ form.classe_rpa.label(class="form-label") }}
                                         {{ form.classe_rpa(class="form-control" + (" is-invalid" if form.classe_rpa.errors else "")) }}
                                         {% if form.classe_rpa.errors %}
@@ -135,10 +137,10 @@
                                                 {% endfor %}
                                             </div>
                                         {% endif %}
-                                        <div class="form-text">
+                                        <small class="form-text text-muted">
                                             <i class="feather icon-cpu"></i> 
                                             Nome da classe Python do RPA (ex: EmbratelRPA, VivoRPA)
-                                        </div>
+                                        </small>
                                     </div>
                                 </div>
                             </div>
@@ -146,7 +148,7 @@
                             <div class="row">
                                 <!-- Instruções de Acesso -->
                                 <div class="col-md-12">
-                                    <div class="mb-3">
+                                    <div class="form-group">
                                         {{ form.instrucoes_acesso.label(class="form-label") }}
                                         {{ form.instrucoes_acesso(class="form-control" + (" is-invalid" if form.instrucoes_acesso.errors else "")) }}
                                         {% if form.instrucoes_acesso.errors %}
@@ -156,40 +158,42 @@
                                                 {% endfor %}
                                             </div>
                                         {% endif %}
-                                        <div class="form-text">
+                                        <small class="form-text text-muted">
                                             <i class="feather icon-book-open"></i> 
                                             Instruções detalhadas para acesso ao portal (opcional)
-                                        </div>
+                                        </small>
                                     </div>
                                 </div>
                             </div>
                             
+                            <hr class="my-4">
+                            
                             <div class="row">
                                 <div class="col-md-6">
                                     <!-- Possui RPA -->
-                                    <div class="mb-3">
-                                        <div class="form-check">
-                                            {{ form.possui_rpa() }}
+                                    <div class="form-group">
+                                        <div class="form-check form-check-lg">
+                                            {{ form.possui_rpa(class="form-check-input") }}
                                             {{ form.possui_rpa.label(class="form-check-label") }}
                                         </div>
-                                        <div class="form-text">
+                                        <small class="form-text text-muted">
                                             <i class="feather icon-cpu"></i> 
                                             Marque se a operadora possui RPA homologado para automação
-                                        </div>
+                                        </small>
                                     </div>
                                 </div>
                                 
                                 <div class="col-md-6">
                                     <!-- Status Ativo -->
-                                    <div class="mb-3">
-                                        <div class="form-check">
-                                            {{ form.status_ativo() }}
+                                    <div class="form-group">
+                                        <div class="form-check form-check-lg">
+                                            {{ form.status_ativo(class="form-check-input") }}
                                             {{ form.status_ativo.label(class="form-check-label") }}
                                         </div>
-                                        <div class="form-text">
+                                        <small class="form-text text-muted">
                                             <i class="feather icon-check-circle"></i> 
                                             Marque para manter a operadora ativa no sistema
-                                        </div>
+                                        </small>
                                     </div>
                                 </div>
                             </div>
@@ -198,14 +202,14 @@
                             
                             <!-- Botões de Ação -->
                             <div class="d-flex justify-content-between">
-                                <a href="{{ url_for('operadoras_bp.index') }}" class="btn btn-secondary">
+                                <a href="{{ url_for('operadoras_bp.index') }}" class="btn btn-outline-secondary">
                                     <i class="feather icon-arrow-left"></i> Voltar
                                 </a>
                                 
                                 <div>
                                     {% if operadora %}
                                         <a href="{{ url_for('operadoras_bp.visualizar', operadora_id=operadora.id) }}" 
-                                           class="btn btn-info me-2">
+                                           class="btn btn-outline-info me-2">
                                             <i class="feather icon-eye"></i> Visualizar
                                         </a>
                                     {% endif %}
@@ -216,6 +220,31 @@
                                 </div>
                             </div>
                         </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sidebar Informações -->
+            <div class="col-xl-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="feather icon-info"></i> Informações Importantes</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-primary">
+                            <h6 class="alert-heading">RPA Homologado</h6>
+                            <p class="mb-0">Quando marcado, indica que a operadora possui automação integrada e homologada para download de faturas.</p>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <h6 class="alert-heading">Status Inativo</h6>
+                            <p class="mb-0">Operadoras inativas não podem ser associadas a novos clientes ou processos.</p>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">Classe do RPA</h6>
+                            <p class="mb-0">Nome da classe Python responsável pela automação da operadora. Deve ser preenchido apenas para operadoras com RPA homologado.</p>
+                        </div>
                     </div>
                 </div>
             </div>

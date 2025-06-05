@@ -84,24 +84,25 @@ def nova():
         try:
             # Cria nova operadora
             operadora = Operadora(
-                nome=form.nome.data,
-                codigo=form.codigo.data.upper(),
+                nome=form.nome.data.strip(),
+                codigo=form.codigo.data.upper().strip(),
                 possui_rpa=form.possui_rpa.data,
                 status_ativo=form.status_ativo.data,
-                url_portal=form.url_portal.data or None,
-                instrucoes_acesso=form.instrucoes_acesso.data or None,
-                classe_rpa=form.classe_rpa.data or None
+                url_portal=form.url_portal.data.strip() if form.url_portal.data else None,
+                instrucoes_acesso=form.instrucoes_acesso.data.strip() if form.instrucoes_acesso.data else None,
+                classe_rpa=form.classe_rpa.data.strip() if form.classe_rpa.data and form.possui_rpa.data else None
             )
 
             db.session.add(operadora)
             db.session.commit()
 
             flash(f'Operadora "{operadora.nome}" cadastrada com sucesso!', 'success')
-            return redirect(url_for('operadoras_bp.index'))
+            return redirect(url_for('operadoras_bp.visualizar', operadora_id=operadora.id))
 
         except Exception as e:
             db.session.rollback()
             flash(f'Erro ao cadastrar operadora: {str(e)}', 'error')
+            print(f"Erro ao cadastrar nova operadora: {str(e)}")
 
     return render_template('operadoras/form.html', form=form, title='Nova Operadora')
 
@@ -118,22 +119,27 @@ def editar(operadora_id):
     if form.validate_on_submit():
         try:
             # Atualiza dados
-            operadora.nome = form.nome.data
-            operadora.codigo = form.codigo.data.upper()
+            operadora.nome = form.nome.data.strip()
+            operadora.codigo = form.codigo.data.upper().strip()
             operadora.possui_rpa = form.possui_rpa.data
             operadora.status_ativo = form.status_ativo.data
-            operadora.url_portal = form.url_portal.data or None
-            operadora.instrucoes_acesso = form.instrucoes_acesso.data or None
-            operadora.classe_rpa = form.classe_rpa.data or None
+            operadora.url_portal = form.url_portal.data.strip() if form.url_portal.data else None
+            operadora.instrucoes_acesso = form.instrucoes_acesso.data.strip() if form.instrucoes_acesso.data else None
+            operadora.classe_rpa = form.classe_rpa.data.strip() if form.classe_rpa.data else None
+
+            # Se não possui RPA, limpa a classe RPA
+            if not operadora.possui_rpa:
+                operadora.classe_rpa = None
 
             db.session.commit()
 
             flash(f'Operadora "{operadora.nome}" atualizada com sucesso!', 'success')
-            return redirect(url_for('operadoras_bp.index'))
+            return redirect(url_for('operadoras_bp.visualizar', operadora_id=operadora.id))
 
         except Exception as e:
             db.session.rollback()
             flash(f'Erro ao atualizar operadora: {str(e)}', 'error')
+            print(f"Erro ao atualizar operadora {operadora_id}: {str(e)}")
 
     return render_template(
         'operadoras/form.html', 
