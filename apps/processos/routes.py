@@ -19,40 +19,53 @@ def index():
     """Lista todos os processos com filtros e paginação"""
 
     try:
-        # Query base com joins obrigatórios
-        query = db.session.query(Processo).join(Cliente).join(Operadora)
+        # Começar com query básica usando options para carregar relacionamentos
+        query = db.session.query(Processo).options(
+            joinedload(Processo.cliente).joinedload(Cliente.operadora)
+        )
 
-        # Aplicar filtros dos parâmetros da URL
+        # Obter parâmetros dos filtros
         busca = request.args.get('busca', '').strip()
-        status = request.args.get('status', '').strip()
+        status = request.args.get('status', '').strip() 
         mes_ano = request.args.get('mes_ano', '').strip()
         operadora_id = request.args.get('operadora', '').strip()
 
-        # Filtro de busca textual
+        # Aplicar filtros de forma segura
         if busca:
-            busca_term = f"%{busca}%"
+            # Usar subquery para busca em campos relacionados
+            subquery_cliente = db.session.query(Cliente.id).filter(
+                or_(
+                    Cliente.razao_social.ilike('%' + busca + '%'),
+                    Cliente.nome_sat.ilike('%' + busca + '%'),
+                    Cliente.cnpj.ilike('%' + busca + '%')
+                )
+            ).subquery()
+            
+            subquery_operadora = db.session.query(Cliente.id).join(Operadora).filter(
+                Operadora.nome.ilike('%' + busca + '%')
+            ).subquery()
+            
             query = query.filter(
                 or_(
-                    Cliente.razao_social.ilike(busca_term),
-                    Cliente.nome_sat.ilike(busca_term),
-                    Cliente.cnpj.ilike(busca_term),
-                    Operadora.nome.ilike(busca_term)
+                    Processo.cliente_id.in_(subquery_cliente),
+                    Processo.cliente_id.in_(subquery_operadora)
                 )
             )
 
-        # Filtro por status
         if status:
             query = query.filter(Processo.status_processo == status)
 
-        # Filtro por mês/ano
         if mes_ano:
             query = query.filter(Processo.mes_ano == mes_ano)
 
-        # Filtro por operadora
         if operadora_id:
-            query = query.filter(Cliente.operadora_id == operadora_id)
+            # Usar subquery para filtro por operadora
+            subquery_operadora_filter = db.session.query(Cliente.id).filter(
+                Cliente.operadora_id == operadora_id
+            ).subquery()
+            query = query.filter(Processo.cliente_id.in_(subquery_operadora_filter))
 
-        # Ordenação por data de atualização (mais recentes primeiro)
+        # Ordenação
         query = query.order_by(desc(Processo.data_atualizacao))
 
         # Paginação
@@ -65,7 +78,7 @@ def index():
             error_out=False
         )
 
-        # Criar formulário de filtros
+        # Formulário de filtros
         form = ProcessoFiltroForm(request.args)
 
         return render_template(
