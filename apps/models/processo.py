@@ -1,25 +1,30 @@
 """
 Modelo do Processo Mensal
+
+Representa um processo de download e envio de fatura para um cliente
+específico em um determinado mês/ano.
+
+Unicidade garantida por: Cliente + Mês/Ano
 """
 
+from dataclasses import dataclass
 from datetime import datetime, date
-from decimal import Decimal
 from typing import Optional, List, TYPE_CHECKING
 from enum import Enum
 
-from sqlalchemy import Column, String, Boolean, Text, ForeignKey, UniqueConstraint, Date, DECIMAL, DateTime
+from sqlalchemy import Column, String, Boolean, Text, Date, DateTime, ForeignKey, UniqueConstraint, DECIMAL
 from sqlalchemy.orm import relationship, Mapped
 
 from .base import BaseModel, GUID
 
 if TYPE_CHECKING:
     from .cliente import Cliente
-    from .usuario import Usuario
     from .execucao import Execucao
+    from .usuario import Usuario
 
 
 class StatusProcesso(Enum):
-    """Status possíveis de um processo"""
+    """Status possíveis para um processo"""
     AGUARDANDO_DOWNLOAD = "AGUARDANDO_DOWNLOAD"
     DOWNLOAD_EM_ANDAMENTO = "DOWNLOAD_EM_ANDAMENTO"
     DOWNLOAD_CONCLUIDO = "DOWNLOAD_CONCLUIDO"

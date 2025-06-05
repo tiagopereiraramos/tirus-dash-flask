@@ -6,9 +6,8 @@ from sqlalchemy import and_, or_, desc
 from sqlalchemy.orm import joinedload
 
 from . import bp
-from .forms import ProcessoForm, ProcessoFiltroForm, AprovacaoForm, CriarProcessosMensaisForm
 from apps import db
-from apps.models import Processo, Cliente, Operadora, StatusProcesso, Execucao, Usuario
+from apps.models import Processo, Cliente, Operadora, Execucao, Usuario
 from apps.authentication.util import verify_user_jwt
 
 logger = logging.getLogger(__name__)
@@ -19,60 +18,69 @@ logger = logging.getLogger(__name__)
 def index():
     """Lista todos os processos com filtros e paginação"""
     
-    # Formulário de filtros
-    form = ProcessoFiltroForm()
-    
-    # Query base
-    query = db.session.query(Processo)\
-        .options(
-            joinedload(Processo.cliente).joinedload(Cliente.operadora),
-            joinedload(Processo.aprovador)
-        )
-    
-    # Aplicar filtros
-    if form.busca.data:
-        busca_term = f"%{form.busca.data}%"
-        query = query.join(Cliente).join(Operadora).filter(
-            or_(
-                Cliente.razao_social.ilike(busca_term),
-                Cliente.nome_sat.ilike(busca_term),
-                Cliente.cnpj.ilike(busca_term),
-                Operadora.nome.ilike(busca_term)
+    try:
+        # Query base simplificada primeiro
+        query = db.session.query(Processo)
+        
+        # Aplicar filtros simples dos parâmetros da URL
+        busca = request.args.get('busca', '')
+        status = request.args.get('status', '')
+        mes_ano = request.args.get('mes_ano', '')
+        operadora_id = request.args.get('operadora', '')
+        
+        if busca:
+            busca_term = f"%{busca}%"
+            query = query.join(Cliente).join(Operadora).filter(
+                or_(
+                    Cliente.razao_social.ilike(busca_term),
+                    Cliente.nome_sat.ilike(busca_term),
+                    Cliente.cnpj.ilike(busca_term),
+                    Operadora.nome.ilike(busca_term)
+                )
             )
+        
+        if status:
+            query = query.filter(Processo.status_processo == status)
+        
+        if mes_ano:
+            query = query.filter(Processo.mes_ano == mes_ano)
+        
+        if operadora_id:
+            query = query.join(Cliente).filter(Cliente.operadora_id == operadora_id)
+        
+        # Ordenação
+        query = query.order_by(desc(Processo.data_atualizacao))
+        
+        # Paginação
+        page = request.args.get('page', 1, type=int)
+        per_page = 10
+        
+        processos = query.paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
         )
-    
-    if form.status.data:
-        query = query.filter(Processo.status_processo == form.status.data)
-    
-    if form.mes_ano.data:
-        query = query.filter(Processo.mes_ano == form.mes_ano.data)
-    
-    if form.operadora.data:
-        query = query.join(Cliente).filter(Cliente.operadora_id == form.operadora.data)
-    
-    # Ordenação
-    query = query.order_by(desc(Processo.data_atualizacao))
-    
-    # Paginação
-    page = request.args.get('page', 1, type=int)
-    per_page = current_app.config.get('ITEMS_PER_PAGE', 10)
-    
-    # Remove conflito de parâmetros para paginação
-    args_sem_page = request.args.copy()
-    args_sem_page.pop('page', None)
-    
-    processos = query.paginate(
-        page=page,
-        per_page=per_page,
-        error_out=False
-    )
-    
-    return render_template(
-        'processos/index.html',
-        processos=processos,
-        form=form,
-        args_sem_page=args_sem_page
-    )
+        
+        # Criar formulário mock para compatibilidade com template
+        class MockForm:
+            def __init__(self):
+                self.busca = type('obj', (object,), {'data': busca})()
+                self.status = type('obj', (object,), {'data': status})()
+                self.mes_ano = type('obj', (object,), {'data': mes_ano})()
+                self.operadora = type('obj', (object,), {'data': operadora_id})()
+        
+        form = MockForm()
+        
+        return render_template(
+            'processos/index.html',
+            processos=processos,
+            form=form
+        )
+        
+    except Exception as e:
+        logger.error(f"Erro ao carregar processos: {str(e)}")
+        flash('Erro ao carregar processos. Tente novamente.', 'danger')
+        return redirect(url_for('home_blueprint.index'))
 
 
 @bp.route('/novo', methods=['GET', 'POST'])
