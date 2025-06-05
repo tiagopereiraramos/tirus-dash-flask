@@ -53,18 +53,11 @@ def index():
     # Ordenação
     query = query.order_by(Operadora.nome)
 
-    # Paginação
-    page = request.args.get('page', 1, type=int)
-    per_page = 20
-
-    operadoras = query.paginate(
-        page=page,
-        per_page=per_page,
-        error_out=False
-    )
+    # Buscar todas as operadoras para a lista (sem paginação por enquanto)
+    operadoras = query.all()
 
     # Estatísticas para cards
-    total_operadoras = Operadora.query.count()
+    total_operadoras = len(operadoras)
     operadoras_ativas = Operadora.query.filter_by(status_ativo=True).count()
     operadoras_com_rpa = Operadora.query.filter_by(possui_rpa=True).count()
     operadoras_sem_rpa = Operadora.query.filter_by(possui_rpa=False).count()
