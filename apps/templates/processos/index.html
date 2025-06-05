@@ -1,7 +1,3 @@
-` tags.
-
-```
-<replit_final_file>
 {% extends "layouts/base.html" %}
 
 {% block title %} Processos {% endblock %}
@@ -156,7 +152,7 @@
                                                                        class="btn btn-outline-primary btn-sm mb-1" title="Visualizar">
                                                                         <i class="feather icon-eye"></i> Ver
                                                                     </a>
-                                                                    
+
                                                                     {% if processo.pode_ser_aprovado %}
                                                                         <button type="button" class="btn btn-success btn-sm mb-1" 
                                                                                 onclick="visualizarFaturaParaAprovacao('{{ processo.id }}')" 
@@ -164,7 +160,7 @@
                                                                             <i class="feather icon-check-circle"></i> Aprovar
                                                                         </button>
                                                                     {% endif %}
-                                                                    
+
                                                                     {% if processo.pode_enviar_sat %}
                                                                         <button type="button" class="btn btn-info btn-sm mb-1" 
                                                                                 onclick="enviarParaSAT('{{ processo.id }}')" 
@@ -172,7 +168,7 @@
                                                                             <i class="feather icon-upload"></i> SAT
                                                                         </button>
                                                                     {% endif %}
-                                                                    
+
                                                                     {% if not processo.esta_concluido %}
                                                                     <a href="{{ url_for('processos_bp.editar', id=processo.id) }}" 
                                                                        class="btn btn-outline-warning btn-sm" title="Editar">

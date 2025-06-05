@@ -328,37 +328,6 @@
         </div>
     </div>
 
-    <!-- Modal Aprovar -->
-    {% if processo.pode_ser_aprovado %}
-    <div class="modal fade" id="modalAprovar" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Aprovar Processo</h5>
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
-                </div>
-                <form method="POST" action="{{ url_for('processos_bp.aprovar', id=processo.id) }}">
-                    <div class="modal-body">
-                        <p>Deseja aprovar o processo de <strong>{{ processo.cliente.razao_social }}</strong> para <strong>{{ processo.mes_ano }}</strong>?</p>
-                        <div class="form-group">
-                            <label for="observacoes">Observações (opcional)</label>
-                            <textarea name="observacoes" class="form-control" rows="3" placeholder="Observações sobre a aprovação..."></textarea>
-                        </div>
-                        <input type="hidden" name="acao" value="aprovar">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-success">Aprovar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
     <!-- Modal Rejeitar -->
     {% if processo.esta_pendente_aprovacao %}
     <div class="modal fade" id="modalRejeitar" tabindex="-1" role="dialog">
