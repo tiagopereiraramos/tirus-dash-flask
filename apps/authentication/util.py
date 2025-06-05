@@ -6,6 +6,9 @@ Copyright (c) 2019 - present AppSeed.us
 import os
 import hashlib
 import binascii
+from functools import wraps
+from flask import redirect, url_for, session, flash
+from flask_login import current_user
 
 # Inspiration -> https://www.vitoshacademy.com/hashing-passwords-in-python/
 
@@ -32,3 +35,25 @@ def verify_pass(provided_password, stored_password):
                                   100000)
     pwdhash = binascii.hexlify(pwdhash).decode('ascii')
     return pwdhash == stored_password
+
+
+def verify_user_jwt(f):
+    """
+    Decorator para verificar se o usuário está autenticado
+    Redireciona para login se não estiver autenticado
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Verifica se o usuário está autenticado via Flask-Login
+        if not current_user.is_authenticated:
+            flash('Você precisa estar logado para acessar esta página.', 'warning')
+            return redirect(url_for('authentication_blueprint.login'))
+        
+        # Verifica se o usuário está ativo
+        if not current_user.status_ativo:
+            flash('Sua conta está inativa. Entre em contato com o administrador.', 'danger')
+            return redirect(url_for('authentication_blueprint.login'))
+        
+        return f(*args, **kwargs)
+    
+    return decorated_function
