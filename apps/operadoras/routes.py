@@ -236,4 +236,3 @@ def api_operadoras_ativas():
         }
         for operadora in operadoras
     ])
-```
