@@ -19,18 +19,16 @@ def index():
     """Lista todos os processos com filtros e paginação"""
 
     try:
-        # Query base simplificada primeiro
-        query = db.session.query(Processo)
+        # Query base com joins obrigatórios
+        query = db.session.query(Processo).join(Cliente).join(Operadora)
 
-        # Aplicar filtros simples dos parâmetros da URL
-        busca = request.args.get('busca', '')
-        status = request.args.get('status', '')
-        mes_ano = request.args.get('mes_ano', '')
-        operadora_id = request.args.get('operadora', '')
+        # Aplicar filtros dos parâmetros da URL
+        busca = request.args.get('busca', '').strip()
+        status = request.args.get('status', '').strip()
+        mes_ano = request.args.get('mes_ano', '').strip()
+        operadora_id = request.args.get('operadora', '').strip()
 
-        # Fazer joins uma única vez no início para evitar duplicação
-        query = query.join(Cliente).join(Operadora)
-
+        # Filtro de busca textual
         if busca:
             busca_term = f"%{busca}%"
             query = query.filter(
@@ -42,16 +40,19 @@ def index():
                 )
             )
 
+        # Filtro por status
         if status:
             query = query.filter(Processo.status_processo == status)
 
+        # Filtro por mês/ano
         if mes_ano:
             query = query.filter(Processo.mes_ano == mes_ano)
 
+        # Filtro por operadora
         if operadora_id:
             query = query.filter(Cliente.operadora_id == operadora_id)
 
-        # Ordenação
+        # Ordenação por data de atualização (mais recentes primeiro)
         query = query.order_by(desc(Processo.data_atualizacao))
 
         # Paginação
