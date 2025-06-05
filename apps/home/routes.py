@@ -45,6 +45,11 @@ def dashboard():
 
 @home_bp.route('/index')
 @login_required
+def index():
+    return render_template('home/index.html', segment='index')
+
+@home_bp.route('/index')
+@login_required
 def home_index():
     return render_template('home/index.html', segment='index')
 
