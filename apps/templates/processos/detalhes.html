@@ -73,8 +73,6 @@
                                                             <span class="badge badge-danger">Rejeitado</span>
                                                         {% else %}
                                                             <span class="badge badge-light">{{ processo.status_processo }}</span>
-                                                        {% endif %}% else %}
-                                                            <span class="badge badge-secondary">{{ processo.status_processo }}</span>
                                                         {% endif %}
                                                     </p>
 
@@ -84,7 +82,6 @@
                                             </div>
 
                                             {% if processo.valor_fatura or processo.data_vencimento %}
-                                            <hr>
                                             <div class="row">
                                                 {% if processo.valor_fatura %}
                                                 <div class="col-md-6">
@@ -134,7 +131,7 @@
                                                 <strong>Atenção:</strong> Esta fatura foi baixada com sucesso e está aguardando aprovação manual.
                                                 Visualize o arquivo e confirme se está correto antes de aprovar.
                                             </div>
-                                            
+
                                             {% if processo.tem_fatura_para_visualizar %}
                                             <div class="row">
                                                 <div class="col-md-6">
@@ -150,16 +147,16 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                            
+
                                             <hr>
-                                            
+
                                             <form id="formAprovacao" onsubmit="aprovarFatura(event, '{{ processo.id }}')">
                                                 <div class="form-group">
                                                     <label for="observacoes_aprovacao">Observações da Aprovação:</label>
                                                     <textarea class="form-control" id="observacoes_aprovacao" name="observacoes" rows="3" 
                                                               placeholder="Digite observações sobre a aprovação (opcional)"></textarea>
                                                 </div>
-                                                
+
                                                 <div class="row">
                                                     <div class="col-md-6">
                                                         <button type="submit" class="btn btn-success btn-block">
@@ -198,12 +195,12 @@
                                                 <i class="feather icon-check-circle"></i>
                                                 <strong>Fatura Aprovada!</strong> Esta fatura foi aprovada e está pronta para ser enviada ao SAT.
                                             </div>
-                                            
+
                                             {% if processo.aprovador %}
                                             <p><strong>Aprovado por:</strong> {{ processo.aprovador.nome_completo }}</p>
                                             <p><strong>Data da aprovação:</strong> {{ processo.data_aprovacao.strftime('%d/%m/%Y %H:%M') }}</p>
                                             {% endif %}
-                                            
+
                                             <button type="button" class="btn btn-info btn-lg btn-block" 
                                                     onclick="enviarParaSATDetalhes('{{ processo.id }}')">
                                                 <i class="feather icon-upload"></i> Enviar para SAT
@@ -416,9 +413,9 @@ function baixarFatura(processoId) {
 // Função para aprovar fatura
 function aprovarFatura(event, processoId) {
     event.preventDefault();
-    
+
     const observacoes = document.getElementById('observacoes_aprovacao').value;
-    
+
     if (confirm('Confirma a aprovação desta fatura?\n\nApós a aprovação, ela ficará disponível para envio ao SAT.')) {
         $.ajax({
             url: '/processos/aprovar/' + processoId,
@@ -441,7 +438,7 @@ function aprovarFatura(event, processoId) {
 // Função para rejeitar fatura
 function rejeitarFatura(processoId) {
     const motivo = prompt('Digite o motivo da rejeição:');
-    
+
     if (motivo && motivo.trim() !== '') {
         $.ajax({
             url: '/processos/rejeitar/' + processoId,
@@ -485,4 +482,3 @@ function enviarParaSATDetalhes(processoId) {
     }
 }
 </script>
-

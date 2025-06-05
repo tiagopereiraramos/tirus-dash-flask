@@ -90,17 +90,15 @@
                                         <div class="card-body p-0">
                                             {% if processos.items %}
                                             <div class="table-responsive">
-                                                <table class="table table-hover">
+                                                <table class="table table-hover table-sm">
                                                     <thead>
                                                         <tr>
-                                                            <th>Cliente</th>
-                                                            <th>Operadora</th>
-                                                            <th>Mês/Ano</th>
-                                                            <th>Status</th>
-                                                            <th>Valor</th>
-                                                            <th>Vencimento</th>
-                                                            <th>Criado</th>
-                                                            <th>Ações</th>
+                                                            <th style="width: 30%;">Cliente</th>
+                                                            <th style="width: 12%;">Mês/Ano</th>
+                                                            <th style="width: 18%;">Status</th>
+                                                            <th style="width: 12%;">Valor</th>
+                                                            <th style="width: 10%;">Venc.</th>
+                                                            <th style="width: 18%;">Ações</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -108,31 +106,28 @@
                                                         <tr>
                                                             <td>
                                                                 <div>
-                                                                    <h6 class="mb-1">{{ processo.cliente.razao_social }}</h6>
-                                                                    <p class="m-b-0 text-muted">{{ processo.cliente.cnpj }}</p>
+                                                                    <h6 class="mb-1" style="font-size: 13px;">{{ processo.cliente.razao_social }}</h6>
+                                                                    <small class="text-muted d-block">{{ processo.cliente.cnpj }}</small>
+                                                                    <small class="badge badge-light-primary">{{ processo.cliente.operadora.nome }}</small>
                                                                 </div>
                                                             </td>
-                                                            <td>
-                                                                <span class="badge badge-light-primary">
-                                                                    {{ processo.cliente.operadora.nome }}
-                                                                </span>
-                                                            </td>
-                                                            <td>
+                                                            <td class="text-center">
                                                                 <strong>{{ processo.mes_ano }}</strong>
+                                                                <br><small class="text-muted">{{ processo.data_criacao.strftime('%d/%m') }}</small>
                                                             </td>
                                                             <td>
                                                                 {% if processo.status_processo == 'AGUARDANDO_DOWNLOAD' %}
-                                                                    <span class="badge badge-light-warning">Aguardando Download</span>
+                                                                    <span class="badge badge-warning">Aguard. Download</span>
                                                                 {% elif processo.status_processo == 'DOWNLOAD_COMPLETO' %}
-                                                                    <span class="badge badge-light-primary">Download Completo</span>
+                                                                    <span class="badge badge-primary">Download OK</span>
                                                                 {% elif processo.status_processo == 'UPLOAD_SAT_REALIZADO' %}
-                                                                    <span class="badge badge-success">Upload SAT Realizado</span>
+                                                                    <span class="badge badge-success">Upload SAT OK</span>
                                                                 {% elif processo.status_processo == 'DOWNLOAD_EM_ANDAMENTO' %}
-                                                                    <span class="badge badge-warning">Download em Andamento</span>
+                                                                    <span class="badge badge-info">Baixando...</span>
                                                                 {% elif processo.status_processo == 'AGUARDANDO_APROVACAO' %}
-                                                                    <span class="badge badge-warning">Aguardando Aprovação</span>
+                                                                    <span class="badge badge-warning">Aguard. Aprovação</span>
                                                                 {% elif processo.status_processo == 'APROVADO' %}
-                                                                    <span class="badge badge-info">Aprovado - Pronto para SAT</span>
+                                                                    <span class="badge badge-info">Aprovado</span>
                                                                 {% elif processo.status_processo == 'CONCLUIDO' %}
                                                                     <span class="badge badge-success">Concluído</span>
                                                                 {% elif processo.status_processo == 'REJEITADO' %}
@@ -141,32 +136,29 @@
                                                                     <span class="badge badge-light">{{ processo.status_processo }}</span>
                                                                 {% endif %}
                                                             </td>
-                                                            <td>
+                                                            <td class="text-right">
                                                                 {% if processo.valor_fatura %}
-                                                                    <strong>R$ {{ "%.2f"|format(processo.valor_fatura) }}</strong>
+                                                                    <strong>R$ {{ "{:.0f}"|format(processo.valor_fatura) }}</strong>
                                                                 {% else %}
                                                                     <span class="text-muted">-</span>
                                                                 {% endif %}
                                                             </td>
-                                                            <td>
+                                                            <td class="text-center">
                                                                 {% if processo.data_vencimento %}
-                                                                    {{ processo.data_vencimento.strftime('%d/%m/%Y') }}
+                                                                    <small>{{ processo.data_vencimento.strftime('%d/%m/%y') }}</small>
                                                                 {% else %}
                                                                     <span class="text-muted">-</span>
                                                                 {% endif %}
                                                             </td>
                                                             <td>
-                                                                <small>{{ processo.data_criacao.strftime('%d/%m/%Y %H:%M') }}</small>
-                                                            </td>
-                                                            <td>
-                                                                <div class="btn-group">
+                                                                <div class="btn-group-vertical btn-group-sm" style="width: 100%;">
                                                                     <a href="{{ url_for('processos_bp.visualizar', id=processo.id) }}" 
-                                                                       class="btn btn-sm btn-outline-primary" title="Visualizar">
-                                                                        <i class="feather icon-eye"></i>
+                                                                       class="btn btn-outline-primary btn-sm mb-1" title="Visualizar">
+                                                                        <i class="feather icon-eye"></i> Ver
                                                                     </a>
                                                                     
                                                                     {% if processo.pode_ser_aprovado %}
-                                                                        <button type="button" class="btn btn-sm btn-success" 
+                                                                        <button type="button" class="btn btn-success btn-sm mb-1" 
                                                                                 onclick="visualizarFaturaParaAprovacao('{{ processo.id }}')" 
                                                                                 title="Visualizar Fatura para Aprovação">
                                                                             <i class="feather icon-check-circle"></i> Aprovar
@@ -174,17 +166,17 @@
                                                                     {% endif %}
                                                                     
                                                                     {% if processo.pode_enviar_sat %}
-                                                                        <button type="button" class="btn btn-sm btn-info" 
+                                                                        <button type="button" class="btn btn-info btn-sm mb-1" 
                                                                                 onclick="enviarParaSAT('{{ processo.id }}')" 
                                                                                 title="Enviar para SAT">
-                                                                            <i class="feather icon-upload"></i> Enviar SAT
+                                                                            <i class="feather icon-upload"></i> SAT
                                                                         </button>
                                                                     {% endif %}
                                                                     
                                                                     {% if not processo.esta_concluido %}
                                                                     <a href="{{ url_for('processos_bp.editar', id=processo.id) }}" 
-                                                                       class="btn btn-sm btn-outline-warning" title="Editar">
-                                                                        <i class="feather icon-edit"></i>
+                                                                       class="btn btn-outline-warning btn-sm" title="Editar">
+                                                                        <i class="feather icon-edit"></i> Editar
                                                                     </a>
                                                                     {% endif %}
                                                                 </div>
