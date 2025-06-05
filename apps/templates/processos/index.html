@@ -6,6 +6,21 @@
 
 {% block content %}
 
+<style>
+.table-compact th, .table-compact td {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.875rem;
+}
+.btn-xs {
+    padding: 0.15rem 0.3rem;
+    font-size: 0.75rem;
+}
+.badge-sm {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+}
+</style>
+
     <div class="pcoded-main-container">
         <div class="pcoded-wrapper">
             <div class="pcoded-content">
@@ -86,97 +101,87 @@
                                         <div class="card-body p-0">
                                             {% if processos.items %}
                                             <div class="table-responsive">
-                                                <table class="table table-hover table-sm">
+                                                <table class="table table-hover table-compact">
                                                     <thead>
-                                                        <tr>
-                                                            <th style="width: 30%;">Cliente</th>
-                                                            <th style="width: 12%;">Mês/Ano</th>
-                                                            <th style="width: 18%;">Status</th>
-                                                            <th style="width: 12%;">Valor</th>
-                                                            <th style="width: 10%;">Venc.</th>
-                                                            <th style="width: 18%;">Ações</th>
-                                                        </tr>
-                                                    </thead>
+                                            <tr>
+                                                <th width="30%">Cliente / Operadora</th>
+                                                <th class="text-center" width="10%">Mês/Ano</th>
+                                                <th width="15%">Status</th>
+                                                <th class="text-right" width="12%">Valor</th>
+                                                <th class="text-center" width="10%">Venc.</th>
+                                                <th class="text-center" width="23%">Ações</th>
+                                            </tr>
+                                        </thead>
                                                     <tbody>
                                                         {% for processo in processos.items %}
                                                         <tr>
                                                             <td>
-                                                                <div>
-                                                                    <h6 class="mb-1" style="font-size: 13px;">{{ processo.cliente.razao_social }}</h6>
-                                                                    <small class="text-muted d-block">{{ processo.cliente.cnpj }}</small>
-                                                                    <small class="badge badge-light-primary">{{ processo.cliente.operadora.nome }}</small>
-                                                                </div>
-                                                            </td>
-                                                            <td class="text-center">
-                                                                <strong>{{ processo.mes_ano }}</strong>
-                                                                <br><small class="text-muted">{{ processo.data_criacao.strftime('%d/%m') }}</small>
-                                                            </td>
+                                                <div class="d-flex flex-column">
+                                                    <small><strong>{{ processo.cliente.razao_social[:30] }}{% if processo.cliente.razao_social|length > 30 %}...{% endif %}</strong></small>
+                                                    <small class="text-muted">{{ processo.cliente.operadora.nome }}</small>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="d-flex flex-column">
+                                                    <strong>{{ processo.mes_ano }}</strong>
+                                                    <small class="text-muted">{{ processo.data_criacao.strftime('%d/%m') }}</small>
+                                                </div>
+                                            </td>
                                                             <td>
-                                                                {% if processo.status_processo == 'AGUARDANDO_DOWNLOAD' %}
-                                                                    <span class="badge badge-warning">Aguard. Download</span>
-                                                                {% elif processo.status_processo == 'DOWNLOAD_COMPLETO' %}
-                                                                    <span class="badge badge-primary">Download OK</span>
-                                                                {% elif processo.status_processo == 'UPLOAD_SAT_REALIZADO' %}
-                                                                    <span class="badge badge-success">Upload SAT OK</span>
-                                                                {% elif processo.status_processo == 'DOWNLOAD_EM_ANDAMENTO' %}
-                                                                    <span class="badge badge-info">Baixando...</span>
-                                                                {% elif processo.status_processo == 'AGUARDANDO_APROVACAO' %}
-                                                                    <span class="badge badge-warning">Aguard. Aprovação</span>
-                                                                {% elif processo.status_processo == 'APROVADO' %}
-                                                                    <span class="badge badge-info">Aprovado</span>
-                                                                {% elif processo.status_processo == 'CONCLUIDO' %}
-                                                                    <span class="badge badge-success">Concluído</span>
-                                                                {% elif processo.status_processo == 'REJEITADO' %}
-                                                                    <span class="badge badge-danger">Rejeitado</span>
-                                                                {% else %}
-                                                                    <span class="badge badge-light">{{ processo.status_processo }}</span>
-                                                                {% endif %}
-                                                            </td>
-                                                            <td class="text-right">
-                                                                {% if processo.valor_fatura %}
-                                                                    <strong>R$ {{ "{:.0f}"|format(processo.valor_fatura) }}</strong>
-                                                                {% else %}
-                                                                    <span class="text-muted">-</span>
-                                                                {% endif %}
-                                                            </td>
+                                                {% if processo.status_processo == 'AGUARDANDO_DOWNLOAD' %}
+                                                    <span class="badge badge-warning badge-sm">Aguard. DL</span>
+                                                {% elif processo.status_processo == 'DOWNLOAD_COMPLETO' %}
+                                                    <span class="badge badge-primary badge-sm">DL OK</span>
+                                                {% elif processo.status_processo == 'UPLOAD_SAT_REALIZADO' %}
+                                                    <span class="badge badge-success badge-sm">SAT OK</span>
+                                                {% elif processo.status_processo == 'DOWNLOAD_EM_ANDAMENTO' %}
+                                                    <span class="badge badge-info badge-sm">Baixando</span>
+                                                {% elif processo.status_processo == 'AGUARDANDO_APROVACAO' %}
+                                                    <span class="badge badge-warning badge-sm">Pend. Apr.</span>
+                                                {% elif processo.status_processo == 'APROVADO' %}
+                                                    <span class="badge badge-success badge-sm">Aprovado</span>
+                                                {% elif processo.status_processo == 'REJEITADO' %}
+                                                    <span class="badge badge-danger badge-sm">Rejeitado</span>
+                                                {% elif processo.status_processo == 'ENVIADO_SAT' %}
+                                                    <span class="badge badge-success badge-sm">Env. SAT</span>
+                                                {% elif processo.status_processo == 'CONCLUIDO' %}
+                                                    <span class="badge badge-success badge-sm">Concluído</span>
+                                                {% else %}
+                                                    <span class="badge badge-light badge-sm">{{ processo.status_processo[:8] }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-right">
+                                                {% if processo.valor_fatura %}
+                                                    <strong class="small">R$ {{ "{:.0f}"|format(processo.valor_fatura) }}</strong>
+                                                {% else %}
+                                                    <span class="text-muted small">-</span>
+                                                {% endif %}
+                                            </td>
                                                             <td class="text-center">
-                                                                {% if processo.data_vencimento %}
-                                                                    <small>{{ processo.data_vencimento.strftime('%d/%m/%y') }}</small>
-                                                                {% else %}
-                                                                    <span class="text-muted">-</span>
-                                                                {% endif %}
-                                                            </td>
-                                                            <td>
-                                                                <div class="btn-group-vertical btn-group-sm" style="width: 100%;">
-                                                                    <a href="{{ url_for('processos_bp.visualizar', id=processo.id) }}" 
-                                                                       class="btn btn-outline-primary btn-sm mb-1" title="Visualizar">
-                                                                        <i class="feather icon-eye"></i> Ver
-                                                                    </a>
-
-                                                                    {% if processo.pode_ser_aprovado %}
-                                                                        <button type="button" class="btn btn-success btn-sm mb-1" 
-                                                                                onclick="visualizarFaturaParaAprovacao('{{ processo.id }}')" 
-                                                                                title="Visualizar Fatura para Aprovação">
-                                                                            <i class="feather icon-check-circle"></i> Aprovar
-                                                                        </button>
-                                                                    {% endif %}
-
-                                                                    {% if processo.pode_enviar_sat %}
-                                                                        <button type="button" class="btn btn-info btn-sm mb-1" 
-                                                                                onclick="enviarParaSAT('{{ processo.id }}')" 
-                                                                                title="Enviar para SAT">
-                                                                            <i class="feather icon-upload"></i> SAT
-                                                                        </button>
-                                                                    {% endif %}
-
-                                                                    {% if not processo.esta_concluido %}
-                                                                    <a href="{{ url_for('processos_bp.editar', id=processo.id) }}" 
-                                                                       class="btn btn-outline-warning btn-sm" title="Editar">
-                                                                        <i class="feather icon-edit"></i> Editar
-                                                                    </a>
-                                                                    {% endif %}
-                                                                </div>
-                                                            </td>
+                                                {% if processo.data_vencimento %}
+                                                    <small>{{ processo.data_vencimento.strftime('%d/%m') }}</small>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                                            <td class="text-center">
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="{{ url_for('processos_bp.visualizar', id=processo.id) }}" 
+                                                       class="btn btn-sm btn-info btn-xs" title="Ver Detalhes">
+                                                        <i class="feather icon-eye"></i>
+                                                    </a>
+                                                    <a href="{{ url_for('processos_bp.editar', id=processo.id) }}" 
+                                                       class="btn btn-sm btn-warning btn-xs" title="Editar">
+                                                        <i class="feather icon-edit"></i>
+                                                    </a>
+                                                    {% if processo.pode_ser_aprovado %}
+                                                        <button class="btn btn-sm btn-success btn-aprovar btn-xs" 
+                                                                data-id="{{ processo.id }}" title="Aprovar">
+                                                            <i class="feather icon-check"></i>
+                                                        </button>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
                                                         </tr>
                                                         {% endfor %}
                                                     </tbody>

@@ -28,9 +28,12 @@ def index():
         mes_ano = request.args.get('mes_ano', '')
         operadora_id = request.args.get('operadora', '')
 
+        # Fazer joins uma única vez no início para evitar duplicação
+        query = query.join(Cliente).join(Operadora)
+
         if busca:
             busca_term = f"%{busca}%"
-            query = query.join(Cliente).join(Operadora).filter(
+            query = query.filter(
                 or_(
                     Cliente.razao_social.ilike(busca_term),
                     Cliente.nome_sat.ilike(busca_term),
@@ -46,7 +49,7 @@ def index():
             query = query.filter(Processo.mes_ano == mes_ano)
 
         if operadora_id:
-            query = query.join(Cliente).filter(Cliente.operadora_id == operadora_id)
+            query = query.filter(Cliente.operadora_id == operadora_id)
 
         # Ordenação
         query = query.order_by(desc(Processo.data_atualizacao))
