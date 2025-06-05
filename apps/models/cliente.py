@@ -7,10 +7,9 @@ import hashlib
 from typing import Optional, List, TYPE_CHECKING
 
 from sqlalchemy import Column, String, Boolean, Text, ForeignKey, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped
 
-from .base import BaseModel
+from .base import BaseModel, GUID
 
 if TYPE_CHECKING:
     from .operadora import Operadora
@@ -60,7 +59,7 @@ class Cliente(BaseModel):
     
     # Relacionamento com operadora
     operadora_id = Column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey('operadoras.id', ondelete='RESTRICT'),
         nullable=False,
         index=True,
