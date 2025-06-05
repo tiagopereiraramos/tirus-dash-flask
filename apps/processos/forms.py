@@ -3,7 +3,8 @@ from wtforms import StringField, SelectField, DateField, DecimalField, TextAreaF
 from wtforms.validators import DataRequired, Optional, Length, NumberRange
 from wtforms.widgets import TextInput
 
-from apps.models import Cliente, Operadora, StatusProcesso
+from apps.models import Cliente, Operadora
+from apps.models.processo import StatusProcesso
 from apps import db
 
 

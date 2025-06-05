@@ -38,52 +38,42 @@
                                     <div class="card">
                                         <div class="card-header">
                                             <h5>{{ titulo }}</h5>
-                                            <span class="d-block m-t-5">
-                                                Preencha os dados do processo. A unicidade é garantida por Cliente + Mês/Ano.
-                                            </span>
                                         </div>
                                         <div class="card-body">
-                                            <form method="POST" novalidate>
+                                            <form method="POST">
                                                 {{ form.hidden_tag() }}
                                                 
                                                 <div class="row">
                                                     <div class="col-md-6">
                                                         <div class="form-group">
                                                             {{ form.cliente_id.label(class="form-label") }}
-                                                            {{ form.cliente_id(class="form-control" + (" is-invalid" if form.cliente_id.errors else "")) }}
+                                                            {{ form.cliente_id(class="form-control") }}
                                                             {% if form.cliente_id.errors %}
-                                                                <div class="invalid-feedback">
-                                                                    {% for error in form.cliente_id.errors %}
-                                                                        {{ error }}
-                                                                    {% endfor %}
-                                                                </div>
+                                                                {% for error in form.cliente_id.errors %}
+                                                                    <small class="text-danger">{{ error }}</small>
+                                                                {% endfor %}
                                                             {% endif %}
                                                         </div>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <div class="form-group">
                                                             {{ form.mes_ano.label(class="form-label") }}
-                                                            {{ form.mes_ano(class="form-control" + (" is-invalid" if form.mes_ano.errors else "")) }}
+                                                            {{ form.mes_ano(class="form-control") }}
                                                             {% if form.mes_ano.errors %}
-                                                                <div class="invalid-feedback">
-                                                                    {% for error in form.mes_ano.errors %}
-                                                                        {{ error }}
-                                                                    {% endfor %}
-                                                                </div>
+                                                                {% for error in form.mes_ano.errors %}
+                                                                    <small class="text-danger">{{ error }}</small>
+                                                                {% endfor %}
                                                             {% endif %}
-                                                            <small class="form-text text-muted">Formato: MM/AAAA (ex: 06/2025)</small>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <div class="form-group">
                                                             {{ form.status_processo.label(class="form-label") }}
-                                                            {{ form.status_processo(class="form-control" + (" is-invalid" if form.status_processo.errors else "")) }}
+                                                            {{ form.status_processo(class="form-control") }}
                                                             {% if form.status_processo.errors %}
-                                                                <div class="invalid-feedback">
-                                                                    {% for error in form.status_processo.errors %}
-                                                                        {{ error }}
-                                                                    {% endfor %}
-                                                                </div>
+                                                                {% for error in form.status_processo.errors %}
+                                                                    <small class="text-danger">{{ error }}</small>
+                                                                {% endfor %}
                                                             {% endif %}
                                                         </div>
                                                     </div>
@@ -93,26 +83,22 @@
                                                     <div class="col-md-6">
                                                         <div class="form-group">
                                                             {{ form.url_fatura.label(class="form-label") }}
-                                                            {{ form.url_fatura(class="form-control" + (" is-invalid" if form.url_fatura.errors else "")) }}
+                                                            {{ form.url_fatura(class="form-control") }}
                                                             {% if form.url_fatura.errors %}
-                                                                <div class="invalid-feedback">
-                                                                    {% for error in form.url_fatura.errors %}
-                                                                        {{ error }}
-                                                                    {% endfor %}
-                                                                </div>
+                                                                {% for error in form.url_fatura.errors %}
+                                                                    <small class="text-danger">{{ error }}</small>
+                                                                {% endfor %}
                                                             {% endif %}
                                                         </div>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <div class="form-group">
                                                             {{ form.data_vencimento.label(class="form-label") }}
-                                                            {{ form.data_vencimento(class="form-control" + (" is-invalid" if form.data_vencimento.errors else "")) }}
+                                                            {{ form.data_vencimento(class="form-control") }}
                                                             {% if form.data_vencimento.errors %}
-                                                                <div class="invalid-feedback">
-                                                                    {% for error in form.data_vencimento.errors %}
-                                                                        {{ error }}
-                                                                    {% endfor %}
-                                                                </div>
+                                                                {% for error in form.data_vencimento.errors %}
+                                                                    <small class="text-danger">{{ error }}</small>
+                                                                {% endfor %}
                                                             {% endif %}
                                                         </div>
                                                     </div>
@@ -123,14 +109,12 @@
                                                                 <div class="input-group-prepend">
                                                                     <span class="input-group-text">R$</span>
                                                                 </div>
-                                                                {{ form.valor_fatura(class="form-control" + (" is-invalid" if form.valor_fatura.errors else "")) }}
+                                                                {{ form.valor_fatura(class="form-control") }}
                                                             </div>
                                                             {% if form.valor_fatura.errors %}
-                                                                <div class="invalid-feedback">
-                                                                    {% for error in form.valor_fatura.errors %}
-                                                                        {{ error }}
-                                                                    {% endfor %}
-                                                                </div>
+                                                                {% for error in form.valor_fatura.errors %}
+                                                                    <small class="text-danger">{{ error }}</small>
+                                                                {% endfor %}
                                                             {% endif %}
                                                         </div>
                                                     </div>
@@ -139,44 +123,39 @@
                                                 <div class="row">
                                                     <div class="col-md-6">
                                                         <div class="form-group">
-                                                            <label class="form-label">Configurações</label>
-                                                            <div class="custom-control custom-checkbox">
-                                                                {{ form.upload_manual(class="custom-control-input") }}
-                                                                {{ form.upload_manual.label(class="custom-control-label") }}
-                                                            </div>
-                                                            <div class="custom-control custom-checkbox mt-2">
-                                                                {{ form.criado_automaticamente(class="custom-control-input") }}
-                                                                {{ form.criado_automaticamente.label(class="custom-control-label") }}
+                                                            <div class="form-check">
+                                                                {{ form.upload_manual(class="form-check-input") }}
+                                                                {{ form.upload_manual.label(class="form-check-label") }}
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-6">
                                                         <div class="form-group">
-                                                            {{ form.observacoes.label(class="form-label") }}
-                                                            {{ form.observacoes(class="form-control" + (" is-invalid" if form.observacoes.errors else "")) }}
-                                                            {% if form.observacoes.errors %}
-                                                                <div class="invalid-feedback">
-                                                                    {% for error in form.observacoes.errors %}
-                                                                        {{ error }}
-                                                                    {% endfor %}
-                                                                </div>
-                                                            {% endif %}
+                                                            <div class="form-check">
+                                                                {{ form.criado_automaticamente(class="form-check-input") }}
+                                                                {{ form.criado_automaticamente.label(class="form-check-label") }}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 
-                                                <div class="row">
-                                                    <div class="col-12">
-                                                        <hr>
-                                                        <div class="d-flex justify-content-between">
-                                                            <a href="{{ url_for('processos_bp.index') }}" class="btn btn-light">
-                                                                <i class="feather icon-arrow-left"></i> Voltar
-                                                            </a>
-                                                            <button type="submit" class="btn btn-primary">
-                                                                <i class="feather icon-save"></i> Salvar Processo
-                                                            </button>
-                                                        </div>
-                                                    </div>
+                                                <div class="form-group">
+                                                    {{ form.observacoes.label(class="form-label") }}
+                                                    {{ form.observacoes(class="form-control") }}
+                                                    {% if form.observacoes.errors %}
+                                                        {% for error in form.observacoes.errors %}
+                                                            <small class="text-danger">{{ error }}</small>
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                </div>
+                                                
+                                                <div class="form-group">
+                                                    <button type="submit" class="btn btn-primary">
+                                                        <i class="feather icon-save"></i> Salvar
+                                                    </button>
+                                                    <a href="{{ url_for('processos_bp.index') }}" class="btn btn-secondary ml-2">
+                                                        <i class="feather icon-x"></i> Cancelar
+                                                    </a>
                                                 </div>
                                             </form>
                                         </div>
@@ -193,4 +172,20 @@
 
 {% endblock content %}
 
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+<script>
+$(document).ready(function() {
+    // Máscara para o campo Mês/Ano
+    $('#mes_ano').mask('00/0000', {placeholder: 'MM/AAAA'});
+    
+    // Máscara para valor monetário
+    $('#valor_fatura').maskMoney({
+        prefix: '',
+        allowNegative: false,
+        thousands: '.',
+        decimal: ',',
+        affixesStay: false
+    });
+});
+</script>
+{% endblock javascripts %}

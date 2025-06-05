@@ -1,25 +1,23 @@
 """
 Modelo do Processo Mensal
-
-Representa um processo de download e envio de fatura para um cliente
-específico em um determinado mês/ano.
-
-Unicidade garantida por: Cliente + Mês/Ano
 """
 
 from dataclasses import dataclass
-from datetime import datetime, date
 from typing import Optional, List, TYPE_CHECKING
+from datetime import datetime
 from enum import Enum
+from decimal import Decimal
 
 from sqlalchemy import Column, String, Boolean, Text, Date, DateTime, ForeignKey, UniqueConstraint, DECIMAL
 from sqlalchemy.orm import relationship, Mapped
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
+import uuid
 
 from .base import BaseModel, GUID
 
 if TYPE_CHECKING:
     from .cliente import Cliente
-    from .execucao import Execucao
+    from .execucao import Execucao  
     from .usuario import Usuario
 
 

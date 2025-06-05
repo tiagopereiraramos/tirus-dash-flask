@@ -1,7 +1,6 @@
-
 {% extends "layouts/base.html" %}
 
-{% block title %} Processo {{ processo.cliente.razao_social }} - {{ processo.mes_ano }} {% endblock %}
+{% block title %} Processo - {{ processo.cliente.razao_social }} {% endblock %}
 
 {% block stylesheets %}{% endblock stylesheets %}
 
@@ -22,14 +21,14 @@
                                     <ul class="breadcrumb">
                                         <li class="breadcrumb-item"><a href="{{ url_for('home_blueprint.index') }}"><i class="feather icon-home"></i></a></li>
                                         <li class="breadcrumb-item"><a href="{{ url_for('processos_bp.index') }}">Processos</a></li>
-                                        <li class="breadcrumb-item active">Detalhes</li>
+                                        <li class="breadcrumb-item active">{{ processo.cliente.razao_social }}</li>
                                     </ul>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <!-- [ breadcrumb ] end -->
-                    
+
                     <div class="main-body">
                         <div class="page-wrapper">
                             <!-- [ Main Content ] start -->
@@ -38,154 +37,76 @@
                                 <div class="col-lg-8">
                                     <div class="card">
                                         <div class="card-header">
-                                            <div class="row align-items-center">
-                                                <div class="col">
-                                                    <h5 class="mb-0">{{ processo.cliente.razao_social }}</h5>
-                                                    <small class="text-muted">{{ processo.mes_ano }}</small>
-                                                </div>
-                                                <div class="col-auto">
-                                                    {% if processo.status_processo == 'AGUARDANDO_DOWNLOAD' %}
-                                                        <span class="badge badge-light-warning badge-pill">Aguardando Download</span>
-                                                    {% elif processo.status_processo == 'DOWNLOAD_EM_ANDAMENTO' %}
-                                                        <span class="badge badge-light-info badge-pill">Download em Andamento</span>
-                                                    {% elif processo.status_processo == 'DOWNLOAD_CONCLUIDO' %}
-                                                        <span class="badge badge-light-primary badge-pill">Download Concluído</span>
-                                                    {% elif processo.status_processo == 'DOWNLOAD_FALHOU' %}
-                                                        <span class="badge badge-light-danger badge-pill">Download Falhou</span>
-                                                    {% elif processo.status_processo == 'AGUARDANDO_APROVACAO' %}
-                                                        <span class="badge badge-warning badge-pill">Aguardando Aprovação</span>
-                                                    {% elif processo.status_processo == 'APROVADO' %}
-                                                        <span class="badge badge-success badge-pill">Aprovado</span>
-                                                    {% elif processo.status_processo == 'REJEITADO' %}
-                                                        <span class="badge badge-danger badge-pill">Rejeitado</span>
-                                                    {% elif processo.status_processo == 'ENVIANDO_SAT' %}
-                                                        <span class="badge badge-light-info badge-pill">Enviando SAT</span>
-                                                    {% elif processo.status_processo == 'ENVIADO_SAT' %}
-                                                        <span class="badge badge-light-success badge-pill">Enviado SAT</span>
-                                                    {% elif processo.status_processo == 'FALHA_ENVIO_SAT' %}
-                                                        <span class="badge badge-light-danger badge-pill">Falha Envio SAT</span>
-                                                    {% elif processo.status_processo == 'CONCLUIDO' %}
-                                                        <span class="badge badge-success badge-pill">Concluído</span>
-                                                    {% elif processo.status_processo == 'CANCELADO' %}
-                                                        <span class="badge badge-secondary badge-pill">Cancelado</span>
-                                                    {% endif %}
-                                                </div>
-                                            </div>
+                                            <h5>Informações do Processo</h5>
                                         </div>
                                         <div class="card-body">
                                             <div class="row">
                                                 <div class="col-md-6">
-                                                    <table class="table table-borderless">
-                                                        <tr>
-                                                            <td class="text-muted" width="40%">Cliente:</td>
-                                                            <td><strong>{{ processo.cliente.razao_social }}</strong></td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="text-muted">CNPJ:</td>
-                                                            <td>{{ processo.cliente.cnpj }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="text-muted">Operadora:</td>
-                                                            <td>
-                                                                <span class="badge badge-light-primary">
-                                                                    {{ processo.cliente.operadora.nome }}
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="text-muted">Unidade:</td>
-                                                            <td>{{ processo.cliente.unidade }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="text-muted">Serviço:</td>
-                                                            <td>{{ processo.cliente.servico or '-' }}</td>
-                                                        </tr>
-                                                    </table>
+                                                    <h6 class="text-muted">Cliente</h6>
+                                                    <p class="mb-3">{{ processo.cliente.razao_social }}</p>
+
+                                                    <h6 class="text-muted">CNPJ</h6>
+                                                    <p class="mb-3">{{ processo.cliente.cnpj }}</p>
+
+                                                    <h6 class="text-muted">Operadora</h6>
+                                                    <p class="mb-3">{{ processo.cliente.operadora.nome }}</p>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <table class="table table-borderless">
-                                                        <tr>
-                                                            <td class="text-muted" width="40%">Período:</td>
-                                                            <td><strong>{{ processo.mes_ano }}</strong></td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="text-muted">Valor:</td>
-                                                            <td>
-                                                                {% if processo.valor_fatura %}
-                                                                    <strong>R$ {{ "%.2f"|format(processo.valor_fatura) }}</strong>
-                                                                {% else %}
-                                                                    <span class="text-muted">-</span>
-                                                                {% endif %}
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="text-muted">Vencimento:</td>
-                                                            <td>
-                                                                {% if processo.data_vencimento %}
-                                                                    {{ processo.data_vencimento.strftime('%d/%m/%Y') }}
-                                                                {% else %}
-                                                                    <span class="text-muted">-</span>
-                                                                {% endif %}
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="text-muted">Upload Manual:</td>
-                                                            <td>
-                                                                {% if processo.upload_manual %}
-                                                                    <span class="badge badge-light-info">Sim</span>
-                                                                {% else %}
-                                                                    <span class="badge badge-light">Não</span>
-                                                                {% endif %}
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="text-muted">Criado automaticamente:</td>
-                                                            <td>
-                                                                {% if processo.criado_automaticamente %}
-                                                                    <span class="badge badge-light-success">Sim</span>
-                                                                {% else %}
-                                                                    <span class="badge badge-light-warning">Não</span>
-                                                                {% endif %}
-                                                            </td>
-                                                        </tr>
-                                                    </table>
+                                                    <h6 class="text-muted">Mês/Ano</h6>
+                                                    <p class="mb-3"><strong>{{ processo.mes_ano }}</strong></p>
+
+                                                    <h6 class="text-muted">Status</h6>
+                                                    <p class="mb-3">
+                                                        {% if processo.status_processo == 'AGUARDANDO_DOWNLOAD' %}
+                                                            <span class="badge badge-light-warning">Aguardando Download</span>
+                                                        {% elif processo.status_processo == 'DOWNLOAD_CONCLUIDO' %}
+                                                            <span class="badge badge-light-primary">Download Concluído</span>
+                                                        {% elif processo.status_processo == 'AGUARDANDO_APROVACAO' %}
+                                                            <span class="badge badge-warning">Aguardando Aprovação</span>
+                                                        {% elif processo.status_processo == 'APROVADO' %}
+                                                            <span class="badge badge-success">Aprovado</span>
+                                                        {% elif processo.status_processo == 'CONCLUIDO' %}
+                                                            <span class="badge badge-success">Concluído</span>
+                                                        {% else %}
+                                                            <span class="badge badge-secondary">{{ processo.status_processo }}</span>
+                                                        {% endif %}
+                                                    </p>
+
+                                                    <h6 class="text-muted">Criado em</h6>
+                                                    <p class="mb-3">{{ processo.data_criacao.strftime('%d/%m/%Y %H:%M') }}</p>
                                                 </div>
                                             </div>
-                                            
-                                            {% if processo.url_fatura %}
-                                            <div class="row mt-3">
-                                                <div class="col-12">
-                                                    <div class="alert alert-light">
-                                                        <strong>URL da Fatura:</strong>
-                                                        <a href="{{ processo.url_fatura }}" target="_blank" class="ml-2">
-                                                            {{ processo.url_fatura }}
-                                                            <i class="feather icon-external-link ml-1"></i>
-                                                        </a>
-                                                    </div>
+
+                                            {% if processo.valor_fatura or processo.data_vencimento %}
+                                            <hr>
+                                            <div class="row">
+                                                {% if processo.valor_fatura %}
+                                                <div class="col-md-6">
+                                                    <h6 class="text-muted">Valor da Fatura</h6>
+                                                    <p class="mb-3"><strong>R$ {{ "%.2f"|format(processo.valor_fatura) }}</strong></p>
                                                 </div>
+                                                {% endif %}
+                                                {% if processo.data_vencimento %}
+                                                <div class="col-md-6">
+                                                    <h6 class="text-muted">Data de Vencimento</h6>
+                                                    <p class="mb-3">{{ processo.data_vencimento.strftime('%d/%m/%Y') }}</p>
+                                                </div>
+                                                {% endif %}
                                             </div>
                                             {% endif %}
-                                            
+
                                             {% if processo.observacoes %}
-                                            <div class="row mt-3">
-                                                <div class="col-12">
-                                                    <strong>Observações:</strong>
-                                                    <div class="mt-2 p-3 bg-light rounded">
-                                                        {{ processo.observacoes }}
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <hr>
+                                            <h6 class="text-muted">Observações</h6>
+                                            <p class="mb-0">{{ processo.observacoes }}</p>
                                             {% endif %}
                                         </div>
                                     </div>
-                                    
+
                                     <!-- Histórico de Execuções -->
                                     <div class="card">
                                         <div class="card-header">
                                             <h5>Histórico de Execuções</h5>
-                                            <span class="d-block m-t-5">
-                                                Rastreabilidade completa de todas as tentativas e ações
-                                            </span>
                                         </div>
                                         <div class="card-body">
                                             {% if execucoes %}
@@ -195,33 +116,28 @@
                                                         <tr>
                                                             <th>Tipo</th>
                                                             <th>Status</th>
-                                                            <th>Início</th>
-                                                            <th>Fim</th>
-                                                            <th>Tentativa</th>
-                                                            <th>Resultado</th>
+                                                            <th>Data/Hora</th>
+                                                            <th>Duração</th>
+                                                            <th>Mensagem</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         {% for execucao in execucoes %}
                                                         <tr>
                                                             <td>
-                                                                {% if execucao.tipo_execucao == 'DOWNLOAD_FATURA' %}
-                                                                    <span class="badge badge-light-primary">Download</span>
-                                                                {% elif execucao.tipo_execucao == 'UPLOAD_SAT' %}
-                                                                    <span class="badge badge-light-success">Upload SAT</span>
-                                                                {% elif execucao.tipo_execucao == 'UPLOAD_MANUAL' %}
-                                                                    <span class="badge badge-light-info">Upload Manual</span>
-                                                                {% endif %}
+                                                                <span class="badge badge-light-info">
+                                                                    {{ execucao.tipo_execucao.replace('_', ' ').title() }}
+                                                                </span>
                                                             </td>
                                                             <td>
-                                                                {% if execucao.status_execucao == 'EXECUTANDO' %}
-                                                                    <span class="badge badge-warning">Executando</span>
-                                                                {% elif execucao.status_execucao == 'CONCLUIDO' %}
+                                                                {% if execucao.status_execucao == 'CONCLUIDO' %}
                                                                     <span class="badge badge-success">Concluído</span>
                                                                 {% elif execucao.status_execucao == 'FALHOU' %}
                                                                     <span class="badge badge-danger">Falhou</span>
-                                                                {% elif execucao.status_execucao == 'TENTANDO_NOVAMENTE' %}
-                                                                    <span class="badge badge-info">Tentando Novamente</span>
+                                                                {% elif execucao.status_execucao == 'EXECUTANDO' %}
+                                                                    <span class="badge badge-warning">Executando</span>
+                                                                {% else %}
+                                                                    <span class="badge badge-secondary">{{ execucao.status_execucao }}</span>
                                                                 {% endif %}
                                                             </td>
                                                             <td>
@@ -229,43 +145,17 @@
                                                             </td>
                                                             <td>
                                                                 {% if execucao.data_fim %}
-                                                                    <small>{{ execucao.data_fim.strftime('%d/%m/%Y %H:%M:%S') }}</small>
+                                                                    {% set duracao = execucao.data_fim - execucao.data_inicio %}
+                                                                    <small>{{ duracao.total_seconds()|int }}s</small>
                                                                 {% else %}
-                                                                    <span class="text-muted">-</span>
+                                                                    <small class="text-muted">-</small>
                                                                 {% endif %}
                                                             </td>
                                                             <td>
-                                                                <span class="badge badge-light">{{ execucao.numero_tentativa }}</span>
-                                                            </td>
-                                                            <td>
                                                                 {% if execucao.mensagem_log %}
-                                                                    <button type="button" class="btn btn-sm btn-outline-info" 
-                                                                            data-toggle="modal" 
-                                                                            data-target="#modalLog{{ execucao.id }}">
-                                                                        <i class="feather icon-eye"></i> Ver Log
-                                                                    </button>
-                                                                    
-                                                                    <!-- Modal Log -->
-                                                                    <div class="modal fade" id="modalLog{{ execucao.id }}" tabindex="-1" role="dialog">
-                                                                        <div class="modal-dialog modal-lg" role="document">
-                                                                            <div class="modal-content">
-                                                                                <div class="modal-header">
-                                                                                    <h5 class="modal-title">Log da Execução</h5>
-                                                                                    <button type="button" class="close" data-dismiss="modal">
-                                                                                        <span>&times;</span>
-                                                                                    </button>
-                                                                                </div>
-                                                                                <div class="modal-body">
-                                                                                    <pre class="bg-dark text-light p-3 rounded">{{ execucao.mensagem_log }}</pre>
-                                                                                </div>
-                                                                                <div class="modal-footer">
-                                                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
+                                                                    <small>{{ execucao.mensagem_log[:50] }}{% if execucao.mensagem_log|length > 50 %}...{% endif %}</small>
                                                                 {% else %}
-                                                                    <span class="text-muted">-</span>
+                                                                    <small class="text-muted">-</small>
                                                                 {% endif %}
                                                             </td>
                                                         </tr>
@@ -283,7 +173,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Painel de Ações -->
                                 <div class="col-lg-4">
                                     <div class="card">
@@ -291,155 +181,46 @@
                                             <h5>Ações do Processo</h5>
                                         </div>
                                         <div class="card-body">
-                                            <!-- Informações de Aprovação -->
-                                            {% if processo.aprovador %}
-                                            <div class="alert alert-success">
-                                                <h6 class="alert-heading">
-                                                    <i class="feather icon-check-circle"></i> Processo Aprovado
-                                                </h6>
-                                                <p class="mb-0">
-                                                    Aprovado em {{ processo.data_aprovacao.strftime('%d/%m/%Y às %H:%M') }}
-                                                </p>
-                                            </div>
-                                            {% elif processo.esta_pendente_aprovacao %}
-                                            <div class="alert alert-warning">
-                                                <h6 class="alert-heading">
-                                                    <i class="feather icon-clock"></i> Aguardando Aprovação
-                                                </h6>
-                                                <p class="mb-0">Este processo está pendente de aprovação.</p>
-                                            </div>
+                                            {% if not processo.esta_concluido %}
+                                            <a href="{{ url_for('processos_bp.editar', id=processo.id) }}" class="btn btn-warning btn-block mb-2">
+                                                <i class="feather icon-edit"></i> Editar Processo
+                                            </a>
                                             {% endif %}
-                                            
-                                            <!-- Botões de Ação -->
-                                            <div class="d-grid gap-2">
-                                                {% if not processo.esta_concluido %}
-                                                <a href="{{ url_for('processos_bp.editar', id=processo.id) }}" 
-                                                   class="btn btn-warning btn-block">
-                                                    <i class="feather icon-edit"></i> Editar Processo
-                                                </a>
-                                                {% endif %}
-                                                
-                                                {% if processo.pode_ser_aprovado %}
-                                                <button type="button" 
-                                                        class="btn btn-success btn-block" 
-                                                        data-toggle="modal" 
-                                                        data-target="#modalAprovar">
-                                                    <i class="feather icon-check"></i> Aprovar Processo
-                                                </button>
-                                                {% endif %}
-                                                
-                                                {% if processo.esta_pendente_aprovacao %}
-                                                <button type="button" 
-                                                        class="btn btn-danger btn-block" 
-                                                        data-toggle="modal" 
-                                                        data-target="#modalRejeitar">
-                                                    <i class="feather icon-x"></i> Rejeitar Processo
-                                                </button>
-                                                {% endif %}
-                                                
-                                                <a href="{{ url_for('processos_bp.index') }}" 
-                                                   class="btn btn-light btn-block">
-                                                    <i class="feather icon-arrow-left"></i> Voltar à Lista
-                                                </a>
-                                            </div>
+
+                                            {% if processo.pode_ser_aprovado %}
+                                            <button type="button" class="btn btn-success btn-block mb-2" data-toggle="modal" data-target="#modalAprovar">
+                                                <i class="feather icon-check"></i> Aprovar Processo
+                                            </button>
+                                            {% endif %}
+
+                                            {% if processo.esta_pendente_aprovacao %}
+                                            <button type="button" class="btn btn-danger btn-block mb-2" data-toggle="modal" data-target="#modalRejeitar">
+                                                <i class="feather icon-x"></i> Rejeitar Processo
+                                            </button>
+                                            {% endif %}
+
+                                            <a href="{{ url_for('processos_bp.index') }}" class="btn btn-secondary btn-block">
+                                                <i class="feather icon-arrow-left"></i> Voltar à Lista
+                                            </a>
                                         </div>
                                     </div>
-                                    
-                                    <!-- Informações Adicionais -->
+
+                                    {% if processo.aprovador and processo.data_aprovacao %}
                                     <div class="card">
                                         <div class="card-header">
-                                            <h5>Informações do Sistema</h5>
+                                            <h5>Informações de Aprovação</h5>
                                         </div>
                                         <div class="card-body">
-                                            <table class="table table-borderless table-sm">
-                                                <tr>
-                                                    <td class="text-muted">ID:</td>
-                                                    <td><small>{{ processo.id }}</small></td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted">Criado em:</td>
-                                                    <td><small>{{ processo.data_criacao.strftime('%d/%m/%Y %H:%M') }}</small></td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted">Atualizado em:</td>
-                                                    <td><small>{{ processo.data_atualizacao.strftime('%d/%m/%Y %H:%M') }}</small></td>
-                                                </tr>
-                                                {% if processo.caminho_s3_fatura %}
-                                                <tr>
-                                                    <td class="text-muted">Fatura:</td>
-                                                    <td>
-                                                        <span class="badge badge-light-success">Disponível</span>
-                                                    </td>
-                                                </tr>
-                                                {% endif %}
-                                            </table>
+                                            <h6 class="text-muted">Aprovado por</h6>
+                                            <p class="mb-2">{{ processo.aprovador.nome_completo }}</p>
+
+                                            <h6 class="text-muted">Data da Aprovação</h6>
+                                            <p class="mb-0">{{ processo.data_aprovacao.strftime('%d/%m/%Y %H:%M') }}</p>
                                         </div>
                                     </div>
+                                    {% endif %}
                                 </div>
                             </div>
-                            
-                            <!-- Modals de Aprovação/Rejeição -->
-                            {% if processo.pode_ser_aprovado %}
-                            <div class="modal fade" id="modalAprovar" tabindex="-1" role="dialog">
-                                <div class="modal-dialog" role="document">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Aprovar Processo</h5>
-                                            <button type="button" class="close" data-dismiss="modal">
-                                                <span>&times;</span>
-                                            </button>
-                                        </div>
-                                        <form method="POST" action="{{ url_for('processos_bp.aprovar', id=processo.id) }}">
-                                            <div class="modal-body">
-                                                <p>Deseja aprovar este processo para envio ao SAT?</p>
-                                                <div class="form-group">
-                                                    <label for="observacoes">Observações (opcional)</label>
-                                                    <textarea name="observacoes" class="form-control" rows="3" 
-                                                              placeholder="Observações sobre a aprovação..."></textarea>
-                                                </div>
-                                                <input type="hidden" name="acao" value="aprovar">
-                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                                <button type="submit" class="btn btn-success">Aprovar</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endif %}
-                            
-                            {% if processo.esta_pendente_aprovacao %}
-                            <div class="modal fade" id="modalRejeitar" tabindex="-1" role="dialog">
-                                <div class="modal-dialog" role="document">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Rejeitar Processo</h5>
-                                            <button type="button" class="close" data-dismiss="modal">
-                                                <span>&times;</span>
-                                            </button>
-                                        </div>
-                                        <form method="POST" action="{{ url_for('processos_bp.rejeitar', id=processo.id) }}">
-                                            <div class="modal-body">
-                                                <p class="text-danger">Deseja rejeitar este processo?</p>
-                                                <div class="form-group">
-                                                    <label for="observacoes">Motivo da rejeição</label>
-                                                    <textarea name="observacoes" class="form-control" rows="3" 
-                                                              placeholder="Descreva o motivo da rejeição..." required></textarea>
-                                                </div>
-                                                <input type="hidden" name="acao" value="rejeitar">
-                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                                <button type="submit" class="btn btn-danger">Rejeitar</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endif %}
                             <!-- [ Main Content ] end -->
                         </div>
                     </div>
@@ -447,6 +228,68 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Aprovar -->
+    {% if processo.pode_ser_aprovado %}
+    <div class="modal fade" id="modalAprovar" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Aprovar Processo</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <form method="POST" action="{{ url_for('processos_bp.aprovar', id=processo.id) }}">
+                    <div class="modal-body">
+                        <p>Deseja aprovar o processo de <strong>{{ processo.cliente.razao_social }}</strong> para <strong>{{ processo.mes_ano }}</strong>?</p>
+                        <div class="form-group">
+                            <label for="observacoes">Observações (opcional)</label>
+                            <textarea name="observacoes" class="form-control" rows="3" placeholder="Observações sobre a aprovação..."></textarea>
+                        </div>
+                        <input type="hidden" name="acao" value="aprovar">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Aprovar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Modal Rejeitar -->
+    {% if processo.esta_pendente_aprovacao %}
+    <div class="modal fade" id="modalRejeitar" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Rejeitar Processo</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <form method="POST" action="{{ url_for('processos_bp.rejeitar', id=processo.id) }}">
+                    <div class="modal-body">
+                        <p>Deseja rejeitar o processo de <strong>{{ processo.cliente.razao_social }}</strong> para <strong>{{ processo.mes_ano }}</strong>?</p>
+                        <div class="form-group">
+                            <label for="observacoes">Motivo da rejeição *</label>
+                            <textarea name="observacoes" class="form-control" rows="3" placeholder="Explique o motivo da rejeição..." required></textarea>
+                        </div>
+                        <input type="hidden" name="acao" value="rejeitar">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger">Rejeitar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
 {% endblock content %}
 

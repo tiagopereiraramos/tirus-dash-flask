@@ -6,8 +6,9 @@ from sqlalchemy import and_, or_, desc
 from sqlalchemy.orm import joinedload
 
 from . import bp
+from .forms import ProcessoForm, ProcessoFiltroForm, AprovacaoForm, CriarProcessosMensaisForm
 from apps import db
-from apps.models import Processo, Cliente, Operadora, Execucao, Usuario
+from apps.models import Processo, Cliente, Operadora, Execucao, Usuario, StatusProcesso
 from apps.authentication.util import verify_user_jwt
 
 logger = logging.getLogger(__name__)
@@ -61,15 +62,8 @@ def index():
             error_out=False
         )
         
-        # Criar formulário mock para compatibilidade com template
-        class MockForm:
-            def __init__(self):
-                self.busca = type('obj', (object,), {'data': busca})()
-                self.status = type('obj', (object,), {'data': status})()
-                self.mes_ano = type('obj', (object,), {'data': mes_ano})()
-                self.operadora = type('obj', (object,), {'data': operadora_id})()
-        
-        form = MockForm()
+        # Criar formulário de filtros
+        form = ProcessoFiltroForm(request.args)
         
         return render_template(
             'processos/index.html',
