@@ -1,0 +1,311 @@
+
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="pcoded-main-container">
+    <div class="pcoded-content">
+        <!-- [ breadcrumb ] start -->
+        <div class="page-header">
+            <div class="page-block">
+                <div class="row align-items-center">
+                    <div class="col-md-12">
+                        <div class="page-header-title">
+                            <h5 class="m-b-10">{{ title }}</h5>
+                        </div>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a href="{{ url_for('home_bp.index') }}">
+                                    <i class="feather icon-home"></i>
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item">
+                                <a href="{{ url_for('clientes_bp.index') }}">Clientes</a>
+                            </li>
+                            <li class="breadcrumb-item active" aria-current="page">
+                                {% if cliente %}Editar{% else %}Novo{% endif %}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- [ breadcrumb ] end -->
+        
+        <!-- [ Main Content ] start -->
+        <div class="row">
+            <div class="col-xl-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>
+                            {% if cliente %}
+                                <i class="feather icon-edit"></i> Editar Cliente - {{ cliente.razao_social }}
+                            {% else %}
+                                <i class="feather icon-plus"></i> Novo Cliente
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Mensagens de erro -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{% if category == 'error' %}danger{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <form method="POST" novalidate>
+                            {{ form.hidden_tag() }}
+                            
+                            <!-- Dados Principais -->
+                            <fieldset class="border p-3 mb-3">
+                                <legend class="w-auto px-2">
+                                    <i class="feather icon-user"></i> Dados Principais
+                                </legend>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ form.razao_social.label(class="form-label") }}
+                                        {{ form.razao_social() }}
+                                        {% for error in form.razao_social.errors %}
+                                            <div class="text-danger small">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        {{ form.nome_sat.label(class="form-label") }}
+                                        {{ form.nome_sat() }}
+                                        {% for error in form.nome_sat.errors %}
+                                            <div class="text-danger small">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        {{ form.cnpj.label(class="form-label") }}
+                                        {{ form.cnpj() }}
+                                        {% for error in form.cnpj.errors %}
+                                            <div class="text-danger small">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        {{ form.operadora_id.label(class="form-label") }}
+                                        {{ form.operadora_id() }}
+                                        {% for error in form.operadora_id.errors %}
+                                            <div class="text-danger small">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        <div class="form-check form-switch mt-4">
+                                            {{ form.status_ativo() }}
+                                            {{ form.status_ativo.label(class="form-check-label") }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </fieldset>
+
+                            <!-- Dados do Serviço -->
+                            <fieldset class="border p-3 mb-3">
+                                <legend class="w-auto px-2">
+                                    <i class="feather icon-settings"></i> Dados do Serviço
+                                </legend>
+                                
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        {{ form.servico.label(class="form-label") }}
+                                        {{ form.servico() }}
+                                        {% for error in form.servico.errors %}
+                                            <div class="text-danger small">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        {{ form.unidade.label(class="form-label") }}
+                                        {{ form.unidade() }}
+                                        {% for error in form.unidade.errors %}
+                                            <div class="text-danger small">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        {{ form.filtro.label(class="form-label") }}
+                                        {{ form.filtro() }}
+                                        {% for error in form.filtro.errors %}
+                                            <div class="text-danger small">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ form.dados_sat.label(class="form-label") }}
+                                        {{ form.dados_sat() }}
+                                        {% for error in form.dados_sat.errors %}
+                                            <div class="text-danger small">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        {{ form.site_emissao.label(class="form-label") }}
+                                        {{ form.site_emissao() }}
+                                        {% for error in form.site_emissao.errors %}
+                                            <div class="text-danger small">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </fieldset>
+
+                            <!-- Credenciais de Acesso -->
+                            <fieldset class="border p-3 mb-3">
+                                <legend class="w-auto px-2">
+                                    <i class="feather icon-key"></i> Credenciais de Acesso
+                                </legend>
+                                
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        {{ form.login_portal.label(class="form-label") }}
+                                        {{ form.login_portal() }}
+                                        {% for error in form.login_portal.errors %}
+                                            <div class="text-danger small">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        {{ form.senha_portal.label(class="form-label") }}
+                                        {{ form.senha_portal() }}
+                                        {% for error in form.senha_portal.errors %}
+                                            <div class="text-danger small">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        {{ form.cpf.label(class="form-label") }}
+                                        {{ form.cpf() }}
+                                        {% for error in form.cpf.errors %}
+                                            <div class="text-danger small">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </fieldset>
+
+                            <!-- Botões de Ação -->
+                            <div class="text-end">
+                                <a href="{{ url_for('clientes_bp.index') }}" class="btn btn-secondary">
+                                    <i class="feather icon-x"></i> Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="feather icon-save"></i> 
+                                    {% if cliente %}Atualizar{% else %}Cadastrar{% endif %}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Coluna lateral com informações -->
+            <div class="col-xl-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="feather icon-info"></i> Informações Importantes</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <h6><i class="feather icon-hash"></i> Hash Única</h6>
+                            <p class="mb-0">O sistema gera automaticamente uma hash única baseada nos dados-chave do cliente para garantir unicidade e rastreabilidade.</p>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <h6><i class="feather icon-lock"></i> Unicidade</h6>
+                            <p class="mb-0">Não é permitido cadastrar clientes duplicados com a mesma combinação de <strong>CNPJ + Operadora + Unidade + Serviço</strong>.</p>
+                        </div>
+                        
+                        <div class="alert alert-success">
+                            <h6><i class="feather icon-zap"></i> RPA Automático</h6>
+                            <p class="mb-0">Se a operadora possui RPA configurado, as credenciais de acesso são obrigatórias para automação.</p>
+                        </div>
+                        
+                        {% if cliente %}
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6>Dados Técnicos</h6>
+                            </div>
+                            <div class="card-body">
+                                <small class="text-muted">Hash Única:</small>
+                                <p class="font-monospace small">{{ cliente.hash_unico }}</p>
+                                
+                                <small class="text-muted">Criado em:</small>
+                                <p class="small">{{ cliente.data_criacao.strftime('%d/%m/%Y às %H:%M') }}</p>
+                                
+                                {% if cliente.data_atualizacao != cliente.data_criacao %}
+                                <small class="text-muted">Atualizado em:</small>
+                                <p class="small">{{ cliente.data_atualizacao.strftime('%d/%m/%Y às %H:%M') }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Máscara para CNPJ
+document.getElementById('cnpj').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+    value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+    value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+    value = value.replace(/(\d{4})(\d)/, '$1-$2');
+    e.target.value = value;
+});
+
+// Máscara para CPF
+document.getElementById('cpf').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+    value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    e.target.value = value;
+});
+
+// Validação em tempo real
+document.querySelector('form').addEventListener('submit', function(e) {
+    const operadora = document.getElementById('operadora_id').value;
+    const login = document.getElementById('login_portal').value;
+    const senha = document.getElementById('senha_portal').value;
+    
+    // Se operadora tem RPA, credenciais são obrigatórias
+    if (operadora) {
+        fetch(`/operadoras/api/operadoras-ativas`)
+            .then(response => response.json())
+            .then(data => {
+                const operadoraSelecionada = data.find(op => op.id === operadora);
+                if (operadoraSelecionada && operadoraSelecionada.possui_rpa) {
+                    if (!login || !senha) {
+                        alert('Para operadoras com RPA, login e senha são obrigatórios!');
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+            });
+    }
+});
+</script>
+
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %}

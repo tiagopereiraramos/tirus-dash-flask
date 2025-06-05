@@ -1,0 +1,389 @@
+
+{% extends "layouts/base.html" %}
+
+{% block title %}Cliente - {{ cliente.razao_social }}{% endblock %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="pcoded-main-container">
+    <div class="pcoded-content">
+        <!-- [ breadcrumb ] start -->
+        <div class="page-header">
+            <div class="page-block">
+                <div class="row align-items-center">
+                    <div class="col-md-12">
+                        <div class="page-header-title">
+                            <h5 class="m-b-10">Detalhes do Cliente</h5>
+                        </div>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a href="{{ url_for('home_bp.index') }}">
+                                    <i class="feather icon-home"></i>
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item">
+                                <a href="{{ url_for('clientes_bp.index') }}">Clientes</a>
+                            </li>
+                            <li class="breadcrumb-item active" aria-current="page">{{ cliente.razao_social }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- [ breadcrumb ] end -->
+        
+        <!-- [ Main Content ] start -->
+        <div class="row">
+            <!-- Informações Principais -->
+            <div class="col-xl-8">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h5>
+                                    <i class="feather icon-user"></i> {{ cliente.razao_social }}
+                                    {% if cliente.status_ativo %}
+                                        <span class="badge bg-success ms-2">Ativo</span>
+                                    {% else %}
+                                        <span class="badge bg-danger ms-2">Inativo</span>
+                                    {% endif %}
+                                </h5>
+                                <p class="text-muted mb-0">{{ cliente.nome_sat }}</p>
+                            </div>
+                            <div class="col-auto">
+                                <div class="btn-group">
+                                    <a href="{{ url_for('clientes_bp.editar', cliente_id=cliente.id) }}" class="btn btn-primary">
+                                        <i class="feather icon-edit"></i> Editar
+                                    </a>
+                                    <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
+                                        <span class="sr-only">Toggle Dropdown</span>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" href="#" onclick="toggleStatus('{{ cliente.id }}', '{{ cliente.razao_social }}')">
+                                                <i class="feather icon-{% if cliente.status_ativo %}pause{% else %}play{% endif %}"></i>
+                                                {% if cliente.status_ativo %}Desativar{% else %}Ativar{% endif %}
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item text-danger" href="#" onclick="confirmarExclusao('{{ cliente.id }}', '{{ cliente.razao_social }}')">
+                                                <i class="feather icon-trash-2"></i> Excluir
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Mensagens de Flash -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{% if category == 'error' %}danger{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <!-- Dados Principais -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Dados da Empresa</h6>
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td><strong>Razão Social:</strong></td>
+                                        <td>{{ cliente.razao_social }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Nome no SAT:</strong></td>
+                                        <td>{{ cliente.nome_sat }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>CNPJ:</strong></td>
+                                        <td><span class="font-monospace">{{ cliente.cnpj }}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Hash Única:</strong></td>
+                                        <td><span class="font-monospace small">{{ cliente.hash_unico }}</span></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Operadora e Serviço</h6>
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td><strong>Operadora:</strong></td>
+                                        <td>
+                                            <span class="badge bg-info">{{ cliente.operadora.codigo }}</span>
+                                            {{ cliente.operadora.nome }}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Serviço:</strong></td>
+                                        <td>{{ cliente.servico }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Unidade:</strong></td>
+                                        <td>{{ cliente.unidade }}</td>
+                                    </tr>
+                                    {% if cliente.filtro %}
+                                    <tr>
+                                        <td><strong>Filtro:</strong></td>
+                                        <td>{{ cliente.filtro }}</td>
+                                    </tr>
+                                    {% endif %}
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Dados SAT -->
+                        {% if cliente.dados_sat %}
+                        <hr>
+                        <h6 class="text-muted">Dados SAT</h6>
+                        <div class="alert alert-light">
+                            <i class="feather icon-database"></i>
+                            <pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">{{ cliente.dados_sat }}</pre>
+                        </div>
+                        {% endif %}
+
+                        <!-- Site de Emissão -->
+                        {% if cliente.site_emissao %}
+                        <hr>
+                        <h6 class="text-muted">Site de Emissão</h6>
+                        <p><i class="feather icon-link"></i> {{ cliente.site_emissao }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Credenciais de Acesso -->
+                {% if cliente.login_portal or cliente.senha_portal or cliente.cpf %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="feather icon-key"></i> Credenciais de Acesso</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% if cliente.login_portal %}
+                            <div class="col-md-4">
+                                <h6 class="text-muted">Login do Portal</h6>
+                                <p class="font-monospace">{{ cliente.login_portal }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            {% if cliente.senha_portal %}
+                            <div class="col-md-4">
+                                <h6 class="text-muted">Senha do Portal</h6>
+                                <p>
+                                    <span id="senhaOculta">••••••••</span>
+                                    <span id="senhaVisivel" style="display: none;" class="font-monospace">{{ cliente.senha_portal }}</span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleSenha()">
+                                        <i class="feather icon-eye" id="iconeSenha"></i>
+                                    </button>
+                                </p>
+                            </div>
+                            {% endif %}
+                            
+                            {% if cliente.cpf %}
+                            <div class="col-md-4">
+                                <h6 class="text-muted">CPF</h6>
+                                <p class="font-monospace">{{ cliente.cpf }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Coluna Lateral -->
+            <div class="col-xl-4">
+                <!-- Status do RPA -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="feather icon-settings"></i> Status de Automação</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        {% if cliente.pode_usar_rpa %}
+                            <div class="text-primary mb-3">
+                                <i class="feather icon-zap f-40"></i>
+                            </div>
+                            <h5 class="text-primary">RPA Disponível</h5>
+                            <p class="text-muted">Este cliente pode usar automação RPA para download de faturas.</p>
+                            <div class="alert alert-success">
+                                <small><strong>Operadora:</strong> {{ cliente.operadora.nome }}</small><br>
+                                <small><strong>RPA Classe:</strong> {{ cliente.operadora.classe_rpa or 'Não especificada' }}</small>
+                            </div>
+                        {% elif cliente.requer_upload_manual %}
+                            <div class="text-warning mb-3">
+                                <i class="feather icon-upload f-40"></i>
+                            </div>
+                            <h5 class="text-warning">Upload Manual</h5>
+                            <p class="text-muted">Este cliente requer upload manual de faturas pois a operadora não possui RPA.</p>
+                        {% else %}
+                            <div class="text-secondary mb-3">
+                                <i class="feather icon-pause-circle f-40"></i>
+                            </div>
+                            <h5 class="text-secondary">Não Disponível</h5>
+                            <p class="text-muted">Cliente inativo ou operadora não configurada.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Validação de Dados -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="feather icon-check-circle"></i> Validação de Dados</h5>
+                    </div>
+                    <div class="card-body">
+                        {% set campos_faltando = cliente.validar_dados_obrigatorios() %}
+                        {% if not campos_faltando %}
+                            <div class="alert alert-success">
+                                <i class="feather icon-check"></i>
+                                <strong>Todos os dados obrigatórios estão completos!</strong>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <i class="feather icon-alert-triangle"></i>
+                                <strong>Campos obrigatórios em falta:</strong>
+                                <ul class="mb-0 mt-2">
+                                    {% for campo in campos_faltando %}
+                                        <li>{{ campo.replace('_', ' ').title() }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Informações Técnicas -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="feather icon-info"></i> Informações Técnicas</h5>
+                    </div>
+                    <div class="card-body">
+                        <small class="text-muted">Criado em:</small>
+                        <p class="small">{{ cliente.data_criacao.strftime('%d/%m/%Y às %H:%M') }}</p>
+                        
+                        {% if cliente.data_atualizacao != cliente.data_criacao %}
+                        <small class="text-muted">Última atualização:</small>
+                        <p class="small">{{ cliente.data_atualizacao.strftime('%d/%m/%Y às %H:%M') }}</p>
+                        {% endif %}
+                        
+                        <small class="text-muted">ID do Cliente:</small>
+                        <p class="font-monospace small">{{ cliente.id }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="modalExclusao" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="feather icon-trash-2 text-danger"></i> Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir o cliente:</p>
+                <p class="fw-bold" id="nomeCliente"></p>
+                <div class="alert alert-warning">
+                    <i class="feather icon-alert-triangle"></i>
+                    <strong>Atenção:</strong> Esta ação não pode ser desfeita!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formExclusao" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="feather icon-trash-2"></i> Sim, Excluir
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Toggle Status -->
+<div class="modal fade" id="modalToggleStatus" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="feather icon-refresh-cw"></i> Alterar Status
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="mensagemStatus"></p>
+                <p class="fw-bold" id="nomeClienteStatus"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formToggleStatus" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-primary" id="btnConfirmarStatus">
+                        Confirmar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmarExclusao(clienteId, nomeCliente) {
+    document.getElementById('nomeCliente').textContent = nomeCliente;
+    document.getElementById('formExclusao').action = '/clientes/excluir/' + clienteId;
+    $('#modalExclusao').modal('show');
+}
+
+function toggleStatus(clienteId, nomeCliente) {
+    document.getElementById('nomeClienteStatus').textContent = nomeCliente;
+    document.getElementById('formToggleStatus').action = '/clientes/toggle-status/' + clienteId;
+    
+    const isAtivo = {{ 'true' if cliente.status_ativo else 'false' }};
+    
+    if (isAtivo) {
+        document.getElementById('mensagemStatus').textContent = 'Tem certeza que deseja DESATIVAR o cliente:';
+        document.getElementById('btnConfirmarStatus').innerHTML = '<i class="feather icon-pause"></i> Desativar';
+        document.getElementById('btnConfirmarStatus').className = 'btn btn-warning';
+    } else {
+        document.getElementById('mensagemStatus').textContent = 'Tem certeza que deseja ATIVAR o cliente:';
+        document.getElementById('btnConfirmarStatus').innerHTML = '<i class="feather icon-play"></i> Ativar';
+        document.getElementById('btnConfirmarStatus').className = 'btn btn-success';
+    }
+    
+    $('#modalToggleStatus').modal('show');
+}
+
+function toggleSenha() {
+    const senhaOculta = document.getElementById('senhaOculta');
+    const senhaVisivel = document.getElementById('senhaVisivel');
+    const icone = document.getElementById('iconeSenha');
+    
+    if (senhaOculta.style.display === 'none') {
+        senhaOculta.style.display = 'inline';
+        senhaVisivel.style.display = 'none';
+        icone.className = 'feather icon-eye';
+    } else {
+        senhaOculta.style.display = 'none';
+        senhaVisivel.style.display = 'inline';
+        icone.className = 'feather icon-eye-off';
+    }
+}
+</script>
+
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %}

@@ -1,0 +1,378 @@
+
+{% extends "layouts/base.html" %}
+
+{% block title %}Gerenciamento de Clientes{% endblock %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="pcoded-main-container">
+    <div class="pcoded-content">
+        <!-- [ breadcrumb ] start -->
+        <div class="page-header">
+            <div class="page-block">
+                <div class="row align-items-center">
+                    <div class="col-md-12">
+                        <div class="page-header-title">
+                            <h5 class="m-b-10">Gerenciamento de Clientes</h5>
+                        </div>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a href="{{ url_for('home_bp.index') }}">
+                                    <i class="feather icon-home"></i>
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item active" aria-current="page">Clientes</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- [ breadcrumb ] end -->
+        
+        <!-- [ Main Content ] start -->
+        <div class="row">
+            <!-- Estatísticas em Cards -->
+            <div class="col-md-6 col-xl-3">
+                <div class="card bg-primary">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-8">
+                                <h4 class="text-white m-0">{{ total_clientes }}</h4>
+                                <p class="text-white m-0">Total de Clientes</p>
+                            </div>
+                            <div class="col-4 text-right">
+                                <i class="feather icon-users text-white f-30"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-xl-3">
+                <div class="card bg-success">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-8">
+                                <h4 class="text-white m-0">{{ clientes_ativos }}</h4>
+                                <p class="text-white m-0">Clientes Ativos</p>
+                            </div>
+                            <div class="col-4 text-right">
+                                <i class="feather icon-user-check text-white f-30"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-xl-3">
+                <div class="card bg-info">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-8">
+                                <h4 class="text-white m-0">{{ clientes_com_rpa }}</h4>
+                                <p class="text-white m-0">Com RPA</p>
+                            </div>
+                            <div class="col-4 text-right">
+                                <i class="feather icon-zap text-white f-30"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-xl-3">
+                <div class="card bg-warning">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-8">
+                                <h4 class="text-white m-0">{{ clientes_sem_rpa }}</h4>
+                                <p class="text-white m-0">Upload Manual</p>
+                            </div>
+                            <div class="col-4 text-right">
+                                <i class="feather icon-upload text-white f-30"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros e Ações -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h5><i class="feather icon-filter"></i> Filtros de Busca</h5>
+                            </div>
+                            <div class="col-auto">
+                                <div class="btn-group">
+                                    <a href="{{ url_for('clientes_bp.novo') }}" class="btn btn-primary">
+                                        <i class="feather icon-plus"></i> Novo Cliente
+                                    </a>
+                                    <a href="{{ url_for('clientes_bp.importar') }}" class="btn btn-info">
+                                        <i class="feather icon-upload"></i> Importar CSV
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <form method="GET" class="row g-3">
+                            <div class="col-md-3">
+                                {{ form_filtro.razao_social.label(class="form-label") }}
+                                {{ form_filtro.razao_social() }}
+                            </div>
+                            <div class="col-md-2">
+                                {{ form_filtro.cnpj.label(class="form-label") }}
+                                {{ form_filtro.cnpj() }}
+                            </div>
+                            <div class="col-md-2">
+                                {{ form_filtro.operadora.label(class="form-label") }}
+                                {{ form_filtro.operadora() }}
+                            </div>
+                            <div class="col-md-2">
+                                {{ form_filtro.servico.label(class="form-label") }}
+                                {{ form_filtro.servico() }}
+                            </div>
+                            <div class="col-md-2">
+                                {{ form_filtro.unidade.label(class="form-label") }}
+                                {{ form_filtro.unidade() }}
+                            </div>
+                            <div class="col-md-1">
+                                {{ form_filtro.status.label(class="form-label") }}
+                                {{ form_filtro.status() }}
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="feather icon-search"></i> Filtrar
+                                </button>
+                                <a href="{{ url_for('clientes_bp.index') }}" class="btn btn-secondary">
+                                    <i class="feather icon-x"></i> Limpar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Clientes -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="feather icon-users"></i> Lista de Clientes ({{ clientes|length }})</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Mensagens de Flash -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{% if category == 'error' %}danger{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        {% if clientes %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Razão Social</th>
+                                        <th>CNPJ</th>
+                                        <th>Operadora</th>
+                                        <th>Serviço</th>
+                                        <th>Unidade</th>
+                                        <th>Status</th>
+                                        <th>RPA</th>
+                                        <th width="200">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for cliente in clientes %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ cliente.razao_social }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ cliente.nome_sat }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="font-monospace">{{ cliente.cnpj }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ cliente.operadora.codigo }}</span>
+                                            <br>
+                                            <small>{{ cliente.operadora.nome }}</small>
+                                        </td>
+                                        <td>{{ cliente.servico }}</td>
+                                        <td>{{ cliente.unidade }}</td>
+                                        <td>
+                                            {% if cliente.status_ativo %}
+                                                <span class="badge bg-success">Ativo</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Inativo</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if cliente.pode_usar_rpa %}
+                                                <span class="badge bg-primary">
+                                                    <i class="feather icon-zap"></i> RPA
+                                                </span>
+                                            {% elif cliente.requer_upload_manual %}
+                                                <span class="badge bg-warning">
+                                                    <i class="feather icon-upload"></i> Manual
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">N/A</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ url_for('clientes_bp.visualizar', cliente_id=cliente.id) }}" 
+                                                   class="btn btn-outline-info" title="Visualizar">
+                                                    <i class="feather icon-eye"></i>
+                                                </a>
+                                                <a href="{{ url_for('clientes_bp.editar', cliente_id=cliente.id) }}" 
+                                                   class="btn btn-outline-primary" title="Editar">
+                                                    <i class="feather icon-edit"></i>
+                                                </a>
+                                                <button type="button" 
+                                                        class="btn btn-outline-{% if cliente.status_ativo %}warning{% else %}success{% endif %}"
+                                                        onclick="toggleStatus('{{ cliente.id }}', '{{ cliente.razao_social }}')"
+                                                        title="{% if cliente.status_ativo %}Desativar{% else %}Ativar{% endif %}">
+                                                    <i class="feather icon-{% if cliente.status_ativo %}pause{% else %}play{% endif %}"></i>
+                                                </button>
+                                                <button type="button" 
+                                                        class="btn btn-outline-danger"
+                                                        onclick="confirmarExclusao('{{ cliente.id }}', '{{ cliente.razao_social }}')"
+                                                        title="Excluir">
+                                                    <i class="feather icon-trash-2"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="feather icon-users f-40 text-muted"></i>
+                            <h5 class="mt-3">Nenhum cliente encontrado</h5>
+                            <p class="text-muted">Comece cadastrando um novo cliente ou ajuste os filtros de busca.</p>
+                            <a href="{{ url_for('clientes_bp.novo') }}" class="btn btn-primary">
+                                <i class="feather icon-plus"></i> Cadastrar Primeiro Cliente
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="modalExclusao" tabindex="-1" aria-labelledby="modalExclusaoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalExclusaoLabel">
+                    <i class="feather icon-trash-2 text-danger"></i> Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir o cliente:</p>
+                <p class="fw-bold" id="nomeCliente"></p>
+                <div class="alert alert-warning">
+                    <i class="feather icon-alert-triangle"></i>
+                    <strong>Atenção:</strong> Esta ação não pode ser desfeita!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formExclusao" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="feather icon-trash-2"></i> Sim, Excluir
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Toggle Status -->
+<div class="modal fade" id="modalToggleStatus" tabindex="-1" aria-labelledby="modalToggleStatusLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalToggleStatusLabel">
+                    <i class="feather icon-refresh-cw"></i> Alterar Status
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="mensagemStatus"></p>
+                <p class="fw-bold" id="nomeClienteStatus"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formToggleStatus" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-primary" id="btnConfirmarStatus">
+                        Confirmar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmarExclusao(clienteId, nomeCliente) {
+    document.getElementById('nomeCliente').textContent = nomeCliente;
+    document.getElementById('formExclusao').action = '/clientes/excluir/' + clienteId;
+    $('#modalExclusao').modal('show');
+}
+
+function toggleStatus(clienteId, nomeCliente) {
+    document.getElementById('nomeClienteStatus').textContent = nomeCliente;
+    document.getElementById('formToggleStatus').action = '/clientes/toggle-status/' + clienteId;
+    
+    // Determina a mensagem baseada no status atual
+    const statusAtual = document.querySelector(`[onclick="toggleStatus('${clienteId}', '${nomeCliente}')"]`);
+    const isAtivo = statusAtual.classList.contains('btn-outline-warning');
+    
+    if (isAtivo) {
+        document.getElementById('mensagemStatus').textContent = 'Tem certeza que deseja DESATIVAR o cliente:';
+        document.getElementById('btnConfirmarStatus').innerHTML = '<i class="feather icon-pause"></i> Desativar';
+        document.getElementById('btnConfirmarStatus').className = 'btn btn-warning';
+    } else {
+        document.getElementById('mensagemStatus').textContent = 'Tem certeza que deseja ATIVAR o cliente:';
+        document.getElementById('btnConfirmarStatus').innerHTML = '<i class="feather icon-play"></i> Ativar';
+        document.getElementById('btnConfirmarStatus').className = 'btn btn-success';
+    }
+    
+    $('#modalToggleStatus').modal('show');
+}
+
+// Exibe notificações Toast
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            toastr.{{ 'error' if category == 'error' else category }}('{{ message }}');
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+</script>
+
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %}

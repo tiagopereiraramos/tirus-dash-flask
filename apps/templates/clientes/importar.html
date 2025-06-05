@@ -1,0 +1,219 @@
+
+{% extends "layouts/base.html" %}
+
+{% block title %}Importar Clientes via CSV{% endblock %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="pcoded-main-container">
+    <div class="pcoded-content">
+        <!-- [ breadcrumb ] start -->
+        <div class="page-header">
+            <div class="page-block">
+                <div class="row align-items-center">
+                    <div class="col-md-12">
+                        <div class="page-header-title">
+                            <h5 class="m-b-10">Importar Clientes via CSV</h5>
+                        </div>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a href="{{ url_for('home_bp.index') }}">
+                                    <i class="feather icon-home"></i>
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item">
+                                <a href="{{ url_for('clientes_bp.index') }}">Clientes</a>
+                            </li>
+                            <li class="breadcrumb-item active" aria-current="page">Importar CSV</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- [ breadcrumb ] end -->
+        
+        <!-- [ Main Content ] start -->
+        <div class="row">
+            <div class="col-xl-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>
+                            <i class="feather icon-upload"></i> Importar Clientes
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Mensagens de Flash -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{% if category == 'error' %}danger{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <form method="POST" enctype="multipart/form-data">
+                            {{ form.hidden_tag() }}
+                            
+                            <div class="mb-4">
+                                {{ form.arquivo_csv.label(class="form-label") }}
+                                {{ form.arquivo_csv() }}
+                                {% for error in form.arquivo_csv.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                                <div class="form-text">
+                                    Selecione um arquivo CSV com os dados dos clientes seguindo o formato especificado.
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <div class="form-check">
+                                    {{ form.sobrescrever_existentes() }}
+                                    {{ form.sobrescrever_existentes.label(class="form-check-label") }}
+                                </div>
+                                <div class="form-text">
+                                    Se marcado, clientes já existentes serão atualizados com os novos dados.
+                                </div>
+                            </div>
+                            
+                            <div class="text-end">
+                                <a href="{{ url_for('clientes_bp.index') }}" class="btn btn-secondary">
+                                    <i class="feather icon-x"></i> Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="feather icon-upload"></i> Importar Clientes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Coluna lateral com instruções -->
+            <div class="col-xl-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="feather icon-info"></i> Formato do Arquivo CSV</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <h6>Colunas Obrigatórias:</h6>
+                            <ul class="mb-0">
+                                <li><strong>RAZÃO SOCIAL</strong></li>
+                                <li><strong>NOME SAT</strong></li>
+                                <li><strong>CNPJ</strong></li>
+                                <li><strong>OPERADORA</strong></li>
+                                <li><strong>SERVIÇO</strong></li>
+                                <li><strong>UNIDADE / FILTRO SAT</strong></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="alert alert-secondary">
+                            <h6>Colunas Opcionais:</h6>
+                            <ul class="mb-0">
+                                <li>FILTRO</li>
+                                <li>DADOS SAT</li>
+                                <li>SITE PARA EMISSÃO</li>
+                                <li>LOGIN</li>
+                                <li>SENHA</li>
+                                <li>CPF</li>
+                                <li>STATUS (1=Ativo, 0=Inativo)</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <h6><i class="feather icon-alert-triangle"></i> Importante:</h6>
+                            <ul class="mb-0">
+                                <li>A operadora deve existir no sistema</li>
+                                <li>Combinação CNPJ + Operadora + Unidade + Serviço deve ser única</li>
+                                <li>Use codificação UTF-8 no arquivo CSV</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="feather icon-download"></i> Exemplo de Arquivo</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Você pode baixar um arquivo de exemplo para usar como modelo:</p>
+                        <a href="#" class="btn btn-outline-primary btn-sm" onclick="downloadExemplo()">
+                            <i class="feather icon-download"></i> Baixar Exemplo CSV
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="feather icon-help-circle"></i> Processo de Importação</h5>
+                    </div>
+                    <div class="card-body">
+                        <ol>
+                            <li>O sistema valida cada linha do CSV</li>
+                            <li>Verifica se a operadora existe</li>
+                            <li>Gera hash única para cada cliente</li>
+                            <li>Cria ou atualiza o cliente (conforme opção)</li>
+                            <li>Exibe relatório de importação</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function downloadExemplo() {
+    // Cria conteúdo CSV de exemplo
+    const csvContent = `HASH,RAZÃO SOCIAL,NOME SAT,CNPJ,OPERADORA,FILTRO,SERVIÇO,DADOS SAT,UNIDADE / FILTRO SAT,CATEGORIAS / FILTRO SAT,SITE PARA EMISSÃO,LOGIN,SENHA,CPF,OBS,STATUS,PATCHDOWNLOAD,ATUALIZA/CRIA
+exemplo123,EMPRESA EXEMPLO LTDA,EMPRESA EXEMPLO LTDA,12.345.678/0001-00,EMBRATEL,12345,Internet,Dados exemplo,Campo Grande-MS,,https://portal.exemplo.com.br,usuario@exemplo.com,senha123,,Observações exemplo,1,,SIM`;
+
+    // Cria e baixa o arquivo
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'exemplo_clientes.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Validação do formulário
+document.querySelector('form').addEventListener('submit', function(e) {
+    const arquivo = document.getElementById('arquivo_csv').files[0];
+    
+    if (!arquivo) {
+        alert('Por favor, selecione um arquivo CSV.');
+        e.preventDefault();
+        return false;
+    }
+    
+    if (!arquivo.name.toLowerCase().endsWith('.csv')) {
+        alert('Por favor, selecione um arquivo com extensão .csv');
+        e.preventDefault();
+        return false;
+    }
+    
+    // Confirmação antes de importar
+    if (!confirm('Tem certeza que deseja importar este arquivo? Esta operação pode demorar alguns minutos.')) {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Mostra loading
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.innerHTML = '<i class="feather icon-loader"></i> Importando...';
+    btn.disabled = true;
+});
+</script>
+
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %}
