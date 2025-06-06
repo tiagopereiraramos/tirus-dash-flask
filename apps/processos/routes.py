@@ -12,7 +12,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from . import bp
 from .forms import ProcessoForm, ProcessoFiltroForm, AprovacaoForm, CriarProcessosMensaisForm
 from apps import db
-from apps.models import Processo, Cliente, Operadora, Execucao, Usuario, StatusProcesso
+from apps.models import Processo, Cliente, Operadora, Execucao, Usuario
+from apps.models.processo import StatusProcesso
 from apps.authentication.util import verify_user_jwt
 
 logger = logging.getLogger(__name__)
@@ -360,6 +361,74 @@ def test_log():
     except Exception as e:
         logger.error("Erro no teste de log: %s", str(e))
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@bp.route('/criar-processos-mensais', methods=['GET', 'POST'])
+@verify_user_jwt
+def criar_processos_mensais():
+    """Criar processos mensais em massa"""
+    form = CriarProcessosMensaisForm()
+
+    if form.validate_on_submit():
+        try:
+            if not Processo.validar_formato_mes_ano(form.mes_ano.data):
+                flash('Formato de mês/ano inválido. Use MM/AAAA.', 'danger')
+                return render_template('processos/criar_mensais.html', form=form)
+
+            # Query base para clientes ativos
+            query_clientes = Cliente.query.filter(Cliente.status_ativo == True)
+
+            # Filtrar por operadora se especificado
+            if form.operadora_id.data:
+                query_clientes = query_clientes.filter(Cliente.operadora_id == form.operadora_id.data)
+
+            clientes = query_clientes.all()
+
+            if not clientes:
+                flash('Nenhum cliente encontrado para criar processos.', 'warning')
+                return render_template('processos/criar_mensais.html', form=form)
+
+            processos_criados = 0
+            processos_existentes = 0
+
+            for cliente in clientes:
+                # Verificar se já existe processo para este cliente no mês/ano
+                processo_existente = Processo.query.filter(
+                    and_(
+                        Processo.cliente_id == cliente.id,
+                        Processo.mes_ano == form.mes_ano.data
+                    )
+                ).first()
+
+                if processo_existente:
+                    processos_existentes += 1
+                    continue
+
+                # Criar novo processo
+                processo = Processo(
+                    cliente_id=cliente.id,
+                    mes_ano=form.mes_ano.data,
+                    status_processo=StatusProcesso.AGUARDANDO_DOWNLOAD.value,
+                    criado_automaticamente=True
+                )
+
+                db.session.add(processo)
+                processos_criados += 1
+
+            db.session.commit()
+
+            mensagem = f"Processos criados: {processos_criados}"
+            if processos_existentes > 0:
+                mensagem += f" | Já existiam: {processos_existentes}"
+
+            flash(mensagem, 'success')
+            return redirect(url_for('processos_bp.index'))
+
+        except Exception as e:
+            db.session.rollback()
+            logger.error("Erro ao criar processos mensais: %s", str(e))
+            flash('Erro ao criar processos. Tente novamente.', 'danger')
+
+    return render_template('processos/criar_mensais.html', form=form)
 
 # Adicione também um endpoint para verificar o estado do banco
 @bp.route('/test-db')
