@@ -133,8 +133,7 @@ def index():
         )
 
     except Exception as e:
-        # Correção principal: usar f-string ou str() para evitar problemas de formatação
-        logger.error(f"Erro ao carregar processos: {str(e)}")
+        logger.error("Erro ao carregar processos: %s", str(e))
         flash('Erro ao carregar processos. Tente novamente.', 'danger')
         return redirect(url_for('home_blueprint.index'))
 
@@ -179,14 +178,14 @@ def novo():
             db.session.add(processo)
             db.session.commit()
 
-            logger.info(f"Processo criado: {processo.id} - {processo.cliente.razao_social} - {processo.mes_ano}")
+            logger.info("Processo criado: %s - %s - %s", processo.id, processo.cliente.razao_social, processo.mes_ano)
             flash('Processo criado com sucesso!', 'success')
 
             return redirect(url_for('processos_bp.visualizar', id=processo.id))
 
         except Exception as e:
             db.session.rollback()
-            logger.error(f"Erro ao criar processo: {str(e)}")
+            logger.error("Erro ao criar processo: %s", str(e))
             flash('Erro ao criar processo. Tente novamente.', 'danger')
 
     return render_template('processos/form.html', form=form, titulo="Novo Processo")
@@ -258,14 +257,14 @@ def editar(id):
 
             db.session.commit()
 
-            logger.info(f"Processo atualizado: {processo.id}")
+            logger.info("Processo atualizado: %s", processo.id)
             flash('Processo atualizado com sucesso!', 'success')
 
             return redirect(url_for('processos_bp.visualizar', id=processo.id))
 
         except Exception as e:
             db.session.rollback()
-            logger.error(f"Erro ao atualizar processo: {str(e)}")
+            logger.error("Erro ao atualizar processo: %s", str(e))
             flash('Erro ao atualizar processo. Tente novamente.', 'danger')
 
     return render_template('processos/form.html', form=form, titulo="Editar Processo")
@@ -294,12 +293,12 @@ def excluir(id):
         db.session.delete(processo)
         db.session.commit()
 
-        logger.info(f"Processo excluído: {id} - {cliente_nome} - {mes_ano}")
+        logger.info("Processo excluído: %s - %s - %s", id, cliente_nome, mes_ano)
         flash('Processo excluído com sucesso!', 'success')
 
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Erro ao excluir processo {id}: {str(e)}")
+        logger.error("Erro ao excluir processo %s: %s", id, str(e))
         flash('Erro ao excluir processo.', 'danger')
 
     return redirect(url_for('processos_bp.index'))
@@ -334,7 +333,7 @@ def aprovar(id):
 
         db.session.commit()
 
-        logger.info(f"Processo aprovado: {processo.id}")
+        logger.info("Processo aprovado: %s", processo.id)
 
         if request.is_json or request.headers.get('Content-Type') == 'application/json':
             return jsonify({
@@ -347,7 +346,7 @@ def aprovar(id):
 
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Erro ao aprovar processo {id}: {str(e)}")
+        logger.error("Erro ao aprovar processo %s: %s", id, str(e))
 
         if request.is_json or request.headers.get('Content-Type') == 'application/json':
             return jsonify({
@@ -397,7 +396,7 @@ def rejeitar(id):
 
         db.session.commit()
 
-        logger.info(f"Processo rejeitado: {processo.id}")
+        logger.info("Processo rejeitado: %s", processo.id)
 
         if request.is_json or request.headers.get('Content-Type') == 'application/json':
             return jsonify({
@@ -410,7 +409,7 @@ def rejeitar(id):
 
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Erro ao rejeitar processo {id}: {str(e)}")
+        logger.error("Erro ao rejeitar processo %s: %s", id, str(e))
 
         if request.is_json or request.headers.get('Content-Type') == 'application/json':
             return jsonify({
@@ -473,7 +472,7 @@ def criar_processos_mensais():
 
             db.session.commit()
 
-            logger.info(f"Processos mensais criados: {processos_criados} para {form.mes_ano.data}")
+            logger.info("Processos mensais criados: %s para %s", processos_criados, form.mes_ano.data)
 
             if processos_criados > 0:
                 flash(f'Criados {processos_criados} processos para {form.mes_ano.data}!', 'success')
@@ -488,7 +487,7 @@ def criar_processos_mensais():
 
         except Exception as e:
             db.session.rollback()
-            logger.error(f"Erro ao criar processos mensais: {str(e)}")
+            logger.error("Erro ao criar processos mensais: %s", str(e))
             flash('Erro ao criar processos mensais.', 'danger')
 
     return render_template('processos/criar_mensais.html', form=form)
@@ -511,7 +510,7 @@ def enviar_sat(id):
 
         db.session.commit()
 
-        logger.info(f"Processo enviado para SAT (mock): {processo.id}")
+        logger.info("Processo enviado para SAT (mock): %s", processo.id)
 
         return jsonify({
             'success': True,
@@ -520,7 +519,7 @@ def enviar_sat(id):
 
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Erro ao enviar processo {id} para SAT: {str(e)}")
+        logger.error("Erro ao enviar processo %s para SAT: %s", id, str(e))
         return jsonify({
             'success': False,
             'message': 'Erro interno do servidor.'
@@ -558,5 +557,5 @@ def api_estatisticas():
         })
 
     except Exception as e:
-        logger.error(f"Erro ao buscar estatísticas: {str(e)}")
+        logger.error("Erro ao buscar estatísticas: %s", str(e))
         return jsonify({'error': 'Erro interno'}), 500
