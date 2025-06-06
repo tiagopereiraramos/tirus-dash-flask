@@ -50,25 +50,7 @@ window.sistemaRPA.faturaCarregada = false;
 // Remover todas as funções duplicadas que causam conflitos
 // As funções específicas da página de detalhes ficam no template da página
 
-// Função global para abrir fatura em nova aba
-window.abrirFaturaNovaAba = function(processoId) {
-    if (typeof $ !== 'undefined') {
-        $.get('/processos/fatura-dados/' + processoId)
-        .done(function(response) {
-            if (response.success && response.url_fatura) {
-                window.open(response.url_fatura, '_blank');
-            } else {
-                alert('Erro ao abrir fatura em nova aba: ' + (response.message || 'URL da fatura não encontrada.'));
-            }
-        })
-        .fail(function() {
-            alert('Erro ao carregar dados da fatura.');
-        });
-    } else {
-        console.error('jQuery não disponível');
-        alert('Sistema não carregou corretamente');
-    }
-};
+// Função global removida para evitar conflitos - agora gerenciada pela página específica
 
 // Function to toggle between light and dark themes (legacy support)
 window.toggleTheme = function() {

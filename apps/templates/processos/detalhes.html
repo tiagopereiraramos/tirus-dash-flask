@@ -185,33 +185,46 @@
                                                                     </button>
                                                                 </h6>
                                                             </div>
-                                                            <div class="card-body p-0">
-                                                                <div class="fatura-container">
-                                                                    <iframe 
-                                                                        id="fatura-iframe"
-                                                                        src="{{ processo.url_fatura }}"
-                                                                        onload="faturaCarregou()"
-                                                                        onerror="faturaErro()">
-                                                                    </iframe>
-
-                                                                    <div id="loading-fatura" class="loading-overlay">
-                                                                        <div class="text-center">
-                                                                            <div class="spinner-border text-primary" role="status">
-                                                                                <span class="sr-only">Carregando...</span>
-                                                                            </div>
-                                                                            <p class="mt-2 text-muted">Carregando fatura...</p>
-                                                                        </div>
+                                                            <div class="card-body p-3">
+                                                                <div class="text-center">
+                                                                    <div class="mb-3">
+                                                                        <i class="feather icon-file-text" style="font-size: 4rem; color: #007bff;"></i>
                                                                     </div>
-
-                                                                    <div id="error-fatura" class="error-overlay">
-                                                                        <div class="text-center">
-                                                                            <i class="feather icon-alert-triangle text-warning" style="font-size: 3rem;"></i>
-                                                                            <p class="mt-2 text-muted">Erro ao carregar fatura</p>
-                                                                            <button type="button" class="btn btn-primary btn-sm" onclick="recarregarFatura()">
-                                                                                <i class="feather icon-refresh-cw"></i> Tentar Novamente
+                                                                    <h5 class="mb-3">Fatura Disponível</h5>
+                                                                    <p class="text-muted mb-4">Clique no botão abaixo para visualizar a fatura em uma nova aba</p>
+                                                                    
+                                                                    <div class="row">
+                                                                        <div class="col-md-6 mb-2">
+                                                                            <button type="button" class="btn btn-primary btn-block" onclick="abrirFaturaNovaAba()">
+                                                                                <i class="feather icon-external-link mr-2"></i>
+                                                                                Abrir Fatura
+                                                                            </button>
+                                                                        </div>
+                                                                        <div class="col-md-6 mb-2">
+                                                                            <button type="button" class="btn btn-outline-primary btn-block" onclick="copiarUrlFatura()">
+                                                                                <i class="feather icon-copy mr-2"></i>
+                                                                                Copiar URL
                                                                             </button>
                                                                         </div>
                                                                     </div>
+                                                                    
+                                                                    {% if processo.valor_fatura or processo.data_vencimento %}
+                                                                    <hr class="my-4">
+                                                                    <div class="row text-left">
+                                                                        {% if processo.valor_fatura %}
+                                                                        <div class="col-md-6">
+                                                                            <small class="text-muted">Valor da Fatura:</small>
+                                                                            <p class="font-weight-bold text-success">R$ {{ "%.2f"|format(processo.valor_fatura) }}</p>
+                                                                        </div>
+                                                                        {% endif %}
+                                                                        {% if processo.data_vencimento %}
+                                                                        <div class="col-md-6">
+                                                                            <small class="text-muted">Vencimento:</small>
+                                                                            <p class="font-weight-bold">{{ processo.data_vencimento.strftime('%d/%m/%Y') }}</p>
+                                                                        </div>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                    {% endif %}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -422,63 +435,62 @@
 // Aguardar documento carregar
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Página de detalhes carregada');
-    
-    // Aplicar máscaras se jQuery estiver disponível
-    if (typeof $ !== 'undefined' && typeof $.fn.mask !== 'undefined') {
-        console.log('Máscaras aplicadas com sucesso');
-    }
 });
 
-// Variáveis globais
-var faturaUrl = "{{ processo.url_fatura|default('') }}";
-
-// Função quando a fatura carrega com sucesso
-function faturaCarregou() {
-    console.log('Fatura carregada com sucesso');
-    var loading = document.getElementById('loading-fatura');
-    if (loading) {
-        loading.style.display = 'none';
+// Variáveis globais - escopo da página
+var FaturaViewer = {
+    url: "{{ processo.url_fatura|default('') }}",
+    
+    // Função para abrir fatura em nova aba
+    abrirNovaAba: function() {
+        if (this.url) {
+            window.open(this.url, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+        } else {
+            alert('URL da fatura não encontrada');
+        }
+    },
+    
+    // Função para copiar URL da fatura
+    copiarUrl: function() {
+        if (this.url) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(this.url).then(function() {
+                    alert('URL copiada para a área de transferência!');
+                }).catch(function() {
+                    // Fallback se clipboard API falhar
+                    FaturaViewer.copiarUrlFallback();
+                });
+            } else {
+                this.copiarUrlFallback();
+            }
+        } else {
+            alert('URL da fatura não encontrada');
+        }
+    },
+    
+    // Fallback para copiar URL
+    copiarUrlFallback: function() {
+        var textArea = document.createElement('textarea');
+        textArea.value = this.url;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            alert('URL copiada para a área de transferência!');
+        } catch (err) {
+            alert('Não foi possível copiar a URL. URL: ' + this.url);
+        }
+        document.body.removeChild(textArea);
     }
-}
+};
 
-// Função quando há erro no carregamento da fatura
-function faturaErro() {
-    console.log('Erro ao carregar fatura');
-    var loading = document.getElementById('loading-fatura');
-    var error = document.getElementById('error-fatura');
-
-    if (loading) {
-        loading.style.display = 'none';
-    }
-    if (error) {
-        error.style.display = 'flex';
-    }
-}
-
-// Função para recarregar a fatura
-function recarregarFatura() {
-    var iframe = document.getElementById('fatura-iframe');
-    var loading = document.getElementById('loading-fatura');
-    var error = document.getElementById('error-fatura');
-
-    if (loading) {
-        loading.style.display = 'flex';
-    }
-    if (error) {
-        error.style.display = 'none';
-    }
-    if (iframe && faturaUrl) {
-        iframe.src = faturaUrl;
-    }
-}
-
-// Função para abrir fatura em nova aba
+// Funções globais para compatibilidade
 function abrirFaturaNovaAba() {
-    if (faturaUrl) {
-        window.open(faturaUrl, '_blank');
-    } else {
-        alert('URL da fatura não encontrada');
-    }
+    FaturaViewer.abrirNovaAba();
+}
+
+function copiarUrlFatura() {
+    FaturaViewer.copiarUrl();
 }
 
 // Função para aprovar processo
@@ -486,7 +498,6 @@ function aprovarProcesso() {
     var observacoes = prompt('Observações da aprovação (opcional):');
     if (observacoes === null) return; // Cancelou
 
-    // Fazer requisição usando fetch (método moderno)
     fetch('/processos/aprovar/{{ processo.id }}', {
         method: 'POST',
         headers: {
@@ -520,7 +531,6 @@ function rejeitarProcesso() {
         return;
     }
 
-    // Fazer requisição usando fetch (método moderno)
     fetch('/processos/rejeitar/{{ processo.id }}', {
         method: 'POST',
         headers: {
