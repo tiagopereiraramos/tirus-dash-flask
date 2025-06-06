@@ -1,0 +1,62 @@
+Atue como um engenheiro de software sênior, especialista em documentação técnica e desenvolvimento de sistemas escaláveis. Você deve gerar um arquivo Markdown (`.md`) que seja ao mesmo tempo um **Ponto de Status do Projeto** e uma **Memória Técnica e Operacional** de tudo que foi homologado até agora na construção dos CRUDs do projeto [NOME-DO-PROJETO].
+
+O documento precisa contemplar:
+
+### 1️⃣ Sumário Executivo
+- Status atual do projeto
+- CRUDs concluídos e homologados
+- Pendências ou pontos em desenvolvimento
+
+### 2️⃣ Arquitetura Técnica
+- Descrição da arquitetura do frontend, backend e banco de dados
+- Frameworks, bibliotecas e tecnologias adotadas
+- Padrões e convenções aplicadas
+
+### 3️⃣ Estrutura de Rotas (Routes)
+- Descrição das rotas frontend e backend
+- Verbos HTTP utilizados (GET, POST, PUT, DELETE, PATCH)
+- Padrões de URL adotados (ex.: `/api/v1/entidade`)
+
+### 4️⃣ Modelagem dos CRUDs
+Para cada CRUD homologado, documentar:
+- Nome da entidade
+- Campos e seus tipos
+- Regras de negócio aplicadas
+- Validações front e back
+- Dependências entre entidades
+- Tabelas de apoio ou referenciais
+
+### 5️⃣ Padrões de Interface (Frontend)
+- Layout das páginas (listagem, cadastro, edição, visualização)
+- Componentes reutilizáveis
+- Design System adotado (se houver)
+- Comportamentos padrão (ex.: confirmação de exclusão, modais, snackbars)
+
+### 6️⃣ Padrões de Backend
+- Estrutura de APIs
+- Formato padrão de request e response (JSON, status code, mensagens)
+- Tratamento de erros e exceções
+- Logs e auditorias
+- Segurança (autenticação, autorização, roles)
+
+### 7️⃣ Fluxos e Rotinas Automatizadas
+- Processos assíncronos, batchs ou integrações existentes
+- Agendamentos, webhooks ou listeners
+- Dependências externas
+
+### 8️⃣ Referências ao Manual-App
+- Indicar quais padrões e diretrizes estão alinhados ao manual-app
+- Destacar desvios justificados ou ajustes específicos
+
+### 9️⃣ Considerações Finais
+- Recomendações técnicas
+- Riscos conhecidos
+- Próximos passos
+
+### 🔥 Formatação Markdown
+- Use títulos (`#`, `##`, `###`) de forma hierárquica
+- Inclua tabelas para modelagem de entidades
+- Liste itens com `-` ou `*` onde for adequado
+- Use blocos de código (```json, ```bash, etc.) para exemplos de API ou configuração
+
+Seja completo, direto, profissional e consistente.
