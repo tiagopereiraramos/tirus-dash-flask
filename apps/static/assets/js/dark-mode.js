@@ -70,3 +70,46 @@ themeSwitch.addEventListener('change', function () {
         setPage(1)
     }
 });
+
+// Dark mode toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Check for saved theme preference or default to light mode
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    const themeIcon = document.getElementById('theme-icon');
+
+    if (currentTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        if (themeIcon) {
+            themeIcon.className = 'feather icon-moon';
+        }
+    } else {
+        if (themeIcon) {
+            themeIcon.className = 'feather icon-sun';
+        }
+    }
+});
+
+// Function to toggle between light and dark themes
+function toggleTheme() {
+    const body = document.body;
+    const themeIcon = document.getElementById('theme-icon');
+
+    if (body.classList.contains('dark-mode')) {
+        body.classList.remove('dark-mode');
+        if (themeIcon) {
+            themeIcon.className = 'feather icon-sun';
+        }
+        localStorage.setItem('theme', 'light');
+    } else {
+        body.classList.add('dark-mode');
+        if (themeIcon) {
+            themeIcon.className = 'feather icon-moon';
+        }
+        localStorage.setItem('theme', 'dark');
+    }
+}
+
+// Function to toggle between light and dark themes (legacy)
+function toggleDarkMode() {
+    toggleTheme();
+}
