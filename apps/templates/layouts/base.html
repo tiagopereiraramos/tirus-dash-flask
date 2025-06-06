@@ -224,44 +224,7 @@
 
     {% block javascripts %}{% endblock javascripts %}
 
-    <script>
-    // Script para alternar tema escuro/claro
-    document.addEventListener('DOMContentLoaded', function() {
-        const themeToggle = document.getElementById('theme-toggle');
-        const body = document.body;
-        const icon = themeToggle.querySelector('i');
-
-        // Verificar tema atual no localStorage
-        const currentTheme = localStorage.getItem('theme') || 'light';
-
-        if (currentTheme === 'dark') {
-            body.classList.add('dark-mode');
-            icon.classList.remove('icon-moon');
-            icon.classList.add('icon-sun');
-            themeToggle.title = 'Modo claro';
-        }
-
-        themeToggle.addEventListener('click', function(e) {
-            e.preventDefault();
-
-            if (body.classList.contains('dark-mode')) {
-                // Mudar para modo claro
-                body.classList.remove('dark-mode');
-                icon.classList.remove('icon-sun');
-                icon.classList.add('icon-moon');
-                themeToggle.title = 'Modo escuro';
-                localStorage.setItem('theme', 'light');
-            } else {
-                // Mudar para modo escuro
-                body.classList.add('dark-mode');
-                icon.classList.remove('icon-moon');
-                icon.classList.add('icon-sun');
-                themeToggle.title = 'Modo claro';
-                localStorage.setItem('theme', 'dark');
-            }
-        });
-    });
-    </script>
+    
 
 </body>
 </html>

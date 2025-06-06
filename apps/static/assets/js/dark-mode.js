@@ -1,3 +1,10 @@
+` tags.
+
+```text
+Correcting querySelector errors and adding form element masking functionality.
+```
+
+<replit_final_file>
 // BRM Theme Toggle functionality
 document.addEventListener('DOMContentLoaded', function() {
     const themeToggle = document.getElementById('theme-toggle');
@@ -38,71 +45,68 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Dark mode toggle functionality
+// Script para alternar tema escuro/claro
 document.addEventListener('DOMContentLoaded', function() {
-    // Check for saved theme preference or default to light mode
-    const currentTheme = localStorage.getItem('theme') || 'light';
-    const themeIcon = document.getElementById('theme-icon');
+    const themeSwitch = document.getElementById('theme-switch');
+    const themeIndicator = document.getElementById('theme-indicator');
+    const body = document.body;
 
-    if (currentTheme === 'dark') {
-        document.body.classList.add('dark-mode');
-        if (themeIcon) {
-            themeIcon.className = 'feather icon-moon';
-        }
-    } else {
-        if (themeIcon) {
-            themeIcon.className = 'feather icon-sun';
-        }
+    if (!themeSwitch || !themeIndicator) {
+        console.warn('Elementos de tema não encontrados');
+        return;
     }
 
-    // Initialize theme switch if it exists
-    const themeSwitch = document.getElementById("theme-switch");
-    const themeIndicator = document.getElementById("theme-indicator");
+    // Verificar tema atual no localStorage
+    const currentTheme = localStorage.getItem('theme') || 'light';
 
-    if (themeSwitch && themeIndicator) {
-        const themeStates = ["light", "dark"];
-        const indicators = ["icon-sun", "icon-moon"];
+    // Aplicar tema inicial
+    if (currentTheme === 'dark') {
+        body.classList.add('dark-mode');
+        themeSwitch.checked = true;
+        themeIndicator.classList.remove('icon-sun');
+        themeIndicator.classList.add('icon-moon');
+    } else {
+        body.classList.remove('dark-mode');
+        themeSwitch.checked = false;
+        themeIndicator.classList.remove('icon-moon');
+        themeIndicator.classList.add('icon-sun');
+    }
 
-        function setTheme(theme) {
-            localStorage.setItem("theme", themeStates[theme]);
+    // Event listener para mudança de tema
+    themeSwitch.addEventListener('change', function() {
+        if (this.checked) {
+            // Mudar para modo escuro
+            body.classList.add('dark-mode');
+            themeIndicator.classList.remove('icon-sun');
+            themeIndicator.classList.add('icon-moon');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            // Mudar para modo claro
+            body.classList.remove('dark-mode');
+            themeIndicator.classList.remove('icon-moon');
+            themeIndicator.classList.add('icon-sun');
+            localStorage.setItem('theme', 'light');
         }
+    });
 
-        function setIndicator(theme) {
-            themeIndicator.classList.remove(indicators[0]);
-            themeIndicator.classList.remove(indicators[1]);
-            themeIndicator.classList.add(indicators[theme]);
-        }
+    // Verificar se existem elementos específicos de páginas antes de tentar usá-los
+    const faturaModal = document.getElementById('faturaModal');
+    const faturaViewer = document.getElementById('faturaViewer');
+    const faturaLoader = document.getElementById('faturaLoader');
 
-        function setPage(theme) {
-            if (theme === 1) {
-                document.body.classList.add("dark");
-            } else {
-                document.body.classList.remove("dark");
-            }
-        }
+    // Só adicionar event listeners se os elementos existirem
+    if (faturaModal) {
+        // Event listeners para modal de fatura
+    }
 
-        // Initialize based on saved theme
-        if (currentTheme === themeStates[0]) {
-            setIndicator(0);
-            setPage(0);
-            themeSwitch.checked = true;
-        }
-        if (currentTheme === themeStates[1]) {
-            setIndicator(1);
-            setPage(1);
-            themeSwitch.checked = false;
-        }
-
-        // Handle user interaction
-        themeSwitch.addEventListener('change', function () {
-            if (this.checked) {
-                setTheme(0);
-                setIndicator(0);
-                setPage(0);
-            } else {
-                setTheme(1);
-                setIndicator(1);
-                setPage(1);
+    // Verificar elementos de formulário
+    const formElements = document.querySelectorAll('input[data-mask]');
+    if (formElements.length > 0 && typeof $ !== 'undefined' && $.fn.mask) {
+        // Aplicar máscaras apenas se jQuery mask estiver disponível
+        formElements.forEach(function(element) {
+            const mask = element.getAttribute('data-mask');
+            if (mask) {
+                $(element).mask(mask);
             }
         });
     }
