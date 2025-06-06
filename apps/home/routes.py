@@ -16,6 +16,7 @@ from apps.models.processo import StatusProcesso
 home_bp = Blueprint('home_bp', __name__, url_prefix='/home')
 
 
+@blueprint.route('/')
 @blueprint.route('/index')
 @login_required
 def index():
