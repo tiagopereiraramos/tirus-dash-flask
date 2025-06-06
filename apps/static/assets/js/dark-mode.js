@@ -86,29 +86,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Funções para visualização de fatura
 function visualizarFatura(processoId) {
-    const modal = document.getElementById('faturaModal');
-    if (!modal) {
-        console.error('Modal de fatura não encontrado');
-        return;
-    }
-
-    // Mostrar loading
-    const faturaViewer = document.getElementById('faturaViewer');
-    const faturaLoader = document.getElementById('faturaLoader');
-    
-    if (faturaLoader) {
-        faturaLoader.style.display = 'block';
-    }
-    if (faturaViewer) {
-        faturaViewer.style.display = 'none';
-    }
-
-    // Fazer requisição para obter dados da fatura
+    // Fazer requisição para obter dados da fatura primeiro
     fetch(`/processos/fatura-dados/${processoId}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                faturaCarregada(data);
+                exibirFaturaModal(data);
             } else {
                 console.error('Erro ao carregar fatura:', data.message);
                 alert('Erro ao carregar fatura: ' + data.message);
@@ -117,44 +100,68 @@ function visualizarFatura(processoId) {
         .catch(error => {
             console.error('Erro na requisição:', error);
             alert('Erro ao carregar fatura');
-        })
-        .finally(() => {
-            if (faturaLoader) {
-                faturaLoader.style.display = 'none';
-            }
         });
-
-    // Mostrar modal
-    if (typeof $ !== 'undefined' && $.fn.modal) {
-        $(modal).modal('show');
-    } else {
-        modal.style.display = 'block';
-    }
 }
 
-function faturaCarregada(data) {
-    const faturaViewer = document.getElementById('faturaViewer');
-    if (!faturaViewer) {
-        console.error('Viewer de fatura não encontrado');
-        return;
-    }
+function exibirFaturaModal(data) {
+    // Verificar se existe jQuery e Bootstrap
+    if (typeof $ !== 'undefined' && $.fn.modal) {
+        let modalContent = `
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Cliente:</strong> ${data.cliente}</p>
+                    <p><strong>Mês/Ano:</strong> ${data.mes_ano}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Valor:</strong> R$ ${data.valor_fatura || 'N/A'}</p>
+                    <p><strong>Vencimento:</strong> ${data.data_vencimento || 'N/A'}</p>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                ${data.url_fatura ? 
+                    `<iframe src="${data.url_fatura}" width="100%" height="400px" frameborder="0"></iframe>` :
+                    '<p class="text-muted">Fatura não disponível para visualização</p>'
+                }
+            </div>
+        `;
 
-    // Configurar viewer baseado no tipo de arquivo
-    if (data.url_fatura) {
-        const fileExtension = data.url_fatura.split('.').pop().toLowerCase();
-        
-        if (fileExtension === 'pdf') {
-            faturaViewer.innerHTML = `<iframe src="${data.url_fatura}" width="100%" height="500px" frameborder="0"></iframe>`;
-        } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
-            faturaViewer.innerHTML = `<img src="${data.url_fatura}" class="img-fluid" alt="Fatura">`;
-        } else {
-            faturaViewer.innerHTML = `<p>Arquivo não pode ser visualizado diretamente. <a href="${data.url_fatura}" target="_blank">Clique aqui para baixar</a></p>`;
+        // Verificar se o modal existe, se não, criar um
+        let modal = document.getElementById('faturaModal');
+        if (!modal) {
+            $('body').append(`
+                <div class="modal fade" id="faturaModal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Visualizar Fatura</h5>
+                                <button type="button" class="close" data-dismiss="modal">
+                                    <span>&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="fatura-content"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `);
         }
-    } else {
-        faturaViewer.innerHTML = '<p>Fatura não disponível</p>';
-    }
 
-    faturaViewer.style.display = 'block';
+        $('#fatura-content').html(modalContent);
+        $('#faturaModal').modal('show');
+    } else {
+        // Fallback para quando jQuery/Bootstrap não estão disponíveis
+        console.warn('jQuery ou Bootstrap não disponível, abrindo fatura em nova aba');
+        if (data.url_fatura) {
+            window.open(data.url_fatura, '_blank');
+        } else {
+            alert('Fatura não disponível');
+        }
+    }
 }
 
 // Function to toggle between light and dark themes
@@ -184,15 +191,26 @@ function toggleDarkMode() {
 
 // Função para aplicar máscaras nos campos (se jQuery mask estiver disponível)
 function aplicarMascaras() {
-    if (typeof $ !== 'undefined' && $.fn.mask) {
+    // Aguardar jQuery e plugin mask estarem disponíveis
+    if (typeof $ !== 'undefined' && typeof $.fn.mask !== 'undefined') {
         $('[data-mask]').each(function() {
             const mask = $(this).attr('data-mask');
             if (mask) {
                 $(this).mask(mask);
             }
         });
+        
+        // Aplicar máscaras específicas
+        $('#data_vencimento').mask('00/00/0000');
+        $('#valor_fatura').mask('#.##0,00', {reverse: true});
+        $('#mes_ano').mask('00/0000');
+    } else {
+        // Tentar novamente após um pequeno delay
+        setTimeout(aplicarMascaras, 100);
     }
 }
 
 // Chamar aplicarMascaras quando o documento estiver pronto
-document.addEventListener('DOMContentLoaded', aplicarMascaras);
+$(document).ready(function() {
+    aplicarMascaras();
+});
