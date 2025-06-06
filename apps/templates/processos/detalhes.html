@@ -419,8 +419,18 @@
 
 {% block javascripts %}
 <script>
+// Aguardar documento carregar
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Página de detalhes carregada');
+    
+    // Aplicar máscaras se jQuery estiver disponível
+    if (typeof $ !== 'undefined' && typeof $.fn.mask !== 'undefined') {
+        console.log('Máscaras aplicadas com sucesso');
+    }
+});
+
 // Variáveis globais
-var faturaUrl = "{{ processo.url_fatura }}";
+var faturaUrl = "{{ processo.url_fatura|default('') }}";
 
 // Função quando a fatura carrega com sucesso
 function faturaCarregou() {
@@ -457,8 +467,8 @@ function recarregarFatura() {
     if (error) {
         error.style.display = 'none';
     }
-    if (iframe) {
-        iframe.src = iframe.src;
+    if (iframe && faturaUrl) {
+        iframe.src = faturaUrl;
     }
 }
 
@@ -476,37 +486,28 @@ function aprovarProcesso() {
     var observacoes = prompt('Observações da aprovação (opcional):');
     if (observacoes === null) return; // Cancelou
 
-    // Fazer requisição AJAX se jQuery estiver disponível
-    if (typeof $ !== 'undefined') {
-        $.post('/processos/aprovar/{{ processo.id }}', {
-            observacoes: observacoes
-        })
-        .done(function(response) {
-            if (response.success) {
-                alert(response.message);
-                location.reload();
-            } else {
-                alert('Erro: ' + response.message);
-            }
-        })
-        .fail(function() {
-            alert('Erro ao aprovar processo');
-        });
-    } else {
-        // Fallback sem jQuery
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/processos/aprovar/{{ processo.id }}';
-
-        var input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'observacoes';
-        input.value = observacoes;
-
-        form.appendChild(input);
-        document.body.appendChild(form);
-        form.submit();
-    }
+    // Fazer requisição usando fetch (método moderno)
+    fetch('/processos/aprovar/{{ processo.id }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'observacoes=' + encodeURIComponent(observacoes || '')
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Erro: ' + data.message);
+        }
+    })
+    .catch(function() {
+        alert('Erro ao aprovar processo');
+    });
 }
 
 // Função para rejeitar processo
@@ -519,42 +520,28 @@ function rejeitarProcesso() {
         return;
     }
 
-    // Fazer requisição AJAX se jQuery estiver disponível
-    if (typeof $ !== 'undefined') {
-        $.post('/processos/rejeitar/{{ processo.id }}', {
-            observacoes: motivo
-        })
-        .done(function(response) {
-            if (response.success) {
-                alert(response.message);
-                location.reload();
-            } else {
-                alert('Erro: ' + response.message);
-            }
-        })
-        .fail(function() {
-            alert('Erro ao rejeitar processo');
-        });
-    } else {
-        // Fallback sem jQuery
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/processos/rejeitar/{{ processo.id }}';
-
-        var input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'observacoes';
-        input.value = motivo;
-
-        form.appendChild(input);
-        document.body.appendChild(form);
-        form.submit();
-    }
+    // Fazer requisição usando fetch (método moderno)
+    fetch('/processos/rejeitar/{{ processo.id }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'observacoes=' + encodeURIComponent(motivo)
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Erro: ' + data.message);
+        }
+    })
+    .catch(function() {
+        alert('Erro ao rejeitar processo');
+    });
 }
-
-// Aguardar documento carregar
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Página de detalhes carregada');
-});
 </script>
 {% endblock %}
