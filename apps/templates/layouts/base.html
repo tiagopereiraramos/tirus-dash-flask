@@ -34,6 +34,68 @@
 
     <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    
+    <!-- CSS para o switch de tema -->
+    <style>
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+        
+        .theme-switch {
+            display: inline-block;
+            height: 34px;
+            position: relative;
+            width: 60px;
+        }
+        
+        .theme-switch input {
+            display: none;
+        }
+        
+        .slider {
+            background-color: #ccc;
+            bottom: 0;
+            cursor: pointer;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            transition: .4s;
+            border-radius: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .slider:before {
+            background-color: #fff;
+            bottom: 4px;
+            content: "";
+            height: 26px;
+            left: 4px;
+            position: absolute;
+            transition: .4s;
+            width: 26px;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #66bb6a;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        #theme-indicator {
+            color: #fff;
+            font-size: 16px;
+            z-index: 1;
+        }
+    </style>
+    
     {% block stylesheets %}{% endblock stylesheets %}
 
 </head>
@@ -68,6 +130,16 @@
                         <li><a href="javascript:" class="full-screen" onclick="javascript:toggleFullScreen()"><i class="feather icon-maximize"></i></a></li>
                     </ul>
                     <ul class="navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <div class="theme-switch-wrapper">
+                                <label class="theme-switch" for="checkbox">
+                                    <input type="checkbox" id="theme-switch" />
+                                    <div class="slider">
+                                        <i class="feather icon-sun" id="theme-indicator"></i>
+                                    </div>
+                                </label>
+                            </div>
+                        </li>
                         <li>
                             <div class="dropdown drp-user">
                                 <a href="javascript:" class="dropdown-toggle" data-toggle="dropdown">

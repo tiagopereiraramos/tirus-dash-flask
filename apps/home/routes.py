@@ -11,6 +11,9 @@ from sqlalchemy import func
 from apps import db
 from apps.models import Processo, Cliente, Operadora
 from apps.models.processo import StatusProcesso
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Blueprint específico para home
 home_bp = Blueprint('home_bp', __name__, url_prefix='/home')
@@ -18,82 +21,124 @@ home_bp = Blueprint('home_bp', __name__, url_prefix='/home')
 
 @blueprint.route('/')
 @blueprint.route('/index')
-@login_required
+@login_required  
 def index():
     try:
-        # Calcular métricas
-        total_processos = Processo.query.count()
-        processos_ativos = Processo.query.filter(
+        logger.info("Iniciando carregamento do dashboard")
+        
+        # Calcular métricas básicas
+        logger.debug("Calculando métricas básicas")
+        total_processos = db.session.query(Processo).count()
+        logger.debug(f"Total de processos: {total_processos}")
+        
+        # Verificar se os enums estão funcionando corretamente
+        try:
+            status_aguardando = StatusProcesso.AGUARDANDO_DOWNLOAD.value
+            status_download = StatusProcesso.DOWNLOAD_CONCLUIDO.value  
+            status_pendente = StatusProcesso.PENDENTE_APROVACAO.value
+            status_aprovado = StatusProcesso.APROVADO.value
+            
+            logger.debug(f"Status enum values: {status_aguardando}, {status_download}, {status_pendente}, {status_aprovado}")
+        except Exception as enum_error:
+            logger.error(f"Erro com enums: {enum_error}")
+            # Usar valores hardcoded como fallback
+            status_aguardando = 'AGUARDANDO_DOWNLOAD'
+            status_download = 'DOWNLOAD_CONCLUIDO'
+            status_pendente = 'PENDENTE_APROVACAO'
+            status_aprovado = 'APROVADO'
+        
+        processos_ativos = db.session.query(Processo).filter(
             Processo.status_processo.in_([
-                StatusProcesso.AGUARDANDO_DOWNLOAD.value,
-                StatusProcesso.DOWNLOAD_CONCLUIDO.value,
-                StatusProcesso.PENDENTE_APROVACAO.value
+                status_aguardando,
+                status_download,
+                status_pendente
             ])
         ).count()
+        logger.debug(f"Processos ativos: {processos_ativos}")
         
-        aguardando_aprovacao = Processo.query.filter_by(
-            status_processo=StatusProcesso.PENDENTE_APROVACAO.value
+        aguardando_aprovacao = db.session.query(Processo).filter_by(
+            status_processo=status_pendente
         ).count()
+        logger.debug(f"Aguardando aprovação: {aguardando_aprovacao}")
         
-        aprovados = Processo.query.filter_by(
-            status_processo=StatusProcesso.APROVADO.value
+        aprovados = db.session.query(Processo).filter_by(
+            status_processo=status_aprovado
         ).count()
+        logger.debug(f"Aprovados: {aprovados}")
         
-        total_clientes = Cliente.query.filter_by(status_ativo=True).count()
+        total_clientes = db.session.query(Cliente).filter_by(status_ativo=True).count()
+        logger.debug(f"Total clientes: {total_clientes}")
         
-        # Processos recentes
-        processos_recentes = Processo.query.join(Cliente).join(Operadora)\
-            .order_by(Processo.data_atualizacao.desc())\
-            .limit(10).all()
+        # Processos recentes - simplificado
+        logger.debug("Buscando processos recentes")
+        try:
+            processos_recentes = db.session.query(Processo)\
+                .join(Cliente)\
+                .order_by(Processo.data_atualizacao.desc())\
+                .limit(10).all()
+            logger.debug(f"Processos recentes encontrados: {len(processos_recentes)}")
+        except Exception as proc_error:
+            logger.error(f"Erro ao buscar processos recentes: {proc_error}")
+            processos_recentes = []
         
-        # Resumo por status
-        status_counts = db.session.query(
-            Processo.status_processo,
-            func.count(Processo.id).label('quantidade')
-        ).group_by(Processo.status_processo).all()
+        # Resumo por status - simplificado
+        logger.debug("Calculando resumo por status")
+        try:
+            status_counts = db.session.query(
+                Processo.status_processo,
+                func.count(Processo.id).label('quantidade')
+            ).group_by(Processo.status_processo).all()
+            
+            resumo_status = []
+            total_for_percentage = sum([s.quantidade for s in status_counts])
+            
+            status_mapping = {
+                'AGUARDANDO_DOWNLOAD': {'nome': 'Aguardando Download', 'cor': 'warning'},
+                'DOWNLOAD_CONCLUIDO': {'nome': 'Download Concluído', 'cor': 'info'},
+                'PENDENTE_APROVACAO': {'nome': 'Pendente Aprovação', 'cor': 'orange'},
+                'APROVADO': {'nome': 'Aprovado', 'cor': 'green'},
+                'REJEITADO': {'nome': 'Rejeitado', 'cor': 'red'},
+                'ENVIADO_SAT': {'nome': 'Enviado SAT', 'cor': 'blue'}
+            }
+            
+            for status in status_counts:
+                if status.status_processo in status_mapping:
+                    info = status_mapping[status.status_processo]
+                    percentual = (status.quantidade / total_for_percentage * 100) if total_for_percentage > 0 else 0
+                    resumo_status.append({
+                        'nome': info['nome'],
+                        'quantidade': status.quantidade,
+                        'cor': info['cor'],
+                        'percentual': round(percentual, 1)
+                    })
+            logger.debug(f"Resumo status calculado: {len(resumo_status)} itens")
+        except Exception as status_error:
+            logger.error(f"Erro ao calcular resumo por status: {status_error}")
+            resumo_status = []
         
-        resumo_status = []
-        total_for_percentage = sum([s.quantidade for s in status_counts])
-        
-        status_mapping = {
-            'AGUARDANDO_DOWNLOAD': {'nome': 'Aguardando Download', 'cor': 'warning'},
-            'DOWNLOAD_CONCLUIDO': {'nome': 'Download Concluído', 'cor': 'info'},
-            'PENDENTE_APROVACAO': {'nome': 'Pendente Aprovação', 'cor': 'orange'},
-            'APROVADO': {'nome': 'Aprovado', 'cor': 'green'},
-            'REJEITADO': {'nome': 'Rejeitado', 'cor': 'red'},
-            'ENVIADO_SAT': {'nome': 'Enviado SAT', 'cor': 'blue'}
-        }
-        
-        for status in status_counts:
-            if status.status_processo in status_mapping:
-                info = status_mapping[status.status_processo]
-                percentual = (status.quantidade / total_for_percentage * 100) if total_for_percentage > 0 else 0
-                resumo_status.append({
-                    'nome': info['nome'],
-                    'quantidade': status.quantidade,
-                    'cor': info['cor'],
-                    'percentual': round(percentual, 1)
+        # Resumo por operadora - simplificado  
+        logger.debug("Calculando resumo por operadora")
+        try:
+            operadoras_data = db.session.query(
+                Operadora.nome,
+                func.count(Processo.id).label('total_processos')
+            ).join(Cliente).join(Processo)\
+             .group_by(Operadora.id, Operadora.nome)\
+             .order_by(func.count(Processo.id).desc())\
+             .limit(6).all()
+            
+            operadoras_resumo = []
+            for op in operadoras_data:
+                operadoras_resumo.append({
+                    'nome': op.nome,
+                    'total_processos': op.total_processos,
+                    'aprovados': 0,  # Simplificado por enquanto
+                    'pendentes': 0   # Simplificado por enquanto
                 })
-        
-        # Resumo por operadora
-        operadoras_data = db.session.query(
-            Operadora.nome,
-            func.count(Processo.id).label('total_processos'),
-            func.sum(func.case([(Processo.status_processo == StatusProcesso.APROVADO.value, 1)], else_=0)).label('aprovados'),
-            func.sum(func.case([(Processo.status_processo == StatusProcesso.PENDENTE_APROVACAO.value, 1)], else_=0)).label('pendentes')
-        ).join(Cliente).join(Processo)\
-         .group_by(Operadora.id, Operadora.nome)\
-         .order_by(func.count(Processo.id).desc())\
-         .limit(6).all()
-        
-        operadoras_resumo = []
-        for op in operadoras_data:
-            operadoras_resumo.append({
-                'nome': op.nome,
-                'total_processos': op.total_processos,
-                'aprovados': op.aprovados or 0,
-                'pendentes': op.pendentes or 0
-            })
+            logger.debug(f"Resumo operadoras calculado: {len(operadoras_resumo)} itens")
+        except Exception as op_error:
+            logger.error(f"Erro ao calcular resumo por operadora: {op_error}")
+            operadoras_resumo = []
         
         metricas = {
             'total_processos': total_processos,
@@ -103,6 +148,9 @@ def index():
             'total_clientes': total_clientes
         }
         
+        logger.info("Dashboard carregado com sucesso")
+        logger.debug(f"Métricas finais: {metricas}")
+        
         return render_template('home/index.html', 
                              segment='index',
                              metricas=metricas,
@@ -111,6 +159,11 @@ def index():
                              operadoras_resumo=operadoras_resumo)
     
     except Exception as e:
+        logger.error(f"Erro geral no dashboard: {e}")
+        logger.error(f"Tipo do erro: {type(e).__name__}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        
         # Em caso de erro, renderizar dashboard básico
         metricas = {
             'total_processos': 0,

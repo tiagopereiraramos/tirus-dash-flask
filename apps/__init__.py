@@ -80,4 +80,26 @@ def create_app(config):
             return generate_csrf()
         except Exception:
             return ""
+    
+    # Register Blueprints
+    from apps.home import blueprint as home_blueprint
+    from apps.authentication import blueprint as auth_blueprint
+
+    app.register_blueprint(home_blueprint, url_prefix='/index')
+    app.register_blueprint(auth_blueprint, url_prefix='/login')
+
+    # Blueprints específicos dos módulos
+    from apps.operadoras import bp as operadoras_bp
+    from apps.clientes import bp as clientes_bp  
+    from apps.processos import bp as processos_bp
+
+    app.register_blueprint(operadoras_bp, url_prefix='/operadoras')
+    app.register_blueprint(clientes_bp, url_prefix='/clientes')
+    app.register_blueprint(processos_bp, url_prefix='/processos')
+
+    # Rota raiz que redireciona para o dashboard
+    @app.route('/')
+    def root():
+        from flask import redirect, url_for
+        return redirect(url_for('home_bp.index'))
     return app
