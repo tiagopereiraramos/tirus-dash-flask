@@ -71,6 +71,44 @@ themeSwitch.addEventListener('change', function () {
     }
 });
 
+// BRM Theme Toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const themeToggle = document.getElementById('theme-toggle');
+    const mainStyleLink = document.getElementById('main-style-link');
+    
+    // Check for saved theme preference or default to light mode
+    const savedTheme = localStorage.getItem('brm-theme') || 'light';
+    
+    if (savedTheme === 'dark') {
+        themeToggle.checked = true;
+        enableDarkMode();
+    }
+    
+    themeToggle.addEventListener('change', function() {
+        if (this.checked) {
+            enableDarkMode();
+            localStorage.setItem('brm-theme', 'dark');
+        } else {
+            enableLightMode();
+            localStorage.setItem('brm-theme', 'light');
+        }
+    });
+    
+    function enableDarkMode() {
+        document.body.classList.add('dark-mode');
+        if (mainStyleLink) {
+            mainStyleLink.href = mainStyleLink.href.replace('style.css', 'dark.css');
+        }
+    }
+    
+    function enableLightMode() {
+        document.body.classList.remove('dark-mode');
+        if (mainStyleLink) {
+            mainStyleLink.href = mainStyleLink.href.replace('dark.css', 'style.css');
+        }
+    }
+});
+
 // Dark mode toggle functionality
 document.addEventListener('DOMContentLoaded', function() {
     // Check for saved theme preference or default to light mode

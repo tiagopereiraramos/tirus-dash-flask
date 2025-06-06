@@ -1,0 +1,300 @@
+
+/* BRM Telecom - Tema Personalizado */
+
+:root {
+    --brm-primary: #1e3c72;
+    --brm-secondary: #2a5298;
+    --brm-accent: #3d6bb5;
+    --brm-light: #e8f0ff;
+    --brm-dark: #1a2f5c;
+    --brm-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+}
+
+/* Cores primárias do sistema */
+.btn-primary {
+    background: var(--brm-gradient) !important;
+    border-color: var(--brm-primary) !important;
+    color: white !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background: linear-gradient(135deg, #1a3464 0%, #25478a 100%) !important;
+    border-color: var(--brm-dark) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.3) !important;
+}
+
+/* Header personalizado */
+.pcoded-header {
+    background: var(--brm-gradient) !important;
+    color: white !important;
+}
+
+.pcoded-header .input-group .input-group-text,
+.pcoded-header a,
+.pcoded-header .dropdown-toggle {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.pcoded-header .input-group .input-group-text:hover,
+.pcoded-header a:hover,
+.pcoded-header .dropdown-toggle:hover {
+    color: white !important;
+}
+
+/* Sidebar personalizado */
+.pcoded-navbar {
+    background: var(--brm-primary) !important;
+}
+
+.pcoded-navbar .header-logo {
+    background: var(--brm-dark) !important;
+}
+
+.pcoded-navbar .b-bg {
+    background: var(--brm-secondary) !important;
+}
+
+/* Menu ativo */
+.pcoded-navbar .pcoded-inner-navbar li.active > a,
+.pcoded-navbar .pcoded-inner-navbar li:focus > a,
+.pcoded-navbar .pcoded-inner-navbar li:hover > a {
+    color: var(--brm-light) !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.pcoded-navbar .pcoded-inner-navbar > li.active:after,
+.pcoded-navbar .pcoded-inner-navbar > li.pcoded-trigger:after {
+    background-color: var(--brm-light) !important;
+}
+
+/* Cards e elementos */
+.card {
+    border: none !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+    border-radius: 12px !important;
+}
+
+.card-header {
+    background: var(--brm-light) !important;
+    border-bottom: 1px solid rgba(30, 60, 114, 0.1) !important;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+.card-header h5 {
+    color: var(--brm-primary) !important;
+    font-weight: 600 !important;
+}
+
+/* Badges e labels */
+.badge-primary,
+.label-primary {
+    background: var(--brm-gradient) !important;
+}
+
+.badge-success {
+    background: #28a745 !important;
+}
+
+.badge-warning {
+    background: #ffc107 !important;
+    color: #212529 !important;
+}
+
+.badge-danger {
+    background: #dc3545 !important;
+}
+
+/* Botões secundários */
+.btn-outline-primary {
+    color: var(--brm-primary) !important;
+    border-color: var(--brm-primary) !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus,
+.btn-outline-primary:active {
+    background: var(--brm-gradient) !important;
+    border-color: var(--brm-primary) !important;
+    color: white !important;
+}
+
+/* Links */
+a {
+    color: var(--brm-secondary) !important;
+}
+
+a:hover {
+    color: var(--brm-primary) !important;
+}
+
+/* Formulários */
+.form-control:focus {
+    border-color: var(--brm-secondary) !important;
+    box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1) !important;
+}
+
+/* Paginação */
+.page-link {
+    color: var(--brm-primary) !important;
+}
+
+.page-item.active .page-link {
+    background: var(--brm-gradient) !important;
+    border-color: var(--brm-primary) !important;
+}
+
+/* Tabelas */
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(30, 60, 114, 0.05) !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(30, 60, 114, 0.08) !important;
+}
+
+/* Progress bars */
+.progress-bar {
+    background: var(--brm-gradient) !important;
+}
+
+/* Breadcrumb */
+.breadcrumb-item.active {
+    color: var(--brm-primary) !important;
+}
+
+/* Dashboard cards especiais */
+.bg-primary {
+    background: var(--brm-gradient) !important;
+}
+
+.bg-c-blue {
+    background: var(--brm-secondary) !important;
+}
+
+.text-c-blue {
+    color: var(--brm-secondary) !important;
+}
+
+/* Hover effects */
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12) !important;
+    transition: all 0.3s ease;
+}
+
+/* Dropdowns */
+.dropdown-menu {
+    border: none !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15) !important;
+    border-radius: 8px !important;
+}
+
+/* Modais */
+.modal-header {
+    background: var(--brm-light) !important;
+    border-bottom: 1px solid rgba(30, 60, 114, 0.1) !important;
+}
+
+.modal-title {
+    color: var(--brm-primary) !important;
+}
+
+/* Alertas */
+.alert-primary {
+    background-color: var(--brm-light) !important;
+    border-color: rgba(30, 60, 114, 0.2) !important;
+    color: var(--brm-primary) !important;
+}
+
+/* Custom classes para destaque */
+.brm-gradient {
+    background: var(--brm-gradient) !important;
+    color: white !important;
+}
+
+.brm-text {
+    color: var(--brm-primary) !important;
+}
+
+.brm-bg-light {
+    background: var(--brm-light) !important;
+}
+
+/* Animações suaves */
+.btn, .card, .form-control {
+    transition: all 0.3s ease !important;
+}
+
+/* Logo customizada no header */
+.b-brand .b-bg img {
+    filter: brightness(0) invert(1);
+}
+
+/* Theme Switcher */
+.theme-switcher {
+    position: relative;
+    display: inline-block;
+    margin: 0 15px;
+}
+
+.theme-toggle-checkbox {
+    display: none;
+}
+
+.theme-toggle-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    width: 50px;
+    height: 25px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 25px;
+    position: relative;
+    transition: background-color 0.3s;
+    padding: 3px;
+}
+
+.theme-toggle-label:before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 21px;
+    height: 21px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.3s;
+    z-index: 2;
+}
+
+.theme-toggle-checkbox:checked + .theme-toggle-label:before {
+    transform: translateX(25px);
+}
+
+.theme-icon-light,
+.theme-icon-dark {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    z-index: 1;
+}
+
+.theme-toggle-checkbox:checked + .theme-toggle-label {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 15px;
+        border-radius: 8px !important;
+    }
+    
+    .btn {
+        padding: 8px 16px !important;
+        font-size: 14px !important;
+    }
+}

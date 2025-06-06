@@ -1,75 +1,145 @@
+
 {% extends "layouts/base-fullscreen.html" %}
 
-{% block title %} Login {% endblock %}
+{% block title %}BRM Telecom - Criar Conta{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .auth-wrapper {
+        background-image: url("{{ config.ASSETS_ROOT }}/images/2.jpg");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        position: relative;
+    }
+    
+    .auth-wrapper::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 1;
+    }
+    
+    .auth-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: none;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    }
+    
+    .brand-logo {
+        max-width: 200px;
+        height: auto;
+        margin-bottom: 30px;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        border: none;
+        padding: 12px 30px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #1a3464 0%, #25478a 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(30, 60, 114, 0.4);
+    }
+    
+    .form-control {
+        border: 2px solid #e1e5e9;
+        border-radius: 8px;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.9);
+    }
+    
+    .form-control:focus {
+        border-color: #2a5298;
+        box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
+    }
+    
+    .register-title {
+        color: #1e3c72;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+    
+    .register-subtitle {
+        color: #6c757d;
+        margin-bottom: 30px;
+    }
+    
+    .register-links a {
+        color: #2a5298;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    
+    .register-links a:hover {
+        color: #1e3c72;
+        text-decoration: underline;
+    }
+</style>
+{% endblock stylesheets %}
 
 {% block content %}   
 
     <div class="auth-wrapper">
         <div class="auth-content">
-            <div class="auth-bg">
-                <span class="r"></span>
-                <span class="r s"></span>
-                <span class="r s"></span>
-                <span class="r"></span>
-            </div>
             <div class="card">
                 <div class="card-body text-center">
+                    <div class="mb-4">
+                        <img src="{{ config.ASSETS_ROOT }}/images/logobrm.png" alt="BRM Telecom" class="brand-logo">
+                    </div>
+                    
+                    <h3 class="register-title">Criar Nova Conta</h3>
+                    <p class="register-subtitle">Preencha os dados para criar sua conta</p>
 
-                    <h3 class="mb-4">Sign UP</h3>
-
-                    <span class="mb-2 text-muted">
+                    <span class="mb-0 text-muted">
                         {% if msg %}
                             <span class="text-danger">{{ msg | safe }}</span>
                         {% else %}
-                            Add your credentials
+                            Digite seus dados para criar a conta
                         {% endif %} 
                     </span>
 
                     <br />
                     <br />
 
-                    <!-- Hide the form on success -->
-                    {% if success %}
-                        <a href="{{ url_for('authentication_blueprint.login') }}" class="btn btn-primary shadow-2 mb-4">Sign IN</a>
-                    {% else %}
+                    <form role="form" method="post" action="">
 
-                        <form role="form" method="post" action="">
+                        {{ form.hidden_tag() }}                    
 
-                            {{ form.hidden_tag() }}                    
-
-                            <div class="input-group mb-3">
-                                {{ form.username(placeholder="Username", class="form-control") }}
-                            </div>
-                            
-                            <div class="input-group mb-3">
-                                {{ form.email(placeholder="Email", class="input form-control", type="email") }}
-                            </div>
-
-                            <div class="input-group mb-4">
-                                {{ form.password(placeholder="Password", class="form-control", type="password") }}
-                            </div>
-                            
-                            <button type="submit" name="register" class="btn btn-primary shadow-2 mb-4">Register</button>
-
-                        </form>
-                        
-                        <p class="mb-0 text-muted">Already have an account? <a href="{{ url_for('authentication_blueprint.login') }}">Login</a></p>
-                       
-
-                    {% endif %}
-                    
-                    {% if not success and config.SOCIAL_AUTH_GITHUB %}
-                        <div class="mx-2">
-
-                            <a href="{{url_for('authentication_blueprint.login_github')}}" class="btn">
-                                <i class="feather icon-github auth-icon"></i>
-                                
-                            </a>
-                            <br />
-                            <span class="mx-2">Sign UP with GitHub</span>
+                        <div class="input-group mb-3">
+                            {{ form.username(placeholder="Nome de Usuário", class="form-control") }}
                         </div>
-                    {% endif %}
+                        
+                        <div class="input-group mb-3">
+                            {{ form.email(placeholder="E-mail", class="form-control") }}
+                        </div>
+                        
+                        <div class="input-group mb-4">
+                            {{ form.password(placeholder="Senha", class="form-control", type="password") }}
+                        </div>
+                        
+                        <button type="submit" name="register" class="btn btn-primary shadow-2 mb-4 w-100">Criar Conta</button>
 
+                    </form>
+
+                    <div class="register-links">
+                        <p class="mb-0 text-muted">Já possui uma conta? <a href="{{ url_for('authentication_blueprint.login') }}">Fazer Login</a></p>
+                    </div>
                 </div>
             </div>
         </div>

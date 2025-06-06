@@ -128,7 +128,15 @@
                 <div class="collapse navbar-collapse">
                     <ul class="navbar-nav mr-auto">
                         <li><a href="javascript:" class="full-screen" onclick="javascript:toggleFullScreen()"><i class="feather icon-maximize"></i></a></li>
-                        <li><a href="javascript:" id="theme-toggle" onclick="toggleTheme()"><i class="feather icon-sun" id="theme-icon"></i></a></li>
+                        <li>
+                            <div class="theme-switcher">
+                                <input type="checkbox" id="theme-toggle" class="theme-toggle-checkbox" />
+                                <label for="theme-toggle" class="theme-toggle-label">
+                                    <i class="feather icon-sun theme-icon-light"></i>
+                                    <i class="feather icon-moon theme-icon-dark"></i>
+                                </label>
+                            </div>
+                        </li>
                     </ul>
                     <ul class="navbar-nav ml-auto">
                         <li class="nav-item">
