@@ -171,60 +171,26 @@
                                                     </div>
                                                 </div>
 
-                                                <!-- Visualizador de Fatura Simplificado -->
+                                                <!-- Link para Fatura -->
                                                 {% if processo.url_fatura %}
                                                 <div class="row mt-4">
                                                     <div class="col-12">
-                                                        <div class="card">
-                                                            <div class="card-header bg-primary">
-                                                                <h6 class="text-white mb-0">
-                                                                    <i class="feather icon-file-text mr-2"></i>
-                                                                    Visualizador de Fatura
-                                                                    <button type="button" class="btn btn-sm btn-light float-right" onclick="abrirFaturaNovaAba()">
-                                                                        <i class="feather icon-external-link"></i> Nova Aba
-                                                                    </button>
-                                                                </h6>
-                                                            </div>
-                                                            <div class="card-body p-3">
-                                                                <div class="text-center">
-                                                                    <div class="mb-3">
-                                                                        <i class="feather icon-file-text" style="font-size: 4rem; color: #007bff;"></i>
+                                                        <div class="alert alert-info">
+                                                            <div class="d-flex align-items-center">
+                                                                <i class="feather icon-file-text mr-3" style="font-size: 2rem;"></i>
+                                                                <div class="flex-grow-1">
+                                                                    <h6 class="mb-1">Fatura Disponível</h6>
+                                                                    <p class="mb-2">A fatura está disponível para visualização</p>
+                                                                    <div class="btn-group">
+                                                                        <button type="button" class="btn btn-primary btn-sm" onclick="abrirFaturaNovaAba()">
+                                                                            <i class="feather icon-external-link mr-1"></i>
+                                                                            Abrir Fatura
+                                                                        </button>
+                                                                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="copiarUrlFatura()">
+                                                                            <i class="feather icon-copy mr-1"></i>
+                                                                            Copiar URL
+                                                                        </button>
                                                                     </div>
-                                                                    <h5 class="mb-3">Fatura Disponível</h5>
-                                                                    <p class="text-muted mb-4">Clique no botão abaixo para visualizar a fatura em uma nova aba</p>
-                                                                    
-                                                                    <div class="row">
-                                                                        <div class="col-md-6 mb-2">
-                                                                            <button type="button" class="btn btn-primary btn-block" onclick="abrirFaturaNovaAba()">
-                                                                                <i class="feather icon-external-link mr-2"></i>
-                                                                                Abrir Fatura
-                                                                            </button>
-                                                                        </div>
-                                                                        <div class="col-md-6 mb-2">
-                                                                            <button type="button" class="btn btn-outline-primary btn-block" onclick="copiarUrlFatura()">
-                                                                                <i class="feather icon-copy mr-2"></i>
-                                                                                Copiar URL
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                    
-                                                                    {% if processo.valor_fatura or processo.data_vencimento %}
-                                                                    <hr class="my-4">
-                                                                    <div class="row text-left">
-                                                                        {% if processo.valor_fatura %}
-                                                                        <div class="col-md-6">
-                                                                            <small class="text-muted">Valor da Fatura:</small>
-                                                                            <p class="font-weight-bold text-success">R$ {{ "%.2f"|format(processo.valor_fatura) }}</p>
-                                                                        </div>
-                                                                        {% endif %}
-                                                                        {% if processo.data_vencimento %}
-                                                                        <div class="col-md-6">
-                                                                            <small class="text-muted">Vencimento:</small>
-                                                                            <p class="font-weight-bold">{{ processo.data_vencimento.strftime('%d/%m/%Y') }}</p>
-                                                                        </div>
-                                                                        {% endif %}
-                                                                    </div>
-                                                                    {% endif %}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -382,7 +348,7 @@
 
                                             {% if processo.pode_ser_aprovado %}
                                                 {% if processo.url_fatura %}
-                                                <button type="button" class="btn btn-success btn-block mb-2" onclick="aprovarProcesso()">
+                                                <button type="button" class="btn btn-success btn-block mb-2" data-toggle="modal" data-target="#modalAprovar">
                                                     <i class="feather icon-check"></i> Aprovar Processo
                                                 </button>
                                                 {% else %}
@@ -393,7 +359,7 @@
                                             {% endif %}
 
                                             {% if processo.esta_pendente_aprovacao %}
-                                            <button type="button" class="btn btn-danger btn-block mb-2" onclick="rejeitarProcesso()">
+                                            <button type="button" class="btn btn-danger btn-block mb-2" data-toggle="modal" data-target="#modalRejeitar">
                                                 <i class="feather icon-x"></i> Rejeitar Processo
                                             </button>
                                             {% endif %}
@@ -423,6 +389,145 @@
                             <!-- [ Main Content ] end -->
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Aprovação -->
+    <div class="modal fade" id="modalAprovar" tabindex="-1" role="dialog" aria-labelledby="modalAprovarLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="modalAprovarLabel">
+                        <i class="feather icon-check mr-2"></i>
+                        Aprovar Processo
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Cliente</h6>
+                            <p class="mb-3"><strong>{{ processo.cliente.razao_social }}</strong></p>
+                            
+                            <h6 class="text-muted">Mês/Ano</h6>
+                            <p class="mb-3">{{ processo.mes_ano }}</p>
+                            
+                            {% if processo.valor_fatura %}
+                            <h6 class="text-muted">Valor da Fatura</h6>
+                            <p class="mb-3 text-success"><strong>R$ {{ "%.2f"|format(processo.valor_fatura) }}</strong></p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            {% if processo.data_vencimento %}
+                            <h6 class="text-muted">Data de Vencimento</h6>
+                            <p class="mb-3">{{ processo.data_vencimento.strftime('%d/%m/%Y') }}</p>
+                            {% endif %}
+                            
+                            <h6 class="text-muted">Operadora</h6>
+                            <p class="mb-3">{{ processo.cliente.operadora.nome }}</p>
+                            
+                            {% if processo.url_fatura %}
+                            <h6 class="text-muted">Fatura</h6>
+                            <p class="mb-3">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="abrirFaturaNovaAba()">
+                                    <i class="feather icon-external-link mr-1"></i>
+                                    Visualizar Fatura
+                                </button>
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="form-group">
+                        <label for="observacoesAprovacao">Observações da Aprovação (opcional)</label>
+                        <textarea class="form-control" id="observacoesAprovacao" rows="3" placeholder="Adicione observações sobre a aprovação..."></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="feather icon-info mr-2"></i>
+                        <strong>Atenção:</strong> Ao aprovar este processo, ele será marcado como pronto para envio ao SAT.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="feather icon-x mr-2"></i>
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="confirmarAprovacao()">
+                        <i class="feather icon-check mr-2"></i>
+                        Confirmar Aprovação
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Rejeição -->
+    <div class="modal fade" id="modalRejeitar" tabindex="-1" role="dialog" aria-labelledby="modalRejeitarLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="modalRejeitarLabel">
+                        <i class="feather icon-x mr-2"></i>
+                        Rejeitar Processo
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Cliente</h6>
+                            <p class="mb-3"><strong>{{ processo.cliente.razao_social }}</strong></p>
+                            
+                            <h6 class="text-muted">Mês/Ano</h6>
+                            <p class="mb-3">{{ processo.mes_ano }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Operadora</h6>
+                            <p class="mb-3">{{ processo.cliente.operadora.nome }}</p>
+                            
+                            {% if processo.url_fatura %}
+                            <h6 class="text-muted">Fatura</h6>
+                            <p class="mb-3">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="abrirFaturaNovaAba()">
+                                    <i class="feather icon-external-link mr-1"></i>
+                                    Visualizar Fatura
+                                </button>
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="form-group">
+                        <label for="motivoRejeicao">Motivo da Rejeição <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="motivoRejeicao" rows="4" placeholder="Descreva o motivo da rejeição..." required></textarea>
+                        <small class="form-text text-muted">Este campo é obrigatório e será registrado no histórico do processo.</small>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="feather icon-alert-triangle mr-2"></i>
+                        <strong>Atenção:</strong> Ao rejeitar este processo, ele retornará ao status de aguardando download.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="feather icon-x mr-2"></i>
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="confirmarRejeicao()">
+                        <i class="feather icon-x mr-2"></i>
+                        Confirmar Rejeição
+                    </button>
                 </div>
             </div>
         </div>
@@ -493,11 +598,10 @@ function copiarUrlFatura() {
     FaturaViewer.copiarUrl();
 }
 
-// Função para aprovar processo
-function aprovarProcesso() {
-    var observacoes = prompt('Observações da aprovação (opcional):');
-    if (observacoes === null) return; // Cancelou
-
+// Função para confirmar aprovação via modal
+function confirmarAprovacao() {
+    var observacoes = document.getElementById('observacoesAprovacao').value;
+    
     fetch('/processos/aprovar/{{ processo.id }}', {
         method: 'POST',
         headers: {
@@ -510,7 +614,13 @@ function aprovarProcesso() {
     })
     .then(function(data) {
         if (data.success) {
+            // Fechar modal
+            $('#modalAprovar').modal('hide');
+            
+            // Mostrar mensagem de sucesso
             alert(data.message);
+            
+            // Recarregar página
             location.reload();
         } else {
             alert('Erro: ' + data.message);
@@ -521,13 +631,13 @@ function aprovarProcesso() {
     });
 }
 
-// Função para rejeitar processo
-function rejeitarProcesso() {
-    var motivo = prompt('Motivo da rejeição (obrigatório):');
-    if (!motivo || motivo.trim() === '') {
-        if (motivo !== null) {
-            alert('Motivo da rejeição é obrigatório');
-        }
+// Função para confirmar rejeição via modal
+function confirmarRejeicao() {
+    var motivo = document.getElementById('motivoRejeicao').value.trim();
+    
+    if (!motivo) {
+        alert('Motivo da rejeição é obrigatório');
+        document.getElementById('motivoRejeicao').focus();
         return;
     }
 
@@ -543,7 +653,13 @@ function rejeitarProcesso() {
     })
     .then(function(data) {
         if (data.success) {
+            // Fechar modal
+            $('#modalRejeitar').modal('hide');
+            
+            // Mostrar mensagem de sucesso
             alert(data.message);
+            
+            // Recarregar página
             location.reload();
         } else {
             alert('Erro: ' + data.message);
@@ -553,5 +669,14 @@ function rejeitarProcesso() {
         alert('Erro ao rejeitar processo');
     });
 }
+
+// Limpar campos dos modais quando fecharem
+$('#modalAprovar').on('hidden.bs.modal', function () {
+    document.getElementById('observacoesAprovacao').value = '';
+});
+
+$('#modalRejeitar').on('hidden.bs.modal', function () {
+    document.getElementById('motivoRejeicao').value = '';
+});
 </script>
 {% endblock %}
