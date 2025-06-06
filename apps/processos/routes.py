@@ -437,10 +437,14 @@ def visualizar(id):
     """Visualizar detalhes de um processo"""
     try:
         processo = Processo.query.options(
-            joinedload(Processo.cliente).joinedload(Cliente.operadora)
+            joinedload(Processo.cliente).joinedload(Cliente.operadora),
+            joinedload(Processo.aprovador)
         ).get_or_404(id)
         
-        return render_template('processos/detalhes.html', processo=processo)
+        # Carregar execuções relacionadas ao processo
+        execucoes = processo.execucoes.all()
+        
+        return render_template('processos/detalhes.html', processo=processo, execucoes=execucoes)
     
     except Exception as e:
         logger.error("Erro ao visualizar processo: %s", str(e))
@@ -506,6 +510,77 @@ def editar(id):
         logger.error("Erro ao carregar processo para edição: %s", str(e))
         flash('Erro ao carregar processo. Tente novamente.', 'danger')
         return redirect(url_for('processos_bp.index'))
+
+@bp.route('/aprovar/<id>', methods=['POST'])
+@verify_user_jwt
+def aprovar(id):
+    """Aprovar um processo"""
+    try:
+        from flask import session
+        processo = Processo.query.get_or_404(id)
+        
+        if not processo.pode_ser_aprovado:
+            return jsonify({'success': False, 'message': 'Processo não pode ser aprovado no status atual'}), 400
+        
+        observacoes = request.form.get('observacoes', '').strip() or None
+        usuario_id = session.get('user_id')  # Assumindo que o user_id está na sessão
+        
+        processo.aprovar(usuario_id, observacoes)
+        db.session.commit()
+        
+        logger.info("Processo aprovado: %s por usuário %s", str(processo.id), str(usuario_id))
+        return jsonify({'success': True, 'message': 'Processo aprovado com sucesso'})
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error("Erro ao aprovar processo: %s", str(e))
+        return jsonify({'success': False, 'message': 'Erro ao aprovar processo'}), 500
+
+@bp.route('/rejeitar/<id>', methods=['POST'])
+@verify_user_jwt
+def rejeitar(id):
+    """Rejeitar um processo"""
+    try:
+        processo = Processo.query.get_or_404(id)
+        
+        if not processo.esta_pendente_aprovacao:
+            return jsonify({'success': False, 'message': 'Processo não está pendente de aprovação'}), 400
+        
+        observacoes = request.form.get('observacoes', '').strip()
+        if not observacoes:
+            return jsonify({'success': False, 'message': 'Motivo da rejeição é obrigatório'}), 400
+        
+        processo.rejeitar(observacoes)
+        db.session.commit()
+        
+        logger.info("Processo rejeitado: %s", str(processo.id))
+        return jsonify({'success': True, 'message': 'Processo rejeitado'})
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error("Erro ao rejeitar processo: %s", str(e))
+        return jsonify({'success': False, 'message': 'Erro ao rejeitar processo'}), 500
+
+@bp.route('/enviar-sat/<id>', methods=['POST'])
+@verify_user_jwt
+def enviar_sat(id):
+    """Enviar processo para SAT"""
+    try:
+        processo = Processo.query.get_or_404(id)
+        
+        if not processo.pode_enviar_sat:
+            return jsonify({'success': False, 'message': 'Processo não pode ser enviado para SAT no status atual'}), 400
+        
+        processo.enviar_para_sat()
+        db.session.commit()
+        
+        logger.info("Processo enviado para SAT: %s", str(processo.id))
+        return jsonify({'success': True, 'message': 'Processo enviado para SAT com sucesso'})
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error("Erro ao enviar processo para SAT: %s", str(e))
+        return jsonify({'success': False, 'message': 'Erro ao enviar processo para SAT'}), 500
 
 @bp.route('/test-db')
 @verify_user_jwt

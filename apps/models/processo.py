@@ -213,8 +213,8 @@ class Processo(BaseModel):
     def pode_ser_aprovado(self) -> bool:
         """Verifica se o processo pode ser aprovado"""
         return (
-            self.status_processo == StatusProcesso.DOWNLOAD_COMPLETO.value and
-            (self.caminho_s3_fatura is not None or self.upload_manual)
+            self.status_processo == StatusProcesso.DOWNLOAD_COMPLETO.value or
+            self.status_processo == StatusProcesso.AGUARDANDO_APROVACAO.value
         )
     
     @property
@@ -231,6 +231,11 @@ class Processo(BaseModel):
     def tem_fatura_disponivel(self) -> bool:
         """Verifica se há fatura disponível"""
         return bool(self.caminho_s3_fatura)
+    
+    @property
+    def esta_pendente_aprovacao(self) -> bool:
+        """Verifica se o processo está pendente de aprovação (alias para backward compatibility)"""
+        return self.status_processo == StatusProcesso.AGUARDANDO_APROVACAO.value
 
     def aprovar(self, usuario_id: GUID, observacoes: Optional[str] = None) -> None:
         """

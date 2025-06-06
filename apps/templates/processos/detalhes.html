@@ -116,98 +116,94 @@
                                             <div class="table-responsive">
 
 
-                                    <!-- Seção de Aprovação de Fatura -->
-                                    {% if processo.pode_ser_aprovado %}
-                                    <div class="card mt-4">
-                                        <div class="card-header bg-warning">
-                                            <h5 class="text-white mb-0">
-                                                <i class="feather icon-alert-circle"></i>
-                                                Aprovação de Fatura Necessária
-                                            </h5>
+                                    </div>
+
+                                <!-- Seção de Aprovação de Fatura -->
+                                {% if processo.status_processo == 'DOWNLOAD_COMPLETO' or processo.status_processo == 'AGUARDANDO_APROVACAO' %}
+                                <div class="card mt-4">
+                                    <div class="card-header bg-warning">
+                                        <h5 class="text-white mb-0">
+                                            <i class="feather icon-alert-circle"></i>
+                                            Aprovação de Fatura Necessária
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="alert alert-info">
+                                            <i class="feather icon-info"></i>
+                                            <strong>Atenção:</strong> Esta fatura foi baixada com sucesso e está aguardando aprovação manual.
+                                            Visualize o arquivo e confirme se está correto antes de aprovar.
                                         </div>
-                                        <div class="card-body">
-                                            <div class="alert alert-info">
-                                                <i class="feather icon-info"></i>
-                                                <strong>Atenção:</strong> Esta fatura foi baixada com sucesso e está aguardando aprovação manual.
-                                                Visualize o arquivo e confirme se está correto antes de aprovar.
+
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <button type="button" class="btn btn-outline-primary btn-block" 
+                                                        onclick="visualizarFatura('{{ processo.id }}')">
+                                                    <i class="feather icon-file-text"></i> Visualizar Fatura (PDF)
+                                                </button>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <button type="button" class="btn btn-outline-info btn-block" 
+                                                        onclick="baixarFatura('{{ processo.id }}')">
+                                                    <i class="feather icon-download"></i> Baixar Fatura
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <hr>
+
+                                        <form id="formAprovacao" onsubmit="aprovarFatura(event, '{{ processo.id }}')">
+                                            {{ csrf_token() }}
+                                            <div class="form-group">
+                                                <label for="observacoes_aprovacao">Observações da Aprovação:</label>
+                                                <textarea class="form-control" id="observacoes_aprovacao" name="observacoes" rows="3" 
+                                                          placeholder="Digite observações sobre a aprovação (opcional)"></textarea>
                                             </div>
 
-                                            {% if processo.tem_fatura_para_visualizar %}
                                             <div class="row">
                                                 <div class="col-md-6">
-                                                    <button type="button" class="btn btn-outline-primary btn-block" 
-                                                            onclick="visualizarFatura('{{ processo.id }}')">
-                                                        <i class="feather icon-file-text"></i> Visualizar Fatura (PDF)
+                                                    <button type="submit" class="btn btn-success btn-block">
+                                                        <i class="feather icon-check"></i> Aprovar Fatura
                                                     </button>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <button type="button" class="btn btn-outline-info btn-block" 
-                                                            onclick="baixarFatura('{{ processo.id }}')">
-                                                        <i class="feather icon-download"></i> Baixar Fatura
+                                                    <button type="button" class="btn btn-danger btn-block" 
+                                                            onclick="rejeitarFatura('{{ processo.id }}')">
+                                                        <i class="feather icon-x"></i> Rejeitar Fatura
                                                     </button>
                                                 </div>
                                             </div>
-
-                                            <hr>
-
-                                            <form id="formAprovacao" onsubmit="aprovarFatura(event, '{{ processo.id }}')">
-                                                <div class="form-group">
-                                                    <label for="observacoes_aprovacao">Observações da Aprovação:</label>
-                                                    <textarea class="form-control" id="observacoes_aprovacao" name="observacoes" rows="3" 
-                                                              placeholder="Digite observações sobre a aprovação (opcional)"></textarea>
-                                                </div>
-
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <button type="submit" class="btn btn-success btn-block">
-                                                            <i class="feather icon-check"></i> Aprovar Fatura
-                                                        </button>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <button type="button" class="btn btn-danger btn-block" 
-                                                                onclick="rejeitarFatura('{{ processo.id }}')">
-                                                            <i class="feather icon-x"></i> Rejeitar Fatura
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                            {% else %}
-                                            <div class="alert alert-warning">
-                                                <i class="feather icon-alert-triangle"></i>
-                                                Fatura não encontrada para visualização. Verifique se o download foi realizado corretamente.
-                                            </div>
-                                            {% endif %}
-                                        </div>
+                                        </form>
                                     </div>
-                                    {% endif %}
+                                </div>
+                                {% endif %}
 
-                                    <!-- Seção de Envio para SAT -->
-                                    {% if processo.pode_enviar_sat %}
-                                    <div class="card mt-4">
-                                        <div class="card-header bg-info">
-                                            <h5 class="text-white mb-0">
-                                                <i class="feather icon-upload"></i>
-                                                Pronto para Envio ao SAT
-                                            </h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="alert alert-success">
-                                                <i class="feather icon-check-circle"></i>
-                                                <strong>Fatura Aprovada!</strong> Esta fatura foi aprovada e está pronta para ser enviada ao SAT.
-                                            </div>
-
-                                            {% if processo.aprovador %}
-                                            <p><strong>Aprovado por:</strong> {{ processo.aprovador.nome_completo }}</p>
-                                            <p><strong>Data da aprovação:</strong> {{ processo.data_aprovacao.strftime('%d/%m/%Y %H:%M') }}</p>
-                                            {% endif %}
-
-                                            <button type="button" class="btn btn-info btn-lg btn-block" 
-                                                    onclick="enviarParaSATDetalhes('{{ processo.id }}')">
-                                                <i class="feather icon-upload"></i> Enviar para SAT
-                                            </button>
-                                        </div>
+                                <!-- Seção de Envio para SAT -->
+                                {% if processo.status_processo == 'APROVADO' %}
+                                <div class="card mt-4">
+                                    <div class="card-header bg-info">
+                                        <h5 class="text-white mb-0">
+                                            <i class="feather icon-upload"></i>
+                                            Pronto para Envio ao SAT
+                                        </h5>
                                     </div>
-                                    {% endif %}
+                                    <div class="card-body">
+                                        <div class="alert alert-success">
+                                            <i class="feather icon-check-circle"></i>
+                                            <strong>Fatura Aprovada!</strong> Esta fatura foi aprovada e está pronta para ser enviada ao SAT.
+                                        </div>
+
+                                        {% if processo.aprovador %}
+                                        <p><strong>Aprovado por:</strong> {{ processo.aprovador.nome_completo }}</p>
+                                        <p><strong>Data da aprovação:</strong> {{ processo.data_aprovacao.strftime('%d/%m/%Y %H:%M') }}</p>
+                                        {% endif %}
+
+                                        <button type="button" class="btn btn-info btn-lg btn-block" 
+                                                onclick="enviarParaSATDetalhes('{{ processo.id }}')">
+                                            <i class="feather icon-upload"></i> Enviar para SAT
+                                        </button>
+                                    </div>
+                                </div>
+                                {% endif %}
 
 
                                                 <table class="table table-hover">
@@ -390,12 +386,15 @@ function aprovarFatura(event, processoId) {
             url: '/processos/aprovar/' + processoId,
             type: 'POST',
             data: {
-                'observacoes': observacoes,
-                'csrf_token': $('input[name="csrf_token"]').val()
+                'observacoes': observacoes
             },
             success: function(response) {
-                alert('Fatura aprovada com sucesso!');
-                location.reload();
+                if (response.success) {
+                    alert('Fatura aprovada com sucesso!');
+                    location.reload();
+                } else {
+                    alert('Erro: ' + response.message);
+                }
             },
             error: function() {
                 alert('Erro ao aprovar fatura. Tente novamente.');
@@ -413,12 +412,15 @@ function rejeitarFatura(processoId) {
             url: '/processos/rejeitar/' + processoId,
             type: 'POST',
             data: {
-                'observacoes': motivo,
-                'csrf_token': $('input[name="csrf_token"]').val()
+                'observacoes': motivo
             },
             success: function(response) {
-                alert('Fatura rejeitada.');
-                location.reload();
+                if (response.success) {
+                    alert('Fatura rejeitada.');
+                    location.reload();
+                } else {
+                    alert('Erro: ' + response.message);
+                }
             },
             error: function() {
                 alert('Erro ao rejeitar fatura. Tente novamente.');
@@ -433,9 +435,6 @@ function enviarParaSATDetalhes(processoId) {
         $.ajax({
             url: '/processos/enviar-sat/' + processoId,
             type: 'POST',
-            data: {
-                'csrf_token': $('input[name="csrf_token"]').val()
-            },
             success: function(response) {
                 if (response.success) {
                     alert('Fatura enviada para o SAT com sucesso!');
