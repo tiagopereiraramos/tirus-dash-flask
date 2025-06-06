@@ -1,561 +1,393 @@
-import logging
-from datetime import datetime
-from typing import Optional, List, Dict, Any
-from dataclasses import dataclass
+        import logging
+        import traceback
+        from datetime import datetime
+        from typing import Optional, List, Dict, Any
+        from dataclasses import dataclass
 
-from flask import render_template, redirect, url_for, flash, request, jsonify, current_app
-from sqlalchemy import and_, or_, desc
-from sqlalchemy.orm import joinedload
+        from flask import render_template, redirect, url_for, flash, request, jsonify, current_app
+        from sqlalchemy import and_, or_, desc
+        from sqlalchemy.orm import joinedload
+        from sqlalchemy.exc import SQLAlchemyError
 
-from . import bp
-from .forms import ProcessoForm, ProcessoFiltroForm, AprovacaoForm, CriarProcessosMensaisForm
-from apps import db
-from apps.models import Processo, Cliente, Operadora, Execucao, Usuario, StatusProcesso
-from apps.authentication.util import verify_user_jwt
+        from . import bp
+        from .forms import ProcessoForm, ProcessoFiltroForm, AprovacaoForm, CriarProcessosMensaisForm
+        from apps import db
+        from apps.models import Processo, Cliente, Operadora, Execucao, Usuario, StatusProcesso
+        from apps.authentication.util import verify_user_jwt
 
-logger = logging.getLogger(__name__)
+        logger = logging.getLogger(__name__)
 
-@dataclass
-class ProcessoFiltros:
-    """Classe para organizar filtros de processos"""
-    busca: Optional[str] = None
-    status: Optional[str] = None
-    mes_ano: Optional[str] = None
-    operadora_id: Optional[str] = None
+        @dataclass
+        class ProcessoFiltros:
+            """Classe para organizar filtros de processos"""
+            busca: Optional[str] = None
+            status: Optional[str] = None
+            mes_ano: Optional[str] = None
+            operadora_id: Optional[str] = None
 
-    @classmethod
-    def from_request_args(cls, args) -> 'ProcessoFiltros':
-        """Cria instância a partir dos argumentos da requisição"""
-        return cls(
-            busca=args.get('busca', '').strip() or None,
-            status=args.get('status', '').strip() or None,
-            mes_ano=args.get('mes_ano', '').strip() or None,
-            operadora_id=args.get('operadora', '').strip() or None
-        )
+            @classmethod
+            def from_request_args(cls, args) -> 'ProcessoFiltros':
+                """Cria instância a partir dos argumentos da requisição"""
+                try:
+                    logger.debug("Criando filtros a partir dos argumentos da requisição")
+                    busca = args.get('busca', '').strip() or None
+                    status = args.get('status', '').strip() or None
+                    mes_ano = args.get('mes_ano', '').strip() or None
+                    operadora_id = args.get('operadora', '').strip() or None
 
-class ProcessoService:
-    """Serviço para operações com processos"""
+                    logger.debug("Filtros extraídos - busca: %s, status: %s, mes_ano: %s, operadora_id: %s", 
+                                busca, status, mes_ano, operadora_id)
 
-    @staticmethod
-    def buscar_clientes_por_termo(termo: str) -> List[int]:
-        """Busca IDs de clientes por termo de pesquisa"""
-        cliente_ids = set()
-
-        # Buscar clientes por nome/cnpj
-        clientes_encontrados = Cliente.query.filter(
-            or_(
-                Cliente.razao_social.like(f'%{termo}%'),
-                Cliente.nome_sat.like(f'%{termo}%'),
-                Cliente.cnpj.like(f'%{termo}%')
-            )
-        ).all()
-
-        for cliente in clientes_encontrados:
-            cliente_ids.add(cliente.id)
-
-        # Buscar clientes por operadora
-        operadoras_encontradas = Operadora.query.filter(
-            Operadora.nome.like(f'%{termo}%')
-        ).all()
-
-        for operadora in operadoras_encontradas:
-            clientes_op = Cliente.query.filter_by(operadora_id=operadora.id).all()
-            for cliente in clientes_op:
-                cliente_ids.add(cliente.id)
-
-        return list(cliente_ids)
-
-    @staticmethod
-    def aplicar_filtros(query, filtros: ProcessoFiltros):
-        """Aplica filtros à query de processos"""
-
-        if filtros.busca:
-            cliente_ids = ProcessoService.buscar_clientes_por_termo(filtros.busca)
-            if cliente_ids:
-                query = query.filter(Processo.cliente_id.in_(cliente_ids))
-            else:
-                # Retorna query vazia se nenhum cliente foi encontrado
-                query = query.filter(Processo.id.is_(None))
-
-        if filtros.status:
-            query = query.filter(Processo.status_processo == filtros.status)
-
-        if filtros.mes_ano:
-            query = query.filter(Processo.mes_ano == filtros.mes_ano)
-
-        if filtros.operadora_id:
-            clientes_da_operadora = Cliente.query.filter_by(
-                operadora_id=filtros.operadora_id
-            ).all()
-
-            if clientes_da_operadora:
-                operadora_cliente_ids = [c.id for c in clientes_da_operadora]
-                query = query.filter(Processo.cliente_id.in_(operadora_cliente_ids))
-            else:
-                query = query.filter(Processo.id.is_(None))
-
-        return query
-
-@bp.route('/')
-@verify_user_jwt
-def index():
-    """Lista todos os processos com filtros e paginação"""
-    try:
-        # Paginação
-        page = request.args.get('page', 1, type=int)
-        per_page = 10
-
-        # Parâmetros de filtro
-        filtros = ProcessoFiltros.from_request_args(request.args)
-
-        # Query inicial
-        query = Processo.query
-
-        # Aplicar filtros
-        query = ProcessoService.aplicar_filtros(query, filtros)
-
-        # Ordenação
-        query = query.order_by(Processo.data_atualizacao.desc())
-
-        # Paginação
-        processos = query.paginate(
-            page=page,
-            per_page=per_page,
-            error_out=False
-        )
-
-        form = ProcessoFiltroForm(request.args)
-
-        return render_template(
-            'processos/index.html',
-            processos=processos,
-            form=form
-        )
-
-    except Exception as e:
-        logger.error("Erro ao carregar processos: %s", str(e))
-        flash('Erro ao carregar processos. Tente novamente.', 'danger')
-        return redirect(url_for('home_blueprint.index'))
-
-@bp.route('/novo', methods=['GET', 'POST'])
-@verify_user_jwt
-def novo():
-    """Criar novo processo"""
-
-    form = ProcessoForm()
-
-    if form.validate_on_submit():
-        try:
-            if not Processo.validar_formato_mes_ano(form.mes_ano.data):
-                flash('Formato de mês/ano inválido. Use MM/AAAA.', 'danger')
-                return render_template('processos/form.html', form=form, titulo="Novo Processo")
-
-            # Verificar duplicatas
-            processo_existente = db.session.query(Processo).filter(
-                and_(
-                    Processo.cliente_id == form.cliente_id.data,
-                    Processo.mes_ano == form.mes_ano.data
-                )
-            ).first()
-
-            if processo_existente:
-                flash('Já existe um processo para este cliente no mês/ano informado.', 'danger')
-                return render_template('processos/form.html', form=form, titulo="Novo Processo")
-
-            # Criar processo
-            processo = Processo(
-                cliente_id=form.cliente_id.data,
-                mes_ano=form.mes_ano.data,
-                status_processo=form.status_processo.data,
-                url_fatura=form.url_fatura.data or None,
-                data_vencimento=form.data_vencimento.data,
-                valor_fatura=form.valor_fatura.data,
-                upload_manual=form.upload_manual.data,
-                criado_automaticamente=form.criado_automaticamente.data,
-                observacoes=form.observacoes.data or None
-            )
-
-            db.session.add(processo)
-            db.session.commit()
-
-            logger.info("Processo criado: %s - %s - %s", processo.id, processo.cliente.razao_social, processo.mes_ano)
-            flash('Processo criado com sucesso!', 'success')
-
-            return redirect(url_for('processos_bp.visualizar', id=processo.id))
-
-        except Exception as e:
-            db.session.rollback()
-            logger.error("Erro ao criar processo: %s", str(e))
-            flash('Erro ao criar processo. Tente novamente.', 'danger')
-
-    return render_template('processos/form.html', form=form, titulo="Novo Processo")
-
-@bp.route('/visualizar/<id>')
-@verify_user_jwt
-def visualizar(id):
-    """Visualizar detalhes de um processo"""
-
-    processo = db.session.query(Processo)\
-        .options(
-            joinedload(Processo.cliente).joinedload(Cliente.operadora),
-            joinedload(Processo.aprovador)
-        )\
-        .filter(Processo.id == id)\
-        .first_or_404()
-
-    execucoes = db.session.query(Execucao)\
-        .filter(Execucao.processo_id == id)\
-        .order_by(desc(Execucao.data_inicio))\
-        .all()
-
-    return render_template(
-        'processos/detalhes.html',
-        processo=processo,
-        execucoes=execucoes
-    )
-
-@bp.route('/editar/<id>', methods=['GET', 'POST'])
-@verify_user_jwt
-def editar(id):
-    """Editar processo existente"""
-
-    processo = db.session.query(Processo).filter(Processo.id == id).first_or_404()
-    form = ProcessoForm(obj=processo)
-
-    if form.validate_on_submit():
-        try:
-            if not Processo.validar_formato_mes_ano(form.mes_ano.data):
-                flash('Formato de mês/ano inválido. Use MM/AAAA.', 'danger')
-                return render_template('processos/form.html', form=form, titulo="Editar Processo")
-
-            # Verificar duplicatas (excluindo o processo atual)
-            if (form.cliente_id.data != str(processo.cliente_id) or 
-                form.mes_ano.data != processo.mes_ano):
-
-                processo_existente = db.session.query(Processo).filter(
-                    and_(
-                        Processo.cliente_id == form.cliente_id.data,
-                        Processo.mes_ano == form.mes_ano.data,
-                        Processo.id != id
+                    return cls(
+                        busca=busca,
+                        status=status,
+                        mes_ano=mes_ano,
+                        operadora_id=operadora_id
                     )
-                ).first()
+                except Exception as e:
+                    logger.error("Erro ao criar filtros: %s", str(e))
+                    logger.error("Traceback: %s", traceback.format_exc())
+                    raise
 
-                if processo_existente:
-                    flash('Já existe um processo para este cliente no mês/ano informado.', 'danger')
-                    return render_template('processos/form.html', form=form, titulo="Editar Processo")
+        class ProcessoService:
+            """Serviço para operações com processos"""
 
-            # Atualizar processo
-            processo.cliente_id = form.cliente_id.data
-            processo.mes_ano = form.mes_ano.data
-            processo.status_processo = form.status_processo.data
-            processo.url_fatura = form.url_fatura.data or None
-            processo.data_vencimento = form.data_vencimento.data
-            processo.valor_fatura = form.valor_fatura.data
-            processo.upload_manual = form.upload_manual.data
-            processo.criado_automaticamente = form.criado_automaticamente.data
-            processo.observacoes = form.observacoes.data or None
+            @staticmethod
+            def buscar_clientes_por_termo(termo: str) -> List[int]:
+                """Busca IDs de clientes por termo de pesquisa"""
+                try:
+                    logger.debug("Iniciando busca de clientes por termo: '%s'", termo)
+                    cliente_ids = set()
 
-            db.session.commit()
+                    # Buscar clientes por nome/cnpj
+                    logger.debug("Buscando clientes por nome/CNPJ")
+                    try:
+                        clientes_encontrados = Cliente.query.filter(
+                            or_(
+                                Cliente.razao_social.like(f'%{termo}%'),
+                                Cliente.nome_sat.like(f'%{termo}%'),
+                                Cliente.cnpj.like(f'%{termo}%')
+                            )
+                        ).all()
+                        logger.debug("Encontrados %d clientes por nome/CNPJ", len(clientes_encontrados))
 
-            logger.info("Processo atualizado: %s", processo.id)
-            flash('Processo atualizado com sucesso!', 'success')
+                        for cliente in clientes_encontrados:
+                            cliente_ids.add(cliente.id)
 
-            return redirect(url_for('processos_bp.visualizar', id=processo.id))
+                    except SQLAlchemyError as e:
+                        logger.error("Erro na query de clientes por nome/CNPJ: %s", str(e))
+                        raise
 
-        except Exception as e:
-            db.session.rollback()
-            logger.error("Erro ao atualizar processo: %s", str(e))
-            flash('Erro ao atualizar processo. Tente novamente.', 'danger')
+                    # Buscar clientes por operadora
+                    logger.debug("Buscando clientes por operadora")
+                    try:
+                        operadoras_encontradas = Operadora.query.filter(
+                            Operadora.nome.like(f'%{termo}%')
+                        ).all()
+                        logger.debug("Encontradas %d operadoras", len(operadoras_encontradas))
 
-    return render_template('processos/form.html', form=form, titulo="Editar Processo")
+                        for operadora in operadoras_encontradas:
+                            logger.debug("Buscando clientes da operadora: %s", operadora.nome)
+                            clientes_op = Cliente.query.filter_by(operadora_id=operadora.id).all()
+                            logger.debug("Encontrados %d clientes para operadora %s", len(clientes_op), operadora.nome)
 
-@bp.route('/excluir/<id>', methods=['POST'])
-@verify_user_jwt
-def excluir(id):
-    """Excluir processo"""
+                            for cliente in clientes_op:
+                                cliente_ids.add(cliente.id)
 
-    try:
-        processo = db.session.query(Processo).filter(Processo.id == id).first_or_404()
+                    except SQLAlchemyError as e:
+                        logger.error("Erro na query de clientes por operadora: %s", str(e))
+                        raise
 
-        status_protegidos = [
-            StatusProcesso.APROVADO.value,
-            StatusProcesso.ENVIADO_SAT.value,
-            StatusProcesso.CONCLUIDO.value
-        ]
+                    logger.debug("Total de IDs de clientes encontrados: %d", len(cliente_ids))
+                    return list(cliente_ids)
 
-        if processo.status_processo in status_protegidos:
-            flash('Não é possível excluir processos aprovados ou concluídos.', 'warning')
-            return redirect(url_for('processos_bp.visualizar', id=id))
+                except Exception as e:
+                    logger.error("Erro geral ao buscar clientes por termo '%s': %s", termo, str(e))
+                    logger.error("Traceback: %s", traceback.format_exc())
+                    raise
 
-        cliente_nome = processo.cliente.razao_social
-        mes_ano = processo.mes_ano
+            @staticmethod
+            def aplicar_filtros(query, filtros: ProcessoFiltros):
+                """Aplica filtros à query de processos"""
+                try:
+                    logger.debug("Aplicando filtros à query")
 
-        db.session.delete(processo)
-        db.session.commit()
+                    if filtros.busca:
+                        logger.debug("Aplicando filtro de busca: '%s'", filtros.busca)
+                        try:
+                            cliente_ids = ProcessoService.buscar_clientes_por_termo(filtros.busca)
+                            if cliente_ids:
+                                logger.debug("Aplicando filtro com %d IDs de clientes", len(cliente_ids))
+                                query = query.filter(Processo.cliente_id.in_(cliente_ids))
+                            else:
+                                logger.debug("Nenhum cliente encontrado, retornando query vazia")
+                                query = query.filter(Processo.id.is_(None))
+                        except Exception as e:
+                            logger.error("Erro ao aplicar filtro de busca: %s", str(e))
+                            raise
 
-        logger.info("Processo excluído: %s - %s - %s", id, cliente_nome, mes_ano)
-        flash('Processo excluído com sucesso!', 'success')
+                    if filtros.status:
+                        logger.debug("Aplicando filtro de status: '%s'", filtros.status)
+                        try:
+                            query = query.filter(Processo.status_processo == filtros.status)
+                        except Exception as e:
+                            logger.error("Erro ao aplicar filtro de status: %s", str(e))
+                            raise
 
-    except Exception as e:
-        db.session.rollback()
-        logger.error("Erro ao excluir processo %s: %s", id, str(e))
-        flash('Erro ao excluir processo.', 'danger')
+                    if filtros.mes_ano:
+                        logger.debug("Aplicando filtro de mês/ano: '%s'", filtros.mes_ano)
+                        try:
+                            query = query.filter(Processo.mes_ano == filtros.mes_ano)
+                        except Exception as e:
+                            logger.error("Erro ao aplicar filtro de mês/ano: %s", str(e))
+                            raise
 
-    return redirect(url_for('processos_bp.index'))
+                    if filtros.operadora_id:
+                        logger.debug("Aplicando filtro de operadora: '%s'", filtros.operadora_id)
+                        try:
+                            clientes_da_operadora = Cliente.query.filter_by(
+                                operadora_id=filtros.operadora_id
+                            ).all()
+                            logger.debug("Encontrados %d clientes para operadora", len(clientes_da_operadora))
 
-@bp.route('/aprovar/<string:id>', methods=['POST'])
-@verify_user_jwt
-def aprovar(id):
-    """Aprovar processo"""
+                            if clientes_da_operadora:
+                                operadora_cliente_ids = [c.id for c in clientes_da_operadora]
+                                query = query.filter(Processo.cliente_id.in_(operadora_cliente_ids))
+                            else:
+                                logger.debug("Nenhum cliente encontrado para operadora, retornando query vazia")
+                                query = query.filter(Processo.id.is_(None))
+                        except Exception as e:
+                            logger.error("Erro ao aplicar filtro de operadora: %s", str(e))
+                            raise
 
-    try:
-        processo = db.session.query(Processo).filter(Processo.id == id).first_or_404()
+                    logger.debug("Filtros aplicados com sucesso")
+                    return query
 
-        if not processo.pode_ser_aprovado:
-            if request.is_json or request.headers.get('Content-Type') == 'application/json':
-                return jsonify({
-                    'success': False,
-                    'message': 'Processo não pode ser aprovado no status atual.'
-                }), 400
-            else:
-                flash('Este processo não pode ser aprovado no status atual.', 'warning')
-                return redirect(url_for('processos_bp.visualizar', id=id))
+                except Exception as e:
+                    logger.error("Erro geral ao aplicar filtros: %s", str(e))
+                    logger.error("Traceback: %s", traceback.format_exc())
+                    raise
 
-        observacoes = None
-        if request.is_json:
-            data = request.get_json()
-            observacoes = data.get('observacoes', '').strip() if data else ''
-        else:
-            observacoes = request.form.get('observacoes', '').strip()
+        @bp.route('/')
+        @verify_user_jwt
+        def index():
+            """Lista todos os processos com filtros e paginação"""
+            logger.info("=== INICIANDO ROTA INDEX ===")
 
-        usuario_id = "00000000-0000-0000-0000-000000000000"
-        processo.aprovar(usuario_id, observacoes)
+            try:
+                # Paginação
+                logger.debug("Extraindo parâmetros de paginação")
+                page = request.args.get('page', 1, type=int)
+                per_page = 10
+                logger.debug("Parâmetros de paginação - page: %d, per_page: %d", page, per_page)
 
-        db.session.commit()
+                # Parâmetros de filtro
+                logger.debug("Extraindo parâmetros de filtro")
+                try:
+                    filtros = ProcessoFiltros.from_request_args(request.args)
+                    logger.debug("Filtros criados com sucesso")
+                except Exception as e:
+                    logger.error("ERRO ao criar filtros: %s", str(e))
+                    raise
 
-        logger.info("Processo aprovado: %s", processo.id)
+                # Query inicial
+                logger.debug("Criando query inicial")
+                try:
+                    query = Processo.query
+                    logger.debug("Query inicial criada")
+                except Exception as e:
+                    logger.error("ERRO ao criar query inicial: %s", str(e))
+                    raise
 
-        if request.is_json or request.headers.get('Content-Type') == 'application/json':
-            return jsonify({
-                'success': True,
-                'message': 'Fatura aprovada com sucesso!'
-            })
-        else:
-            flash('Processo aprovado com sucesso!', 'success')
-            return redirect(url_for('processos_bp.visualizar', id=id))
+                # Aplicar filtros
+                logger.debug("Aplicando filtros à query")
+                try:
+                    query = ProcessoService.aplicar_filtros(query, filtros)
+                    logger.debug("Filtros aplicados com sucesso")
+                except Exception as e:
+                    logger.error("ERRO ao aplicar filtros: %s", str(e))
+                    raise
 
-    except Exception as e:
-        db.session.rollback()
-        logger.error("Erro ao aprovar processo %s: %s", id, str(e))
+                # Ordenação
+                logger.debug("Aplicando ordenação")
+                try:
+                    query = query.order_by(Processo.data_atualizacao.desc())
+                    logger.debug("Ordenação aplicada")
+                except Exception as e:
+                    logger.error("ERRO ao aplicar ordenação: %s", str(e))
+                    raise
 
-        if request.is_json or request.headers.get('Content-Type') == 'application/json':
-            return jsonify({
-                'success': False,
-                'message': 'Erro interno do servidor.'
-            }), 500
-        else:
-            flash('Erro ao aprovar processo.', 'danger')
-            return redirect(url_for('processos_bp.visualizar', id=id))
-
-@bp.route('/rejeitar/<string:id>', methods=['POST'])
-@verify_user_jwt
-def rejeitar(id):
-    """Rejeitar processo"""
-
-    try:
-        processo = db.session.query(Processo).filter(Processo.id == id).first_or_404()
-
-        observacoes = None
-        if request.is_json:
-            data = request.get_json()
-            observacoes = data.get('observacoes', '').strip() if data else ''
-        else:
-            observacoes = request.form.get('observacoes', '').strip()
-
-        if not observacoes:
-            if request.is_json or request.headers.get('Content-Type') == 'application/json':
-                return jsonify({
-                    'success': False,
-                    'message': 'Motivo da rejeição é obrigatório.'
-                }), 400
-            else:
-                flash('Motivo da rejeição é obrigatório.', 'warning')
-                return redirect(url_for('processos_bp.visualizar', id=id))
-
-        if not processo.esta_pendente_aprovacao:
-            if request.is_json or request.headers.get('Content-Type') == 'application/json':
-                return jsonify({
-                    'success': False,
-                    'message': 'Este processo não está pendente de aprovação.'
-                }), 400
-            else:
-                flash('Este processo não está pendente de aprovação.', 'warning')
-                return redirect(url_for('processos_bp.visualizar', id=id))
-
-        processo.rejeitar(observacoes)
-
-        db.session.commit()
-
-        logger.info("Processo rejeitado: %s", processo.id)
-
-        if request.is_json or request.headers.get('Content-Type') == 'application/json':
-            return jsonify({
-                'success': True,
-                'message': 'Fatura rejeitada com sucesso!'
-            })
-        else:
-            flash('Processo rejeitado.', 'info')
-            return redirect(url_for('processos_bp.visualizar', id=id))
-
-    except Exception as e:
-        db.session.rollback()
-        logger.error("Erro ao rejeitar processo %s: %s", id, str(e))
-
-        if request.is_json or request.headers.get('Content-Type') == 'application/json':
-            return jsonify({
-                'success': False,
-                'message': 'Erro interno do servidor.'
-            }), 500
-        else:
-            flash('Erro ao rejeitar processo.', 'danger')
-            return redirect(url_for('processos_bp.visualizar', id=id))
-
-@bp.route('/criar-processos-mensais', methods=['GET', 'POST'])
-@verify_user_jwt
-def criar_processos_mensais():
-    """Criar processos mensais automaticamente para todos os clientes ativos"""
-
-    form = CriarProcessosMensaisForm()
-
-    if form.validate_on_submit():
-        try:
-            if not Processo.validar_formato_mes_ano(form.mes_ano.data):
-                flash('Formato de mês/ano inválido. Use MM/AAAA.', 'danger')
-                return render_template('processos/criar_mensais.html', form=form)
-
-            query_clientes = db.session.query(Cliente)\
-                .join(Operadora)\
-                .filter(
-                    Cliente.status_ativo == True,
-                    Operadora.status_ativo == True
-                )
-
-            if form.operadora_id.data:
-                query_clientes = query_clientes.filter(Cliente.operadora_id == form.operadora_id.data)
-
-            clientes = query_clientes.all()
-
-            processos_criados = 0
-            processos_ja_existentes = 0
-
-            for cliente in clientes:
-                processo_existente = db.session.query(Processo).filter(
-                    and_(
-                        Processo.cliente_id == cliente.id,
-                        Processo.mes_ano == form.mes_ano.data
+                # Paginação
+                logger.debug("Executando paginação")
+                try:
+                    logger.debug("Chamando query.paginate com page=%d, per_page=%d", page, per_page)
+                    processos = query.paginate(
+                        page=page,
+                        per_page=per_page,
+                        error_out=False
                     )
-                ).first()
+                    logger.debug("Paginação executada com sucesso. Total de itens: %d", processos.total if hasattr(processos, 'total') else 0)
+                except Exception as e:
+                    logger.error("ERRO na paginação: %s", str(e))
+                    logger.error("Traceback da paginação: %s", traceback.format_exc())
+                    raise
 
-                if processo_existente:
-                    processos_ja_existentes += 1
-                    continue
+                # Formulário
+                logger.debug("Criando formulário")
+                try:
+                    form = ProcessoFiltroForm(request.args)
+                    logger.debug("Formulário criado")
+                except Exception as e:
+                    logger.error("ERRO ao criar formulário: %s", str(e))
+                    raise
 
-                processo = Processo(
-                    cliente_id=cliente.id,
-                    mes_ano=form.mes_ano.data,
-                    status_processo=StatusProcesso.AGUARDANDO_DOWNLOAD.value,
-                    criado_automaticamente=True
-                )
+                # Renderizar template
+                logger.debug("Renderizando template")
+                try:
+                    result = render_template(
+                        'processos/index.html',
+                        processos=processos,
+                        form=form
+                    )
+                    logger.info("=== ROTA INDEX FINALIZADA COM SUCESSO ===")
+                    return result
+                except Exception as e:
+                    logger.error("ERRO ao renderizar template: %s", str(e))
+                    raise
 
-                db.session.add(processo)
-                processos_criados += 1
+            except Exception as e:
+                logger.error("=== ERRO GERAL NA ROTA INDEX ===")
+                logger.error("Tipo da exceção: %s", type(e).__name__)
+                logger.error("Mensagem da exceção: %s", str(e))
+                logger.error("Representação da exceção: %r", e)
+                logger.error("Traceback completo: %s", traceback.format_exc())
 
-            db.session.commit()
+                # Tentar diferentes formas de log para identificar o problema
+                try:
+                    logger.error("Tentativa 1 - str(e): %s", str(e))
+                except Exception as log_err1:
+                    logger.error("Erro no log tentativa 1: %s", str(log_err1))
 
-            logger.info("Processos mensais criados: %s para %s", processos_criados, form.mes_ano.data)
+                try:
+                    logger.error("Tentativa 2 - repr(e): %r", e)
+                except Exception as log_err2:
+                    logger.error("Erro no log tentativa 2: %s", str(log_err2))
 
-            if processos_criados > 0:
-                flash(f'Criados {processos_criados} processos para {form.mes_ano.data}!', 'success')
+                try:
+                    logger.error("Tentativa 3 - format: Erro ao carregar processos: {}".format(str(e)))
+                except Exception as log_err3:
+                    logger.error("Erro no log tentativa 3: %s", str(log_err3))
 
-            if processos_ja_existentes > 0:
-                flash(f'{processos_ja_existentes} processos já existiam para este período.', 'info')
+                flash('Erro ao carregar processos. Tente novamente.', 'danger')
+                return redirect(url_for('home_blueprint.index'))
 
-            if processos_criados == 0 and processos_ja_existentes == 0:
-                flash('Nenhum cliente ativo encontrado.', 'warning')
+        # Mantendo as outras rotas sem alteração por enquanto, focando no debug da rota principal
+        @bp.route('/novo', methods=['GET', 'POST'])
+        @verify_user_jwt
+        def novo():
+            """Criar novo processo"""
+            form = ProcessoForm()
 
-            return redirect(url_for('processos_bp.index'))
+            if form.validate_on_submit():
+                try:
+                    if not Processo.validar_formato_mes_ano(form.mes_ano.data):
+                        flash('Formato de mês/ano inválido. Use MM/AAAA.', 'danger')
+                        return render_template('processos/form.html', form=form, titulo="Novo Processo")
 
-        except Exception as e:
-            db.session.rollback()
-            logger.error("Erro ao criar processos mensais: %s", str(e))
-            flash('Erro ao criar processos mensais.', 'danger')
+                    processo_existente = db.session.query(Processo).filter(
+                        and_(
+                            Processo.cliente_id == form.cliente_id.data,
+                            Processo.mes_ano == form.mes_ano.data
+                        )
+                    ).first()
 
-    return render_template('processos/criar_mensais.html', form=form)
+                    if processo_existente:
+                        flash('Já existe um processo para este cliente no mês/ano informado.', 'danger')
+                        return render_template('processos/form.html', form=form, titulo="Novo Processo")
 
-@bp.route('/enviar-sat/<string:id>', methods=['POST'])
-@verify_user_jwt
-def enviar_sat(id):
-    """Envia processo para o SAT (mock por enquanto)"""
+                    processo = Processo(
+                        cliente_id=form.cliente_id.data,
+                        mes_ano=form.mes_ano.data,
+                        status_processo=form.status_processo.data,
+                        url_fatura=form.url_fatura.data or None,
+                        data_vencimento=form.data_vencimento.data,
+                        valor_fatura=form.valor_fatura.data,
+                        upload_manual=form.upload_manual.data,
+                        criado_automaticamente=form.criado_automaticamente.data,
+                        observacoes=form.observacoes.data or None
+                    )
 
-    try:
-        processo = db.session.query(Processo).filter(Processo.id == id).first_or_404()
+                    db.session.add(processo)
+                    db.session.commit()
 
-        if not processo.pode_enviar_sat:
-            return jsonify({
-                'success': False,
-                'message': 'Este processo não pode ser enviado para o SAT no status atual.'
-            }), 400
+                    logger.info("Processo criado: %s - %s - %s", 
+                               str(processo.id), 
+                               str(processo.cliente.razao_social), 
+                               str(processo.mes_ano))
+                    flash('Processo criado com sucesso!', 'success')
 
-        processo.enviar_para_sat()
+                    return redirect(url_for('processos_bp.visualizar', id=processo.id))
 
-        db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    logger.error("Erro ao criar processo: %s", str(e))
+                    flash('Erro ao criar processo. Tente novamente.', 'danger')
 
-        logger.info("Processo enviado para SAT (mock): %s", processo.id)
+            return render_template('processos/form.html', form=form, titulo="Novo Processo")
 
-        return jsonify({
-            'success': True,
-            'message': 'Fatura enviada para o SAT com sucesso!'
-        })
+        # Adicione um endpoint de teste para verificar se o problema está na configuração do logger
+        @bp.route('/test-log')
+        @verify_user_jwt
+        def test_log():
+            """Endpoint para testar diferentes tipos de log"""
+            try:
+                # Testes de diferentes tipos de log
+                logger.info("Teste de log INFO")
+                logger.debug("Teste de log DEBUG")
+                logger.warning("Teste de log WARNING")
 
-    except Exception as e:
-        db.session.rollback()
-        logger.error("Erro ao enviar processo %s para SAT: %s", id, str(e))
-        return jsonify({
-            'success': False,
-            'message': 'Erro interno do servidor.'
-        }), 500
+                # Simular uma exceção para testar o tratamento
+                try:
+                    raise ValueError("Teste de exceção com %s formatação")
+                except Exception as e:
+                    logger.error("Teste 1 - str(e): %s", str(e))
+                    logger.error("Teste 2 - repr(e): %r", e)
+                    logger.error("Teste 3 - format: {}".format(str(e)))
+                    logger.error("Teste 4 - f-string: %s", f"Exceção: {str(e)}")
 
-@bp.route('/api/estatisticas')
-@verify_user_jwt
-def api_estatisticas():
-    """API para estatísticas do dashboard"""
+                return jsonify({"status": "success", "message": "Testes de log executados"})
 
-    try:
-        total_processos = db.session.query(Processo).count()
+            except Exception as e:
+                logger.error("Erro no teste de log: %s", str(e))
+                return jsonify({"status": "error", "message": str(e)}), 500
 
-        status_counts = {}
-        for status in StatusProcesso:
-            count = db.session.query(Processo)\
-                .filter(Processo.status_processo == status.value)\
-                .count()
-            status_counts[status.value] = count
+        # Adicione também um endpoint para verificar o estado do banco
+        @bp.route('/test-db')
+        @verify_user_jwt
+        def test_db():
+            """Endpoint para testar conexão com o banco"""
+            try:
+                logger.info("Testando conexão com banco de dados")
 
-        pendentes_aprovacao = db.session.query(Processo)\
-            .filter(Processo.status_processo == StatusProcesso.DOWNLOAD_COMPLETO.value)\
-            .count()
+                # Teste simples de contagem
+                count_processos = db.session.query(Processo).count()
+                logger.info("Contagem de processos: %d", count_processos)
 
-        mes_atual = Processo.criar_mes_ano_atual()
-        processos_mes_atual = db.session.query(Processo)\
-            .filter(Processo.mes_ano == mes_atual)\
-            .count()
+                count_clientes = db.session.query(Cliente).count()
+                logger.info("Contagem de clientes: %d", count_clientes)
 
-        return jsonify({
-            'total_processos': total_processos,
-            'status_counts': status_counts,
-            'pendentes_aprovacao': pendentes_aprovacao,
-            'processos_mes_atual': processos_mes_atual
-        })
+                count_operadoras = db.session.query(Operadora).count()
+                logger.info("Contagem de operadoras: %d", count_operadoras)
 
-    except Exception as e:
-        logger.error("Erro ao buscar estatísticas: %s", str(e))
-        return jsonify({'error': 'Erro interno'}), 500
+                return jsonify({
+                    "status": "success", 
+                    "data": {
+                        "processos": count_processos,
+                        "clientes": count_clientes,
+                        "operadoras": count_operadoras
+                    }
+                })
+
+            except Exception as e:
+                logger.error("Erro no teste de banco: %s", str(e))
+                return jsonify({"status": "error", "message": str(e)}), 500
