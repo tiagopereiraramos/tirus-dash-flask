@@ -152,7 +152,7 @@
                                             </td>
                                             <td class="text-right">
                                                 {% if processo.valor_fatura %}
-                                                    <strong class="small">R$ {{ "{:.0f}"|format(processo.valor_fatura) }}</strong>
+                                                    <strong class="small">R$ {{ "%.0f"|format(processo.valor_fatura) }}</strong>
                                                 {% else %}
                                                     <span class="text-muted small">-</span>
                                                 {% endif %}
