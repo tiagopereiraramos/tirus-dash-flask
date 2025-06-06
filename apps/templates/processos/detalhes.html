@@ -329,6 +329,35 @@
         </div>
     </div>
 
+    <!-- Modal Aprovar -->
+    {% if processo.pode_ser_aprovado %}
+    <div class="modal fade" id="modalAprovar" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Aprovar Processo</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <form id="formAprovarModal" onsubmit="aprovarProcessoModal(event, '{{ processo.id }}')">
+                    <div class="modal-body">
+                        <p>Deseja aprovar o processo de <strong>{{ processo.cliente.razao_social }}</strong> para <strong>{{ processo.mes_ano }}</strong>?</p>
+                        <div class="form-group">
+                            <label for="observacoes_modal">Observações da aprovação:</label>
+                            <textarea id="observacoes_modal" name="observacoes" class="form-control" rows="3" placeholder="Digite observações sobre a aprovação (opcional)"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Aprovar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Modal Rejeitar -->
     {% if processo.esta_pendente_aprovacao %}
     <div class="modal fade" id="modalRejeitar" tabindex="-1" role="dialog">
@@ -365,18 +394,49 @@
 
 
 <script>
-// Função para visualizar fatura em PDF
+// Função para visualizar fatura - obtém dados da fatura e abre em nova aba
 function visualizarFatura(processoId) {
-    // Mock - em produção aqui abrirá o PDF em nova aba
-    alert('Mock: Abrindo visualização da fatura em PDF...\n\nEm produção, aqui será aberta uma nova aba com o arquivo PDF da fatura.');
-    // window.open('/processos/fatura-pdf/' + processoId, '_blank');
+    $.ajax({
+        url: '/processos/fatura-dados/' + processoId,
+        type: 'GET',
+        success: function(response) {
+            if (response.success && response.url_fatura) {
+                // Abrir a URL da fatura em nova aba
+                window.open(response.url_fatura, '_blank');
+            } else {
+                alert('Fatura não disponível: ' + (response.message || 'URL da fatura não encontrada'));
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Erro ao obter dados da fatura:', error);
+            alert('Erro ao obter dados da fatura. Tente novamente.');
+        }
+    });
 }
 
 // Função para baixar fatura
 function baixarFatura(processoId) {
-    // Mock - em produção aqui fará download do arquivo
-    alert('Mock: Iniciando download da fatura...\n\nEm produção, aqui será feito o download direto do arquivo PDF.');
-    // window.location.href = '/processos/download-fatura/' + processoId;
+    $.ajax({
+        url: '/processos/fatura-dados/' + processoId,
+        type: 'GET',
+        success: function(response) {
+            if (response.success && response.url_fatura) {
+                // Criar link temporário para download
+                const link = document.createElement('a');
+                link.href = response.url_fatura;
+                link.download = 'fatura_' + response.cliente + '_' + response.mes_ano + '.pdf';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                alert('Fatura não disponível para download: ' + (response.message || 'URL da fatura não encontrada'));
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Erro ao baixar fatura:', error);
+            alert('Erro ao baixar fatura. Tente novamente.');
+        }
+    });
 }
 
 // Função para aprovar fatura
@@ -431,6 +491,33 @@ function rejeitarFatura(processoId) {
             }
         });
     }
+}
+
+// Função para aprovar processo via modal
+function aprovarProcessoModal(event, processoId) {
+    event.preventDefault();
+
+    const observacoes = document.getElementById('observacoes_modal').value;
+
+    $.ajax({
+        url: '/processos/aprovar/' + processoId,
+        type: 'POST',
+        data: {
+            'observacoes': observacoes
+        },
+        success: function(response) {
+            if (response.success) {
+                alert('Processo aprovado com sucesso!');
+                $('#modalAprovar').modal('hide');
+                location.reload();
+            } else {
+                alert('Erro: ' + response.message);
+            }
+        },
+        error: function() {
+            alert('Erro ao aprovar processo. Tente novamente.');
+        }
+    });
 }
 
 // Função para enviar para SAT na página de detalhes
