@@ -431,6 +431,82 @@ def criar_processos_mensais():
     return render_template('processos/criar_mensais.html', form=form)
 
 # Adicione também um endpoint para verificar o estado do banco
+@bp.route('/visualizar/<id>')
+@verify_user_jwt
+def visualizar(id):
+    """Visualizar detalhes de um processo"""
+    try:
+        processo = Processo.query.options(
+            joinedload(Processo.cliente).joinedload(Cliente.operadora)
+        ).get_or_404(id)
+        
+        return render_template('processos/detalhes.html', processo=processo)
+    
+    except Exception as e:
+        logger.error("Erro ao visualizar processo: %s", str(e))
+        flash('Erro ao carregar processo. Tente novamente.', 'danger')
+        return redirect(url_for('processos_bp.index'))
+
+@bp.route('/editar/<id>', methods=['GET', 'POST'])
+@verify_user_jwt
+def editar(id):
+    """Editar um processo"""
+    try:
+        processo = Processo.query.get_or_404(id)
+        form = ProcessoForm(obj=processo)
+        
+        if form.validate_on_submit():
+            try:
+                if not Processo.validar_formato_mes_ano(form.mes_ano.data):
+                    flash('Formato de mês/ano inválido. Use MM/AAAA.', 'danger')
+                    return render_template('processos/form.html', form=form, titulo="Editar Processo")
+
+                # Verificar se não há outro processo com mesmo cliente/mes_ano (exceto o atual)
+                processo_existente = db.session.query(Processo).filter(
+                    and_(
+                        Processo.cliente_id == form.cliente_id.data,
+                        Processo.mes_ano == form.mes_ano.data,
+                        Processo.id != processo.id
+                    )
+                ).first()
+
+                if processo_existente:
+                    flash('Já existe um processo para este cliente no mês/ano informado.', 'danger')
+                    return render_template('processos/form.html', form=form, titulo="Editar Processo")
+
+                # Atualizar dados
+                processo.cliente_id = form.cliente_id.data
+                processo.mes_ano = form.mes_ano.data
+                processo.status_processo = form.status_processo.data
+                processo.url_fatura = form.url_fatura.data or None
+                processo.data_vencimento = form.data_vencimento.data
+                processo.valor_fatura = form.valor_fatura.data
+                processo.upload_manual = form.upload_manual.data
+                processo.criado_automaticamente = form.criado_automaticamente.data
+                processo.observacoes = form.observacoes.data or None
+
+                db.session.commit()
+
+                logger.info("Processo editado: %s - %s - %s", 
+                           str(processo.id), 
+                           str(processo.cliente.razao_social), 
+                           str(processo.mes_ano))
+                flash('Processo atualizado com sucesso!', 'success')
+
+                return redirect(url_for('processos_bp.visualizar', id=processo.id))
+
+            except Exception as e:
+                db.session.rollback()
+                logger.error("Erro ao editar processo: %s", str(e))
+                flash('Erro ao editar processo. Tente novamente.', 'danger')
+
+        return render_template('processos/form.html', form=form, titulo="Editar Processo")
+    
+    except Exception as e:
+        logger.error("Erro ao carregar processo para edição: %s", str(e))
+        flash('Erro ao carregar processo. Tente novamente.', 'danger')
+        return redirect(url_for('processos_bp.index'))
+
 @bp.route('/test-db')
 @verify_user_jwt
 def test_db():
