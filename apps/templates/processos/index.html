@@ -170,6 +170,12 @@
                                                             <i class="feather icon-check"></i>
                                                         </button>
                                                     {% endif %}
+                                                    {% if processo.pode_enviar_sat %}
+                                                        <button class="btn btn-sm btn-primary btn-enviar-sat btn-xs" 
+                                                                data-id="{{ processo.id }}" title="Enviar para SAT">
+                                                            <i class="feather icon-send"></i>
+                                                        </button>
+                                                    {% endif %}
                                                 </div>
                                             </td>
                                                         </tr>
@@ -318,5 +324,12 @@ function enviarParaSAT(processoId) {
         });
     }
 }
+
+// Event handler para botão enviar SAT
+$(document).on('click', '.btn-enviar-sat', function(e) {
+    e.preventDefault();
+    var processoId = $(this).data('id');
+    enviarParaSAT(processoId);
+});
 </script>
 {% endblock javascripts %}
