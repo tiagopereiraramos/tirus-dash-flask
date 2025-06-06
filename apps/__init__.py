@@ -71,4 +71,13 @@ def create_app(config):
     #Processos Blueprint
     from apps.processos import bp as processos_bp
     app.register_blueprint(processos_bp)
+
+    # Adicionar função csrf_token ao contexto global do Jinja2
+    @app.template_global()
+    def csrf_token():
+        try:
+            from flask_wtf.csrf import generate_csrf
+            return generate_csrf()
+        except Exception:
+            return ""
     return app
