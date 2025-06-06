@@ -27,21 +27,36 @@
 }
 
 /* Header personalizado */
-.pcoded-header {
+.pcoded-header,
+.header-blue {
     background: var(--brm-gradient) !important;
     color: white !important;
 }
 
 .pcoded-header .input-group .input-group-text,
 .pcoded-header a,
-.pcoded-header .dropdown-toggle {
+.pcoded-header .dropdown-toggle,
+.header-blue a,
+.header-blue .navbar-nav a {
     color: rgba(255, 255, 255, 0.9) !important;
 }
 
 .pcoded-header .input-group .input-group-text:hover,
 .pcoded-header a:hover,
-.pcoded-header .dropdown-toggle:hover {
+.pcoded-header .dropdown-toggle:hover,
+.header-blue a:hover {
     color: white !important;
+}
+
+/* Logo no header */
+.b-brand .b-bg {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 8px !important;
+}
+
+.b-title {
+    color: white !important;
+    font-weight: 600 !important;
 }
 
 /* Sidebar personalizado */
@@ -176,6 +191,45 @@ a:hover {
 
 .text-c-blue {
     color: var(--brm-secondary) !important;
+}
+
+/* Cards de métricas do dashboard */
+.card.bg-c-blue,
+.card.text-c-blue {
+    background: var(--brm-gradient) !important;
+    color: white !important;
+}
+
+.card.bg-c-green {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    color: white !important;
+}
+
+.card.bg-c-purple {
+    background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%) !important;
+    color: white !important;
+}
+
+/* Texto dos cards */
+.card .text-white,
+.card .text-c-blue,
+.card .text-c-green,
+.card .text-c-purple {
+    color: white !important;
+}
+
+/* Ícones dos cards */
+.card i {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Valores dos cards */
+.card h2,
+.card h3,
+.card .h2,
+.card .h3 {
+    color: white !important;
+    font-weight: 700 !important;
 }
 
 /* Hover effects */
