@@ -60,17 +60,14 @@ def create_app(config):
     from apps.home.routes import home_bp
     app.register_blueprint(home_bp)
 
-    # Operadoras Blueprint
+    # Blueprints específicos dos módulos
     from apps.operadoras import bp as operadoras_bp
-    app.register_blueprint(operadoras_bp)
-
-    # Clientes Blueprint
-    from apps.clientes import bp as clientes_bp
-    app.register_blueprint(clientes_bp)
-
-    #Processos Blueprint
+    from apps.clientes import bp as clientes_bp  
     from apps.processos import bp as processos_bp
-    app.register_blueprint(processos_bp)
+
+    app.register_blueprint(operadoras_bp, url_prefix='/operadoras')
+    app.register_blueprint(clientes_bp, url_prefix='/clientes')
+    app.register_blueprint(processos_bp, url_prefix='/processos')
 
     # Adicionar função csrf_token ao contexto global do Jinja2
     @app.template_global()
@@ -80,22 +77,6 @@ def create_app(config):
             return generate_csrf()
         except Exception:
             return ""
-    
-    # Register Blueprints
-    from apps.home import blueprint as home_blueprint
-    from apps.authentication import blueprint as auth_blueprint
-
-    app.register_blueprint(home_blueprint, url_prefix='/index')
-    app.register_blueprint(auth_blueprint, url_prefix='/login')
-
-    # Blueprints específicos dos módulos
-    from apps.operadoras import bp as operadoras_bp
-    from apps.clientes import bp as clientes_bp  
-    from apps.processos import bp as processos_bp
-
-    app.register_blueprint(operadoras_bp, url_prefix='/operadoras')
-    app.register_blueprint(clientes_bp, url_prefix='/clientes')
-    app.register_blueprint(processos_bp, url_prefix='/processos')
 
     # Rota raiz que redireciona para o dashboard
     @app.route('/')

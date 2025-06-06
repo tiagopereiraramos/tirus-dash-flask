@@ -34,7 +34,7 @@
 
     <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-    
+
     <!-- CSS para o switch de tema -->
     <style>
         .theme-switch-wrapper {
@@ -42,18 +42,18 @@
             align-items: center;
             margin-right: 15px;
         }
-        
+
         .theme-switch {
             display: inline-block;
             height: 34px;
             position: relative;
             width: 60px;
         }
-        
+
         .theme-switch input {
             display: none;
         }
-        
+
         .slider {
             background-color: #ccc;
             bottom: 0;
@@ -68,7 +68,7 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .slider:before {
             background-color: #fff;
             bottom: 4px;
@@ -80,22 +80,22 @@
             width: 26px;
             border-radius: 50%;
         }
-        
+
         input:checked + .slider {
             background-color: #66bb6a;
         }
-        
+
         input:checked + .slider:before {
             transform: translateX(26px);
         }
-        
+
         #theme-indicator {
             color: #fff;
             font-size: 16px;
             z-index: 1;
         }
     </style>
-    
+
     {% block stylesheets %}{% endblock stylesheets %}
 
 </head>
@@ -220,58 +220,46 @@
     <!-- Required Js -->
     {% include 'includes/scripts.html' %}
 
-    <!-- Toastr notifications -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    {% block javascripts %}{% endblock javascripts %}
 
-    <!-- Dark Mode Toggle - Single Instance -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Evitar duplicação da variável themeSwitch
-            if (typeof window.themeSwitchInitialized === 'undefined') {
-                window.themeSwitchInitialized = true;
+    // Script para alternar tema escuro/claro
+    document.addEventListener('DOMContentLoaded', function() {
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.body;
+        const icon = themeToggle.querySelector('i');
 
-                const themeSwitch = document.getElementById('theme-switch');
-                if (themeSwitch) {
-                    // Aplicar tema salvo
-                    const savedTheme = localStorage.getItem('theme') || 'light';
-                    document.documentElement.setAttribute('data-theme', savedTheme);
-                    themeSwitch.checked = savedTheme === 'dark';
+        // Verificar tema atual no localStorage
+        const currentTheme = localStorage.getItem('theme') || 'light';
 
-                    // Listener para mudança de tema
-                    themeSwitch.addEventListener('change', function() {
-                        const newTheme = this.checked ? 'dark' : 'light';
-                        document.documentElement.setAttribute('data-theme', newTheme);
-                        localStorage.setItem('theme', newTheme);
-                    });
-                }
-            }
+        if (currentTheme === 'dark') {
+            body.classList.add('dark-mode');
+            icon.classList.remove('icon-moon');
+            icon.classList.add('icon-sun');
+            themeToggle.title = 'Modo claro';
+        }
 
-            // Configurar toastr se estiver disponível
-            if (typeof toastr !== 'undefined') {
-                toastr.options = {
-                    closeButton: true,
-                    debug: false,
-                    newestOnTop: false,
-                    progressBar: true,
-                    positionClass: "toast-top-right",
-                    preventDuplicates: false,
-                    onclick: null,
-                    showDuration: "300",
-                    hideDuration: "1000",
-                    timeOut: "5000",
-                    extendedTimeOut: "1000",
-                    showEasing: "swing",
-                    hideEasing: "linear",
-                    showMethod: "fadeIn",
-                    hideMethod: "fadeOut"
-                };
+        themeToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            if (body.classList.contains('dark-mode')) {
+                // Mudar para modo claro
+                body.classList.remove('dark-mode');
+                icon.classList.remove('icon-sun');
+                icon.classList.add('icon-moon');
+                themeToggle.title = 'Modo escuro';
+                localStorage.setItem('theme', 'light');
+            } else {
+                // Mudar para modo escuro
+                body.classList.add('dark-mode');
+                icon.classList.remove('icon-moon');
+                icon.classList.add('icon-sun');
+                themeToggle.title = 'Modo claro';
+                localStorage.setItem('theme', 'dark');
             }
         });
+    });
     </script>
-
-    <!-- Specific Page JS goes HERE  -->
-    {% block javascripts %}{% endblock javascripts %}
 
 </body>
 </html>
