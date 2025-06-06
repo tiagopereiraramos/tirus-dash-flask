@@ -582,6 +582,29 @@ def enviar_sat(id):
         logger.error("Erro ao enviar processo para SAT: %s", str(e))
         return jsonify({'success': False, 'message': 'Erro ao enviar processo para SAT'}), 500
 
+@bp.route('/fatura-dados/<id>', methods=['GET'])
+@verify_user_jwt
+def fatura_dados(id):
+    """Retorna dados da fatura em JSON para visualização"""
+    try:
+        processo = Processo.query.get_or_404(id)
+        
+        if not processo.url_fatura:
+            return jsonify({'success': False, 'message': 'Fatura não disponível'}), 404
+        
+        return jsonify({
+            'success': True,
+            'url_fatura': processo.url_fatura,
+            'valor_fatura': float(processo.valor_fatura) if processo.valor_fatura else None,
+            'data_vencimento': processo.data_vencimento.strftime('%d/%m/%Y') if processo.data_vencimento else None,
+            'cliente': processo.cliente.razao_social,
+            'mes_ano': processo.mes_ano
+        })
+        
+    except Exception as e:
+        logger.error("Erro ao obter dados da fatura: %s", str(e))
+        return jsonify({'success': False, 'message': 'Erro ao obter dados da fatura'}), 500
+
 @bp.route('/test-db')
 @verify_user_jwt
 def test_db():

@@ -275,10 +275,22 @@
                                             </a>
                                             {% endif %}
 
-                                            {% if processo.pode_ser_aprovado %}
-                                            <button type="button" class="btn btn-success btn-block mb-2" data-toggle="modal" data-target="#modalAprovar">
-                                                <i class="feather icon-check"></i> Aprovar Processo
+                                            {% if processo.url_fatura %}
+                                            <button type="button" class="btn btn-primary btn-block mb-2" onclick="visualizarFatura('{{ processo.id }}')">
+                                                <i class="feather icon-file-text"></i> Visualizar Fatura
                                             </button>
+                                            {% endif %}
+
+                                            {% if processo.pode_ser_aprovado %}
+                                                {% if processo.url_fatura %}
+                                                <button type="button" class="btn btn-success btn-block mb-2" data-toggle="modal" data-target="#modalAprovar">
+                                                    <i class="feather icon-check"></i> Aprovar Processo
+                                                </button>
+                                                {% else %}
+                                                <button type="button" class="btn btn-secondary btn-block mb-2" disabled title="Aguardando download da fatura">
+                                                    <i class="feather icon-clock"></i> Aguardando Fatura
+                                                </button>
+                                                {% endif %}
                                             {% endif %}
 
                                             {% if processo.esta_pendente_aprovacao %}
