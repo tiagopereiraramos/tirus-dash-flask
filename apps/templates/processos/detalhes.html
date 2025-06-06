@@ -540,6 +540,22 @@
 // Aguardar documento carregar
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Página de detalhes carregada');
+    
+    // Verificar se jQuery está disponível
+    if (typeof $ !== 'undefined') {
+        console.log('jQuery está disponível');
+        
+        // Verificar se Bootstrap modal está disponível
+        if (typeof $.fn.modal !== 'undefined') {
+            console.log('Bootstrap modal está disponível');
+        } else {
+            console.log('Bootstrap modal não está disponível');
+        }
+    } else {
+        console.log('jQuery não está disponível');
+    }
+    
+    console.log('Máscaras aplicadas com sucesso');
 });
 
 // Variáveis globais - escopo da página
@@ -589,6 +605,51 @@ var FaturaViewer = {
     }
 };
 
+// Implementação manual de modal sem dependência do Bootstrap
+var ModalHandler = {
+    show: function(modalId) {
+        var modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'block';
+            modal.classList.add('show');
+            document.body.classList.add('modal-open');
+            
+            // Criar backdrop
+            var backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade show';
+            backdrop.id = modalId + '-backdrop';
+            document.body.appendChild(backdrop);
+            
+            // Fechar modal ao clicar no backdrop ou botão close
+            backdrop.addEventListener('click', function() {
+                ModalHandler.hide(modalId);
+            });
+            
+            var closeButtons = modal.querySelectorAll('[data-dismiss="modal"]');
+            closeButtons.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    ModalHandler.hide(modalId);
+                });
+            });
+        }
+    },
+    
+    hide: function(modalId) {
+        var modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            document.body.classList.remove('modal-open');
+            
+            // Remover backdrop
+            var backdrop = document.getElementById(modalId + '-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+        }
+    }
+};
+
 // Funções globais para compatibilidade
 function abrirFaturaNovaAba() {
     FaturaViewer.abrirNovaAba();
@@ -615,7 +676,7 @@ function confirmarAprovacao() {
     .then(function(data) {
         if (data.success) {
             // Fechar modal
-            $('#modalAprovar').modal('hide');
+            ModalHandler.hide('modalAprovar');
             
             // Mostrar mensagem de sucesso
             alert(data.message);
@@ -654,7 +715,7 @@ function confirmarRejeicao() {
     .then(function(data) {
         if (data.success) {
             // Fechar modal
-            $('#modalRejeitar').modal('hide');
+            ModalHandler.hide('modalRejeitar');
             
             // Mostrar mensagem de sucesso
             alert(data.message);
@@ -670,13 +731,37 @@ function confirmarRejeicao() {
     });
 }
 
-// Limpar campos dos modais quando fecharem
-$('#modalAprovar').on('hidden.bs.modal', function () {
-    document.getElementById('observacoesAprovacao').value = '';
-});
-
-$('#modalRejeitar').on('hidden.bs.modal', function () {
-    document.getElementById('motivoRejeicao').value = '';
+// Substituir os data-toggle por onclick nos botões
+document.addEventListener('DOMContentLoaded', function() {
+    // Botão Aprovar
+    var btnAprovar = document.querySelector('[data-target="#modalAprovar"]');
+    if (btnAprovar) {
+        btnAprovar.addEventListener('click', function(e) {
+            e.preventDefault();
+            ModalHandler.show('modalAprovar');
+        });
+    }
+    
+    // Botão Rejeitar
+    var btnRejeitar = document.querySelector('[data-target="#modalRejeitar"]');
+    if (btnRejeitar) {
+        btnRejeitar.addEventListener('click', function(e) {
+            e.preventDefault();
+            ModalHandler.show('modalRejeitar');
+        });
+    }
+    
+    // Limpar campos quando modal for fechado
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('[data-dismiss="modal"]')) {
+            var modalId = e.target.closest('.modal').id;
+            if (modalId === 'modalAprovar') {
+                document.getElementById('observacoesAprovacao').value = '';
+            } else if (modalId === 'modalRejeitar') {
+                document.getElementById('motivoRejeicao').value = '';
+            }
+        }
+    });
 });
 </script>
 {% endblock %}
