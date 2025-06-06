@@ -2,7 +2,38 @@
 
 {% block title %} Processo - {{ processo.cliente.razao_social }} {% endblock %}
 
-{% block stylesheets %}{% endblock stylesheets %}
+{% block stylesheets %}
+<style>
+.border-left-primary {
+    border-left: 4px solid #007bff !important;
+    background-color: #f8f9fa;
+}
+
+.alert-primary .text-primary {
+    color: #0056b3 !important;
+}
+
+.dados-sat-highlight {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%);
+    border: 1px solid #bbdefb;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.sat-data-item {
+    background: #ffffff;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.sat-icon {
+    color: #1976d2;
+    font-size: 1.1em;
+}
+</style>
+{% endblock stylesheets %}
 
 {% block content %}
 
@@ -40,16 +71,79 @@
                                             <h5>Informações do Processo</h5>
                                         </div>
                                         <div class="card-body">
+                                            <!-- Seção em Evidência - Dados SAT -->
+                                            <div class="dados-sat-highlight mb-4">
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <h6 class="alert-heading mb-3 text-primary">
+                                                            <i class="feather icon-database sat-icon mr-2"></i>
+                                                            <strong>Dados que serão enviados para o SAT</strong>
+                                                        </h6>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-lg-3 col-md-6 mb-2">
+                                                        <div class="sat-data-item">
+                                                            <h6 class="text-primary font-weight-bold mb-1">
+                                                                <i class="feather icon-user sat-icon mr-1"></i>
+                                                                Cliente SAT
+                                                            </h6>
+                                                            <p class="mb-0 font-weight-bold">{{ processo.cliente.nome_sat }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-lg-3 col-md-6 mb-2">
+                                                        <div class="sat-data-item">
+                                                            <h6 class="text-primary font-weight-bold mb-1">
+                                                                <i class="feather icon-wifi sat-icon mr-1"></i>
+                                                                Operadora
+                                                            </h6>
+                                                            <p class="mb-0 font-weight-bold">{{ processo.cliente.operadora.nome }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-lg-3 col-md-6 mb-2">
+                                                        <div class="sat-data-item">
+                                                            <h6 class="text-primary font-weight-bold mb-1">
+                                                                <i class="feather icon-settings sat-icon mr-1"></i>
+                                                                Serviço
+                                                            </h6>
+                                                            <p class="mb-0 font-weight-bold">{{ processo.cliente.servico }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-lg-3 col-md-6 mb-2">
+                                                        <div class="sat-data-item">
+                                                            <h6 class="text-primary font-weight-bold mb-1">
+                                                                <i class="feather icon-map-pin sat-icon mr-1"></i>
+                                                                Unidade/Filial
+                                                            </h6>
+                                                            <p class="mb-0 font-weight-bold">{{ processo.cliente.unidade }}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row mt-3">
+                                                    <div class="col-12">
+                                                        <div class="alert alert-info mb-0 py-2">
+                                                            <small class="mb-0">
+                                                                <i class="feather icon-alert-circle mr-1"></i>
+                                                                <strong>Importante:</strong> Ao visualizar a fatura, verifique se estes dados estão corretos antes de aprovar o processo.
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Informações Detalhadas -->
                                             <div class="row">
                                                 <div class="col-md-6">
-                                                    <h6 class="text-muted">Cliente</h6>
+                                                    <h6 class="text-muted">Razão Social Completa</h6>
                                                     <p class="mb-3">{{ processo.cliente.razao_social }}</p>
 
                                                     <h6 class="text-muted">CNPJ</h6>
                                                     <p class="mb-3">{{ processo.cliente.cnpj }}</p>
 
-                                                    <h6 class="text-muted">Operadora</h6>
-                                                    <p class="mb-3">{{ processo.cliente.operadora.nome }}</p>
+                                                    {% if processo.cliente.site_emissao %}
+                                                    <h6 class="text-muted">Site de Emissão</h6>
+                                                    <p class="mb-3">{{ processo.cliente.site_emissao }}</p>
+                                                    {% endif %}
                                                 </div>
                                                 <div class="col-md-6">
                                                     <h6 class="text-muted">Mês/Ano</h6>
