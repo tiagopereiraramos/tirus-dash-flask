@@ -1,44 +1,4 @@
 
-// BRM Theme Toggle functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const themeToggle = document.getElementById('theme-toggle');
-    const mainStyleLink = document.getElementById('main-style-link');
-
-    // Check for saved theme preference or default to light mode
-    const savedTheme = localStorage.getItem('brm-theme') || 'light';
-
-    if (themeToggle) {
-        if (savedTheme === 'dark') {
-            themeToggle.checked = true;
-            enableDarkMode();
-        }
-
-        themeToggle.addEventListener('change', function() {
-            if (this.checked) {
-                enableDarkMode();
-                localStorage.setItem('brm-theme', 'dark');
-            } else {
-                enableLightMode();
-                localStorage.setItem('brm-theme', 'light');
-            }
-        });
-    }
-
-    function enableDarkMode() {
-        document.body.classList.add('dark-mode');
-        if (mainStyleLink) {
-            mainStyleLink.href = mainStyleLink.href.replace('style.css', 'dark.css');
-        }
-    }
-
-    function enableLightMode() {
-        document.body.classList.remove('dark-mode');
-        if (mainStyleLink) {
-            mainStyleLink.href = mainStyleLink.href.replace('dark.css', 'style.css');
-        }
-    }
-});
-
 // Script para alternar tema escuro/claro
 document.addEventListener('DOMContentLoaded', function() {
     const themeSwitch = document.getElementById('theme-switch');
@@ -84,6 +44,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Variáveis globais para o viewer de fatura
+let faturaCarregadaIframe = null;
+
 // Funções para visualização de fatura
 function visualizarFatura(processoId) {
     // Fazer requisição para obter dados da fatura primeiro
@@ -120,7 +83,7 @@ function exibirFaturaModal(data) {
             <hr>
             <div class="text-center">
                 ${data.url_fatura ? 
-                    `<iframe src="${data.url_fatura}" width="100%" height="400px" frameborder="0"></iframe>` :
+                    `<iframe id="faturaCarregadaIframe" src="${data.url_fatura}" width="100%" height="400px" frameborder="0"></iframe>` :
                     '<p class="text-muted">Fatura não disponível para visualização</p>'
                 }
             </div>
@@ -153,6 +116,9 @@ function exibirFaturaModal(data) {
 
         $('#fatura-content').html(modalContent);
         $('#faturaModal').modal('show');
+        
+        // Atualizar a referência global do iframe
+        faturaCarregadaIframe = document.getElementById('faturaCarregadaIframe');
     } else {
         // Fallback para quando jQuery/Bootstrap não estão disponíveis
         console.warn('jQuery ou Bootstrap não disponível, abrindo fatura em nova aba');
@@ -189,7 +155,7 @@ function toggleDarkMode() {
     toggleTheme();
 }
 
-// Função para aplicar máscaras nos campos (se jQuery mask estiver disponível)
+// Função para aplicar máscaras nos campos
 function aplicarMascaras() {
     // Aguardar jQuery e plugin mask estarem disponíveis
     if (typeof $ !== 'undefined' && typeof $.fn.mask !== 'undefined') {
@@ -201,16 +167,27 @@ function aplicarMascaras() {
         });
         
         // Aplicar máscaras específicas
-        $('#data_vencimento').mask('00/00/0000');
-        $('#valor_fatura').mask('#.##0,00', {reverse: true});
-        $('#mes_ano').mask('00/0000');
+        const dataVencimento = document.getElementById('data_vencimento');
+        const valorFatura = document.getElementById('valor_fatura');
+        const mesAno = document.getElementById('mes_ano');
+        
+        if (dataVencimento) $('#data_vencimento').mask('00/00/0000');
+        if (valorFatura) $('#valor_fatura').mask('#.##0,00', {reverse: true});
+        if (mesAno) $('#mes_ano').mask('00/0000');
     } else {
         // Tentar novamente após um pequeno delay
-        setTimeout(aplicarMascaras, 100);
+        setTimeout(aplicarMascaras, 200);
     }
 }
 
-// Chamar aplicarMascaras quando o documento estiver pronto
-$(document).ready(function() {
-    aplicarMascaras();
+// Aguardar jQuery estar disponível antes de aplicar máscaras
+document.addEventListener('DOMContentLoaded', function() {
+    // Aguardar um pouco para jQuery carregar
+    setTimeout(function() {
+        if (typeof $ !== 'undefined') {
+            $(document).ready(function() {
+                aplicarMascaras();
+            });
+        }
+    }, 500);
 });
