@@ -146,8 +146,7 @@
                                         <hr>
 
                                         <form id="formAprovacao" onsubmit="aprovarFatura(event, '{{ processo.id }}')">
-                                            {{ csrf_token() }}
-                                            <div class="form-group">
+                            <div class="form-group">
                                                 <label for="observacoes_aprovacao">Observações da Aprovação:</label>
                                                 <textarea class="form-control" id="observacoes_aprovacao" name="observacoes" rows="3" 
                                                           placeholder="Digite observações sobre a aprovação (opcional)"></textarea>
