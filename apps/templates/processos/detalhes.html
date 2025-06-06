@@ -249,97 +249,6 @@
                                         <div class="card-body">
                                             {% if execucoes %}
                                             <div class="table-responsive">
-
-
-                                    </div>
-
-                                <!-- Seção de Aprovação de Fatura -->
-                                {% if processo.status_processo == 'DOWNLOAD_COMPLETO' or processo.status_processo == 'AGUARDANDO_APROVACAO' %}
-                                <div class="card mt-4">
-                                    <div class="card-header bg-warning">
-                                        <h5 class="text-white mb-0">
-                                            <i class="feather icon-alert-circle"></i>
-                                            Aprovação de Fatura Necessária
-                                        </h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="alert alert-info">
-                                            <i class="feather icon-info"></i>
-                                            <strong>Atenção:</strong> Esta fatura foi baixada com sucesso e está aguardando aprovação manual.
-                                            Visualize o arquivo e confirme se está correto antes de aprovar.
-                                        </div>
-
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <button type="button" class="btn btn-outline-primary btn-block" 
-                                                        onclick="visualizarFatura('{{ processo.id }}')">
-                                                    <i class="feather icon-file-text"></i> Visualizar Fatura (PDF)
-                                                </button>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <button type="button" class="btn btn-outline-info btn-block" 
-                                                        onclick="baixarFatura('{{ processo.id }}')">
-                                                    <i class="feather icon-download"></i> Baixar Fatura
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <hr>
-
-                                        <form id="formAprovacao" onsubmit="aprovarFatura(event, '{{ processo.id }}')">
-                            <div class="form-group">
-                                                <label for="observacoes_aprovacao">Observações da Aprovação:</label>
-                                                <textarea class="form-control" id="observacoes_aprovacao" name="observacoes" rows="3" 
-                                                          placeholder="Digite observações sobre a aprovação (opcional)"></textarea>
-                                            </div>
-
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <button type="submit" class="btn btn-success btn-block">
-                                                        <i class="feather icon-check"></i> Aprovar Fatura
-                                                    </button>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <button type="button" class="btn btn-danger btn-block" 
-                                                            onclick="rejeitarFatura('{{ processo.id }}')">
-                                                        <i class="feather icon-x"></i> Rejeitar Fatura
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                                {% endif %}
-
-                                <!-- Seção de Envio para SAT -->
-                                {% if processo.status_processo == 'APROVADO' %}
-                                <div class="card mt-4">
-                                    <div class="card-header bg-info">
-                                        <h5 class="text-white mb-0">
-                                            <i class="feather icon-upload"></i>
-                                            Pronto para Envio ao SAT
-                                        </h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="alert alert-success">
-                                            <i class="feather icon-check-circle"></i>
-                                            <strong>Fatura Aprovada!</strong> Esta fatura foi aprovada e está pronta para ser enviada ao SAT.
-                                        </div>
-
-                                        {% if processo.aprovador %}
-                                        <p><strong>Aprovado por:</strong> {{ processo.aprovador.nome_completo }}</p>
-                                        <p><strong>Data da aprovação:</strong> {{ processo.data_aprovacao.strftime('%d/%m/%Y %H:%M') }}</p>
-                                        {% endif %}
-
-                                        <button type="button" class="btn btn-info btn-lg btn-block" 
-                                                onclick="enviarParaSATDetalhes('{{ processo.id }}')">
-                                            <i class="feather icon-upload"></i> Enviar para SAT
-                                        </button>
-                                    </div>
-                                </div>
-                                {% endif %}
-
-
                                                 <table class="table table-hover">
                                                     <thead>
                                                         <tr>
@@ -529,9 +438,33 @@
     </div>
     {% endif %}
 
+    <!-- Modal Visualizar Fatura -->
+    <div class="modal fade" id="faturaModal" tabindex="-1" role="dialog" aria-labelledby="faturaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="faturaModalLabel">Visualizar Fatura</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Conteúdo da fatura será carregado aqui -->
+                    <div id="fatura-content"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 {% endblock content %}
 
 {% block javascripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+
 <script>
 // Variável global para controlar se a fatura foi carregada
 let faturaCarregada = false;
@@ -553,62 +486,34 @@ $(document).ready(function() {
     }
 });
 
-function visualizarFatura() {
-    const processoId = '{{ processo.id }}';
-
+function visualizarFatura(processoId) {
     // Fazer requisição para obter dados da fatura
     $.get('/processos/fatura-dados/' + processoId)
         .done(function(response) {
             if (response.success) {
                 faturaCarregada = true;
 
-                // Criar modal ou janela para visualizar fatura
-                const modalHtml = `
-                    <div class="modal fade" id="faturaModal" tabindex="-1" role="dialog">
-                        <div class="modal-dialog modal-lg" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Visualizar Fatura</h5>
-                                    <button type="button" class="close" data-dismiss="modal">
-                                        <span>&times;</span>
-                                    </button>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <p><strong>Cliente:</strong> ${response.cliente}</p>
-                                            <p><strong>Mês/Ano:</strong> ${response.mes_ano}</p>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <p><strong>Valor:</strong> R$ ${response.valor_fatura || 'N/A'}</p>
-                                            <p><strong>Vencimento:</strong> ${response.data_vencimento || 'N/A'}</p>
-                                        </div>
-                                    </div>
-                                    <hr>
-                                    <div class="text-center">
-                                        ${response.url_fatura ? 
-                                            `<iframe src="${response.url_fatura}" width="100%" height="400px" frameborder="0"></iframe>` :
-                                            '<p class="text-muted">Fatura não disponível para visualização</p>'
-                                        }
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-                                    ${response.url_fatura ? 
-                                        `<a href="${response.url_fatura}" target="_blank" class="btn btn-primary">Abrir em Nova Aba</a>` :
-                                        ''
-                                    }
-                                </div>
-                            </div>
+                let modalContent = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Cliente:</strong> ${response.cliente}</p>
+                            <p><strong>Mês/Ano:</strong> ${response.mes_ano}</p>
                         </div>
+                        <div class="col-md-6">
+                            <p><strong>Valor:</strong> R$ ${response.valor_fatura || 'N/A'}</p>
+                            <p><strong>Vencimento:</strong> ${response.data_vencimento || 'N/A'}</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="text-center">
+                        ${response.url_fatura ? 
+                            `<iframe src="${response.url_fatura}" width="100%" height="400px" frameborder="0"></iframe>` :
+                            '<p class="text-muted">Fatura não disponível para visualização</p>'
+                        }
                     </div>
                 `;
 
-                // Remover modal existente se houver
-                $('#faturaModal').remove();
-
-                // Adicionar modal ao body e mostrar
-                $('body').append(modalHtml);
+                $('#fatura-content').html(modalContent);
                 $('#faturaModal').modal('show');
 
             } else {
@@ -620,26 +525,29 @@ function visualizarFatura() {
         });
 }
 
-function aprovarProcesso() {
-    const observacoes = prompt('Observações da aprovação (opcional):');
+function aprovarProcessoModal(event, processoId) {
+    event.preventDefault(); // Evita o envio padrão do formulário
 
-    if (observacoes !== null) { // null = cancelou, string vazia = OK sem observações
-        $.post(
-            '{{ url_for("processos_bp.aprovar", id=processo.id) }}',
-            { observacoes: observacoes },
-            function(response) {
-                if (response.success) {
-                    alert(response.message);
-                    location.reload();
-                } else {
-                    alert('Erro: ' + response.message);
-                }
+    let observacoes = $('#observacoes_modal').val();
+
+    $.post(
+        '/processos/aprovar/' + processoId,
+        { observacoes: observacoes },
+        function(response) {
+            if (response.success) {
+                alert(response.message);
+                location.reload();
+            } else {
+                alert('Erro: ' + response.message);
             }
-        ).fail(function() {
-            alert('Erro ao aprovar processo');
-        });
-    }
+        }
+    ).fail(function() {
+        alert('Erro ao aprovar processo');
+    });
+
+    $('#modalAprovar').modal('hide');
 }
+
 
 function rejeitarProcesso() {
     const motivo = prompt('Motivo da rejeição (obrigatório):');
@@ -696,6 +604,20 @@ function toggleTheme() {
         themeIcon.className = 'feather icon-moon';
         localStorage.setItem('theme', 'dark');
     }
+}
+
+function abrirFaturaNovaAba(processoId) {
+        $.get('/processos/fatura-dados/' + processoId)
+        .done(function(response) {
+            if (response.success && response.url_fatura) {
+                window.open(response.url_fatura, '_blank');
+            } else {
+                alert('Erro ao abrir fatura em nova aba: ' + (response.message || 'URL da fatura não encontrada.'));
+            }
+        })
+        .fail(function() {
+            alert('Erro ao carregar dados da fatura.');
+        });
 }
 </script>
 {% endblock %}

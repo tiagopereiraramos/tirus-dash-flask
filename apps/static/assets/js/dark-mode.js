@@ -1,10 +1,4 @@
-` tags.
 
-```text
-Correcting querySelector errors and adding form element masking functionality.
-```
-
-<replit_final_file>
 // BRM Theme Toggle functionality
 document.addEventListener('DOMContentLoaded', function() {
     const themeToggle = document.getElementById('theme-toggle');
@@ -88,29 +82,80 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('theme', 'light');
         }
     });
+});
 
-    // Verificar se existem elementos específicos de páginas antes de tentar usá-los
-    const faturaModal = document.getElementById('faturaModal');
+// Funções para visualização de fatura
+function visualizarFatura(processoId) {
+    const modal = document.getElementById('faturaModal');
+    if (!modal) {
+        console.error('Modal de fatura não encontrado');
+        return;
+    }
+
+    // Mostrar loading
     const faturaViewer = document.getElementById('faturaViewer');
     const faturaLoader = document.getElementById('faturaLoader');
-
-    // Só adicionar event listeners se os elementos existirem
-    if (faturaModal) {
-        // Event listeners para modal de fatura
+    
+    if (faturaLoader) {
+        faturaLoader.style.display = 'block';
+    }
+    if (faturaViewer) {
+        faturaViewer.style.display = 'none';
     }
 
-    // Verificar elementos de formulário
-    const formElements = document.querySelectorAll('input[data-mask]');
-    if (formElements.length > 0 && typeof $ !== 'undefined' && $.fn.mask) {
-        // Aplicar máscaras apenas se jQuery mask estiver disponível
-        formElements.forEach(function(element) {
-            const mask = element.getAttribute('data-mask');
-            if (mask) {
-                $(element).mask(mask);
+    // Fazer requisição para obter dados da fatura
+    fetch(`/processos/fatura-dados/${processoId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                faturaCarregada(data);
+            } else {
+                console.error('Erro ao carregar fatura:', data.message);
+                alert('Erro ao carregar fatura: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Erro na requisição:', error);
+            alert('Erro ao carregar fatura');
+        })
+        .finally(() => {
+            if (faturaLoader) {
+                faturaLoader.style.display = 'none';
             }
         });
+
+    // Mostrar modal
+    if (typeof $ !== 'undefined' && $.fn.modal) {
+        $(modal).modal('show');
+    } else {
+        modal.style.display = 'block';
     }
-});
+}
+
+function faturaCarregada(data) {
+    const faturaViewer = document.getElementById('faturaViewer');
+    if (!faturaViewer) {
+        console.error('Viewer de fatura não encontrado');
+        return;
+    }
+
+    // Configurar viewer baseado no tipo de arquivo
+    if (data.url_fatura) {
+        const fileExtension = data.url_fatura.split('.').pop().toLowerCase();
+        
+        if (fileExtension === 'pdf') {
+            faturaViewer.innerHTML = `<iframe src="${data.url_fatura}" width="100%" height="500px" frameborder="0"></iframe>`;
+        } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
+            faturaViewer.innerHTML = `<img src="${data.url_fatura}" class="img-fluid" alt="Fatura">`;
+        } else {
+            faturaViewer.innerHTML = `<p>Arquivo não pode ser visualizado diretamente. <a href="${data.url_fatura}" target="_blank">Clique aqui para baixar</a></p>`;
+        }
+    } else {
+        faturaViewer.innerHTML = '<p>Fatura não disponível</p>';
+    }
+
+    faturaViewer.style.display = 'block';
+}
 
 // Function to toggle between light and dark themes
 function toggleTheme() {
@@ -136,3 +181,18 @@ function toggleTheme() {
 function toggleDarkMode() {
     toggleTheme();
 }
+
+// Função para aplicar máscaras nos campos (se jQuery mask estiver disponível)
+function aplicarMascaras() {
+    if (typeof $ !== 'undefined' && $.fn.mask) {
+        $('[data-mask]').each(function() {
+            const mask = $(this).attr('data-mask');
+            if (mask) {
+                $(this).mask(mask);
+            }
+        });
+    }
+}
+
+// Chamar aplicarMascaras quando o documento estiver pronto
+document.addEventListener('DOMContentLoaded', aplicarMascaras);
