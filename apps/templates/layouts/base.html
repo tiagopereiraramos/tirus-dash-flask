@@ -228,6 +228,26 @@
     <!-- jQuery UI JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
     
+    <!-- Correção para tooltip do Bootstrap -->
+    <script>
+        // Aguardar jQuery carregar e definir tooltip se não existir
+        $(document).ready(function() {
+            if (typeof $.fn.tooltip === 'undefined' && typeof $.ui !== 'undefined' && $.ui.tooltip) {
+                // Usar jQuery UI tooltip como fallback
+                $.fn.tooltip = function(options) {
+                    if (options === 'hide' || options === 'show' || options === 'toggle') {
+                        return this;
+                    }
+                    return this.each(function() {
+                        if ($(this).attr('title')) {
+                            $(this).tooltip();
+                        }
+                    });
+                };
+            }
+        });
+    </script>
+    
     <!-- jQuery Mask Plugin -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     

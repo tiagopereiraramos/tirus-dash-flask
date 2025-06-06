@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Variáveis globais para o viewer de fatura
-let faturaCarregadaIframe = null;
+window.faturaIframeCarregado = false;
 
 // Funções para visualização de fatura
 function visualizarFatura(processoId) {
@@ -83,7 +83,7 @@ function exibirFaturaModal(data) {
             <hr>
             <div class="text-center">
                 ${data.url_fatura ? 
-                    `<iframe id="faturaCarregadaIframe" src="${data.url_fatura}" width="100%" height="400px" frameborder="0"></iframe>` :
+                    `<iframe id="fatura-iframe-modal" src="${data.url_fatura}" width="100%" height="400px" frameborder="0"></iframe>` :
                     '<p class="text-muted">Fatura não disponível para visualização</p>'
                 }
             </div>
@@ -117,8 +117,6 @@ function exibirFaturaModal(data) {
         $('#fatura-content').html(modalContent);
         $('#faturaModal').modal('show');
         
-        // Atualizar a referência global do iframe
-        faturaCarregadaIframe = document.getElementById('faturaCarregadaIframe');
     } else {
         // Fallback para quando jQuery/Bootstrap não estão disponíveis
         console.warn('jQuery ou Bootstrap não disponível, abrindo fatura em nova aba');
@@ -127,6 +125,29 @@ function exibirFaturaModal(data) {
         } else {
             alert('Fatura não disponível');
         }
+    }
+}
+
+// Função para quando o iframe da fatura carrega
+function onFaturaLoad() {
+    window.faturaIframeCarregado = true;
+    const loadingElement = document.getElementById('loading-fatura');
+    if (loadingElement) {
+        loadingElement.style.display = 'none';
+    }
+}
+
+// Função para quando há erro no iframe da fatura
+function onFaturaError() {
+    const loadingElement = document.getElementById('loading-fatura');
+    const erroElement = document.getElementById('erro-fatura');
+    
+    if (loadingElement) {
+        loadingElement.style.display = 'none';
+    }
+    if (erroElement) {
+        erroElement.classList.remove('d-none');
+        erroElement.classList.add('d-flex');
     }
 }
 

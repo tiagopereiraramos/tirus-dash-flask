@@ -150,8 +150,8 @@
                                                                         id="fatura-iframe" 
                                                                         src="{{ processo.url_fatura }}" 
                                                                         style="width: 100%; height: 100%; border: none;"
-                                                                        onload="faturaCarregadaIframe()"
-                                                                        onerror="faturaErro()">
+                                                                        onload="onFaturaLoad()"
+                                                                        onerror="onFaturaError()">
                                                                     </iframe>
                                                                     <div id="loading-fatura" class="d-flex justify-content-center align-items-center" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9);">
                                                                         <div class="text-center">
@@ -623,14 +623,15 @@ function abrirFaturaNovaAba(processoId) {
     }
 }
 
-function faturaCarregadaIframe() {
+function onFaturaLoad() {
+    window.faturaIframeCarregado = true;
     const loadingElement = document.getElementById('loading-fatura');
     if (loadingElement) {
         loadingElement.style.display = 'none';
     }
 }
 
-function faturaErro() {
+function onFaturaError() {
     const loadingElement = document.getElementById('loading-fatura');
     const erroElement = document.getElementById('erro-fatura');
     
