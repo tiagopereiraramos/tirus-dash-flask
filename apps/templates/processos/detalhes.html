@@ -129,6 +129,53 @@
                                                         </div>
                                                     </div>
                                                 </div>
+
+                                                <!-- Visualizador de Fatura -->
+                                                {% if processo.url_fatura %}
+                                                <div class="row mt-4">
+                                                    <div class="col-12">
+                                                        <div class="card">
+                                                            <div class="card-header bg-primary">
+                                                                <h6 class="text-white mb-0">
+                                                                    <i class="feather icon-file-text mr-2"></i>
+                                                                    Visualizador de Fatura
+                                                                    <button type="button" class="btn btn-sm btn-light float-right" onclick="abrirFaturaNovaAba('{{ processo.id }}')">
+                                                                        <i class="feather icon-external-link"></i> Nova Aba
+                                                                    </button>
+                                                                </h6>
+                                                            </div>
+                                                            <div class="card-body p-0">
+                                                                <div id="fatura-viewer-container" style="height: 600px; position: relative;">
+                                                                    <iframe 
+                                                                        id="fatura-iframe" 
+                                                                        src="{{ processo.url_fatura }}" 
+                                                                        style="width: 100%; height: 100%; border: none;"
+                                                                        onload="faturaCarregada()"
+                                                                        onerror="faturaErro()">
+                                                                    </iframe>
+                                                                    <div id="loading-fatura" class="d-flex justify-content-center align-items-center" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9);">
+                                                                        <div class="text-center">
+                                                                            <div class="spinner-border text-primary" role="status">
+                                                                                <span class="sr-only">Carregando...</span>
+                                                                            </div>
+                                                                            <p class="mt-2 text-muted">Carregando fatura...</p>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div id="erro-fatura" class="d-none justify-content-center align-items-center" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(248,249,250,0.9);">
+                                                                        <div class="text-center">
+                                                                            <i class="feather icon-alert-triangle text-warning" style="font-size: 3rem;"></i>
+                                                                            <p class="mt-2 text-muted">Erro ao carregar fatura</p>
+                                                                            <button type="button" class="btn btn-primary btn-sm" onclick="recarregarFatura()">
+                                                                                <i class="feather icon-refresh-cw"></i> Tentar Novamente
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
                                             </div>
 
                                             <!-- Informações Detalhadas -->
@@ -633,5 +680,43 @@ function enviarParaSATDetalhes(processoId) {
             }
         });
     }
+}
+
+// Funções para gerenciar o visualizador de fatura
+function faturaCarregada() {
+    document.getElementById('loading-fatura').style.display = 'none';
+}
+
+function faturaErro() {
+    document.getElementById('loading-fatura').style.display = 'none';
+    document.getElementById('erro-fatura').classList.remove('d-none');
+    document.getElementById('erro-fatura').classList.add('d-flex');
+}
+
+function recarregarFatura() {
+    document.getElementById('erro-fatura').classList.add('d-none');
+    document.getElementById('erro-fatura').classList.remove('d-flex');
+    document.getElementById('loading-fatura').style.display = 'flex';
+    
+    const iframe = document.getElementById('fatura-iframe');
+    iframe.src = iframe.src; // Recarrega o iframe
+}
+
+function abrirFaturaNovaAba(processoId) {
+    $.ajax({
+        url: '/processos/fatura-dados/' + processoId,
+        type: 'GET',
+        success: function(response) {
+            if (response.success && response.url_fatura) {
+                window.open(response.url_fatura, '_blank');
+            } else {
+                alert('Fatura não disponível: ' + (response.message || 'URL da fatura não encontrada'));
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Erro ao obter dados da fatura:', error);
+            alert('Erro ao obter dados da fatura. Tente novamente.');
+        }
+    });
 }
 </script>
