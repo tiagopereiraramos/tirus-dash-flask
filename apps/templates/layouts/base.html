@@ -222,32 +222,6 @@
     <!-- Required Js -->
     {% include 'includes/scripts.html' %}
     
-    <!-- jQuery UI CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/ui-lightness/jquery-ui.min.css">
-    
-    <!-- jQuery UI JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
-    
-    <!-- Correção para tooltip do Bootstrap -->
-    <script>
-        // Aguardar jQuery carregar e definir tooltip se não existir
-        $(document).ready(function() {
-            if (typeof $.fn.tooltip === 'undefined' && typeof $.ui !== 'undefined' && $.ui.tooltip) {
-                // Usar jQuery UI tooltip como fallback
-                $.fn.tooltip = function(options) {
-                    if (options === 'hide' || options === 'show' || options === 'toggle') {
-                        return this;
-                    }
-                    return this.each(function() {
-                        if ($(this).attr('title')) {
-                            $(this).tooltip();
-                        }
-                    });
-                };
-            }
-        });
-    </script>
-    
     <!-- jQuery Mask Plugin -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     
@@ -256,6 +230,27 @@
     
     <!-- Toastr JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    
+    <!-- Correção para tooltip e modal -->
+    <script>
+        // Aguardar jQuery carregar completamente
+        $(document).ready(function() {
+            // Inicializar tooltips apenas se existirem elementos com data-toggle="tooltip"
+            if (typeof $.fn.tooltip !== 'undefined') {
+                $('[data-toggle="tooltip"]').tooltip();
+            }
+            
+            // Verificar se modal está disponível
+            if (typeof $.fn.modal === 'undefined') {
+                console.warn('Bootstrap modal não está disponível');
+            }
+            
+            // Verificar se mask está disponível
+            if (typeof $.fn.mask === 'undefined') {
+                console.warn('jQuery Mask Plugin não está disponível');
+            }
+        });
+    </script>
 
     {% block javascripts %}{% endblock javascripts %}
 

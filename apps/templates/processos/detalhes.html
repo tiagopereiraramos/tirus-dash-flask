@@ -150,8 +150,8 @@
                                                                         id="fatura-iframe" 
                                                                         src="{{ processo.url_fatura }}" 
                                                                         style="width: 100%; height: 100%; border: none;"
-                                                                        onload="onFaturaLoad()"
-                                                                        onerror="onFaturaError()">
+                                                                        onload="window.onFaturaLoad()"
+                                                                        onerror="window.onFaturaError()">
                                                                     </iframe>
                                                                     <div id="loading-fatura" class="d-flex justify-content-center align-items-center" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9);">
                                                                         <div class="text-center">
@@ -165,7 +165,7 @@
                                                                         <div class="text-center">
                                                                             <i class="feather icon-alert-triangle text-warning" style="font-size: 3rem;"></i>
                                                                             <p class="mt-2 text-muted">Erro ao carregar fatura</p>
-                                                                            <button type="button" class="btn btn-primary btn-sm" onclick="recarregarFatura()">
+                                                                            <button type="button" class="btn btn-primary btn-sm" onclick="window.recarregarFatura()">
                                                                                 <i class="feather icon-refresh-cw"></i> Tentar Novamente
                                                                             </button>
                                                                         </div>
@@ -326,7 +326,7 @@
                                             {% endif %}
 
                                             {% if processo.url_fatura %}
-                                            <button type="button" class="btn btn-primary btn-block mb-2" onclick="visualizarFatura('{{ processo.id }}')">
+                                            <button type="button" class="btn btn-primary btn-block mb-2" onclick="window.visualizarFatura('{{ processo.id }}')">
                                                 <i class="feather icon-file-text"></i> Visualizar Fatura
                                             </button>
                                             {% endif %}
@@ -464,25 +464,24 @@
 {% block javascripts %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-
 <script>
-// Máscara para campos de entrada
+// JavaScript específico da página de detalhes do processo
 $(document).ready(function() {
-    // Verificar se a biblioteca de máscara está carregada
-    setTimeout(function() {
-        if (typeof $.fn.mask !== 'undefined') {
-            // Aplicar máscaras se existirem campos de formulário
-            if ($('#data_vencimento').length) {
-                $('#data_vencimento').mask('00/00/0000');
-            }
-            if ($('#valor_fatura').length) {
-                $('#valor_fatura').mask('#.##0,00', {reverse: true});
-            }
-            if ($('#mes_ano').length) {
-                $('#mes_ano').mask('00/0000');
-            }
+    console.log('Página de detalhes carregada');
+
+    // Aplicar máscaras se necessário
+    if (typeof $.fn.mask !== 'undefined') {
+        // Aplicar máscaras para campos se existirem
+        if ($('#data_vencimento').length) {
+            $('#data_vencimento').mask('00/00/0000');
         }
-    }, 500);
+        if ($('#valor_fatura').length) {
+            $('#valor_fatura').mask('#.##0,00', {reverse: true});
+        }
+        if ($('#mes_ano').length) {
+            $('#mes_ano').mask('00/0000');
+        }
+    }
 });
 
 function visualizarFatura(processoId) {
@@ -525,28 +524,34 @@ function visualizarFatura(processoId) {
 }
 
 function aprovarProcessoModal(event, processoId) {
-    event.preventDefault(); // Evita o envio padrão do formulário
+    event.preventDefault();
 
-    let observacoes = $('#observacoes_modal').val();
+    const observacoes = $('#observacoes_modal').val();
 
-    $.post(
-        '/processos/aprovar/' + processoId,
-        { observacoes: observacoes },
-        function(response) {
-            if (response.success) {
-                alert(response.message);
-                location.reload();
-            } else {
-                alert('Erro: ' + response.message);
+    if (typeof $ !== 'undefined') {
+        $.post(
+            '/processos/aprovar/' + processoId,
+            { observacoes: observacoes },
+            function(response) {
+                if (response.success) {
+                    alert(response.message);
+                    location.reload();
+                } else {
+                    alert('Erro: ' + response.message);
+                }
             }
+        ).fail(function() {
+            alert('Erro ao aprovar processo');
+        });
+
+        // Fechar modal se disponível
+        if ($.fn.modal) {
+            $('#modalAprovar').modal('hide');
         }
-    ).fail(function() {
-        alert('Erro ao aprovar processo');
-    });
-
-    $('#modalAprovar').modal('hide');
+    } else {
+        alert('Sistema não carregou corretamente');
+    }
 }
-
 
 function rejeitarProcesso() {
     const motivo = prompt('Motivo da rejeição (obrigatório):');

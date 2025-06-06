@@ -44,31 +44,86 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Variáveis globais para o viewer de fatura
-window.faturaIframeCarregado = false;
+// Variáveis globais para o sistema
+window.sistemaRPA = window.sistemaRPA || {};
+window.sistemaRPA.faturaCarregada = false;
 
-// Funções para visualização de fatura
-function visualizarFatura(processoId) {
-    // Fazer requisição para obter dados da fatura primeiro
-    fetch(`/processos/fatura-dados/${processoId}`)
-        .then(response => response.json())
-        .then(data => {
+// Função global para quando o iframe da fatura carrega
+window.onFaturaLoad = function() {
+    window.sistemaRPA.faturaCarregada = true;
+    const loadingElement = document.getElementById('loading-fatura');
+    if (loadingElement) {
+        loadingElement.style.display = 'none';
+    }
+    console.log('Fatura carregada com sucesso');
+};
+
+// Função global para quando há erro no iframe da fatura
+window.onFaturaError = function() {
+    const loadingElement = document.getElementById('loading-fatura');
+    const erroElement = document.getElementById('erro-fatura');
+    
+    if (loadingElement) {
+        loadingElement.style.display = 'none';
+    }
+    if (erroElement) {
+        erroElement.classList.remove('d-none');
+        erroElement.classList.add('d-flex');
+    }
+    console.error('Erro ao carregar fatura');
+};
+
+// Função global para recarregar fatura
+window.recarregarFatura = function() {
+    const iframe = document.getElementById('fatura-iframe');
+    const loadingElement = document.getElementById('loading-fatura');
+    const erroElement = document.getElementById('erro-fatura');
+    
+    if (iframe) {
+        if (loadingElement) {
+            loadingElement.style.display = 'flex';
+        }
+        if (erroElement) {
+            erroElement.classList.add('d-none');
+            erroElement.classList.remove('d-flex');
+        }
+        iframe.src = iframe.src; // Recarrega o iframe
+    }
+};
+
+// Função global para visualizar fatura
+window.visualizarFatura = function(processoId) {
+    // Verificar se jQuery está disponível
+    if (typeof $ === 'undefined') {
+        console.error('jQuery não está disponível');
+        alert('Erro: Sistema não carregou corretamente');
+        return;
+    }
+
+    // Fazer requisição para obter dados da fatura
+    $.ajax({
+        url: '/processos/fatura-dados/' + processoId,
+        type: 'GET',
+        timeout: 10000,
+        success: function(data) {
             if (data.success) {
                 exibirFaturaModal(data);
             } else {
                 console.error('Erro ao carregar fatura:', data.message);
                 alert('Erro ao carregar fatura: ' + data.message);
             }
-        })
-        .catch(error => {
+        },
+        error: function(xhr, status, error) {
             console.error('Erro na requisição:', error);
-            alert('Erro ao carregar fatura');
-        });
-}
+            alert('Erro ao carregar fatura. Tente novamente.');
+        }
+    });
+};
 
+// Função para exibir modal da fatura
 function exibirFaturaModal(data) {
     // Verificar se existe jQuery e Bootstrap
-    if (typeof $ !== 'undefined' && $.fn.modal) {
+    if (typeof $ !== 'undefined') {
         let modalContent = `
             <div class="row">
                 <div class="col-md-6">
@@ -83,7 +138,7 @@ function exibirFaturaModal(data) {
             <hr>
             <div class="text-center">
                 ${data.url_fatura ? 
-                    `<iframe id="fatura-iframe-modal" src="${data.url_fatura}" width="100%" height="400px" frameborder="0"></iframe>` :
+                    `<iframe id="fatura-iframe-modal" src="${data.url_fatura}" width="100%" height="400px" frameborder="0" onload="window.onFaturaLoad()" onerror="window.onFaturaError()"></iframe>` :
                     '<p class="text-muted">Fatura não disponível para visualização</p>'
                 }
             </div>
@@ -115,11 +170,18 @@ function exibirFaturaModal(data) {
         }
 
         $('#fatura-content').html(modalContent);
-        $('#faturaModal').modal('show');
+        
+        // Tentar usar Bootstrap modal se disponível
+        if ($.fn.modal) {
+            $('#faturaModal').modal('show');
+        } else {
+            // Fallback para mostrar modal sem Bootstrap
+            $('#faturaModal').show();
+        }
         
     } else {
-        // Fallback para quando jQuery/Bootstrap não estão disponíveis
-        console.warn('jQuery ou Bootstrap não disponível, abrindo fatura em nova aba');
+        // Fallback para quando jQuery não está disponível
+        console.warn('jQuery não disponível, abrindo fatura em nova aba');
         if (data.url_fatura) {
             window.open(data.url_fatura, '_blank');
         } else {
@@ -128,31 +190,28 @@ function exibirFaturaModal(data) {
     }
 }
 
-// Função para quando o iframe da fatura carrega
-function onFaturaLoad() {
-    window.faturaIframeCarregado = true;
-    const loadingElement = document.getElementById('loading-fatura');
-    if (loadingElement) {
-        loadingElement.style.display = 'none';
+// Função global para abrir fatura em nova aba
+window.abrirFaturaNovaAba = function(processoId) {
+    if (typeof $ !== 'undefined') {
+        $.get('/processos/fatura-dados/' + processoId)
+        .done(function(response) {
+            if (response.success && response.url_fatura) {
+                window.open(response.url_fatura, '_blank');
+            } else {
+                alert('Erro ao abrir fatura em nova aba: ' + (response.message || 'URL da fatura não encontrada.'));
+            }
+        })
+        .fail(function() {
+            alert('Erro ao carregar dados da fatura.');
+        });
+    } else {
+        console.error('jQuery não disponível');
+        alert('Sistema não carregou corretamente');
     }
-}
+};
 
-// Função para quando há erro no iframe da fatura
-function onFaturaError() {
-    const loadingElement = document.getElementById('loading-fatura');
-    const erroElement = document.getElementById('erro-fatura');
-    
-    if (loadingElement) {
-        loadingElement.style.display = 'none';
-    }
-    if (erroElement) {
-        erroElement.classList.remove('d-none');
-        erroElement.classList.add('d-flex');
-    }
-}
-
-// Function to toggle between light and dark themes
-function toggleTheme() {
+// Function to toggle between light and dark themes (legacy support)
+window.toggleTheme = function() {
     const body = document.body;
     const themeIcon = document.getElementById('theme-icon');
 
@@ -169,12 +228,12 @@ function toggleTheme() {
         }
         localStorage.setItem('theme', 'dark');
     }
-}
+};
 
 // Function to toggle between light and dark themes (legacy)
-function toggleDarkMode() {
-    toggleTheme();
-}
+window.toggleDarkMode = function() {
+    window.toggleTheme();
+};
 
 // Função para aplicar máscaras nos campos
 function aplicarMascaras() {
@@ -195,6 +254,8 @@ function aplicarMascaras() {
         if (dataVencimento) $('#data_vencimento').mask('00/00/0000');
         if (valorFatura) $('#valor_fatura').mask('#.##0,00', {reverse: true});
         if (mesAno) $('#mes_ano').mask('00/0000');
+        
+        console.log('Máscaras aplicadas com sucesso');
     } else {
         // Tentar novamente após um pequeno delay
         setTimeout(aplicarMascaras, 200);
@@ -208,7 +269,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof $ !== 'undefined') {
             $(document).ready(function() {
                 aplicarMascaras();
+                
+                // Inicializar tooltips apenas se a função existir
+                if (typeof $.fn.tooltip !== 'undefined') {
+                    $('[data-toggle="tooltip"]').tooltip();
+                }
             });
         }
-    }, 500);
+    }, 1000);
 });
