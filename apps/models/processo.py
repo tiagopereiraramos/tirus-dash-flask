@@ -24,19 +24,9 @@ if TYPE_CHECKING:
 class StatusProcesso(Enum):
     """Status possíveis para um processo"""
     AGUARDANDO_DOWNLOAD = "AGUARDANDO_DOWNLOAD"
-    DOWNLOAD_COMPLETO = "DOWNLOAD_COMPLETO"
-    UPLOAD_SAT_REALIZADO = "UPLOAD_SAT_REALIZADO"
-    # Status relacionados às execuções (serão implementados no módulo de execuções)
-    DOWNLOAD_EM_ANDAMENTO = "DOWNLOAD_EM_ANDAMENTO"
-    DOWNLOAD_FALHOU = "DOWNLOAD_FALHOU"
     AGUARDANDO_APROVACAO = "AGUARDANDO_APROVACAO"
-    APROVADO = "APROVADO"
-    REJEITADO = "REJEITADO"
-    ENVIANDO_SAT = "ENVIANDO_SAT"
-    ENVIADO_SAT = "ENVIADO_SAT"
-    FALHA_ENVIO_SAT = "FALHA_ENVIO_SAT"
-    CONCLUIDO = "CONCLUIDO"
-    CANCELADO = "CANCELADO"
+    AGUARDANDO_ENVIO_SAT = "AGUARDANDO_ENVIO_SAT"
+    UPLOAD_REALIZADO = "UPLOAD_REALIZADO"
 
 
 class Processo(BaseModel):
@@ -201,26 +191,23 @@ class Processo(BaseModel):
 
     @property
     def esta_aprovado(self) -> bool:
-        """Verifica se o processo foi aprovado"""
-        return self.status_processo == StatusProcesso.APROVADO.value
+        """Verifica se o processo foi aprovado (aguardando envio SAT)"""
+        return self.status_processo == StatusProcesso.AGUARDANDO_ENVIO_SAT.value
 
     @property
     def esta_concluido(self) -> bool:
         """Verifica se o processo foi concluído"""
-        return self.status_processo == StatusProcesso.CONCLUIDO.value
+        return self.status_processo == StatusProcesso.UPLOAD_REALIZADO.value
 
     @property
     def pode_ser_aprovado(self) -> bool:
         """Verifica se o processo pode ser aprovado"""
-        return (
-            self.status_processo == StatusProcesso.DOWNLOAD_COMPLETO.value or
-            self.status_processo == StatusProcesso.AGUARDANDO_APROVACAO.value
-        )
+        return self.status_processo == StatusProcesso.AGUARDANDO_APROVACAO.value
     
     @property
     def pode_enviar_sat(self) -> bool:
         """Verifica se o processo pode ser enviado para o SAT"""
-        return self.status_processo == StatusProcesso.APROVADO.value
+        return self.status_processo == StatusProcesso.AGUARDANDO_ENVIO_SAT.value
     
     @property
     def tem_fatura_para_visualizar(self) -> bool:
@@ -231,11 +218,11 @@ class Processo(BaseModel):
     def tem_fatura_disponivel(self) -> bool:
         """Verifica se há fatura disponível"""
         return bool(self.caminho_s3_fatura)
-    
+
     @property
-    def esta_pendente_aprovacao(self) -> bool:
-        """Verifica se o processo está pendente de aprovação (alias para backward compatibility)"""
-        return self.status_processo == StatusProcesso.AGUARDANDO_APROVACAO.value
+    def tem_dados_completos_para_aprovacao(self) -> bool:
+        """Verifica se tem dados necessários para aprovação"""
+        return bool(self.url_fatura and self.data_vencimento)
 
     def aprovar(self, usuario_id: GUID, observacoes: Optional[str] = None) -> None:
         """
@@ -245,7 +232,7 @@ class Processo(BaseModel):
             usuario_id: ID do usuário que está aprovando
             observacoes: Observações da aprovação
         """
-        self.status_processo = StatusProcesso.APROVADO.value
+        self.status_processo = StatusProcesso.AGUARDANDO_ENVIO_SAT.value
         self.aprovado_por_usuario_id = usuario_id
         self.data_aprovacao = datetime.now()
         if observacoes:
@@ -258,27 +245,26 @@ class Processo(BaseModel):
         Args:
             observacoes: Motivo da rejeição
         """
-        self.status_processo = StatusProcesso.REJEITADO.value
+        self.status_processo = StatusProcesso.AGUARDANDO_DOWNLOAD.value
         self.aprovado_por_usuario_id = None
         self.data_aprovacao = None
         if observacoes:
             self.observacoes = observacoes
 
-    def marcar_enviado_sat(self) -> None:
+    def marcar_download_completo(self) -> None:
+        """Marca o download como completo e move para aprovação se tem dados necessários"""
+        if self.tem_dados_completos_para_aprovacao:
+            self.status_processo = StatusProcesso.AGUARDANDO_APROVACAO.value
+
+    def enviar_para_sat(self) -> None:
         """Marca o processo como enviado para o SAT"""
+        self.status_processo = StatusProcesso.UPLOAD_REALIZADO.value
         self.enviado_para_sat = True
         self.data_envio_sat = datetime.now()
-        self.status_processo = StatusProcesso.ENVIADO_SAT.value
 
     def atualizar_status(self, novo_status: StatusProcesso) -> None:
         """Atualiza o status do processo"""
         self.status_processo = novo_status.value
-    
-    def enviar_para_sat(self) -> None:
-        """Marca o processo como enviado para o SAT"""
-        self.status_processo = StatusProcesso.UPLOAD_SAT_REALIZADO.value
-        self.enviado_para_sat = True
-        self.data_envio_sat = datetime.now()
 
     @classmethod
     def criar_mes_ano_atual(cls) -> str:

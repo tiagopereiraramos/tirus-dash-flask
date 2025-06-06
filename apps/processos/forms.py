@@ -19,8 +19,12 @@ class ProcessoFiltroForm(FlaskForm):
 
     status = SelectField(
         'Status',
-        choices=[('', 'Todos')] + [(s.value, s.value.replace('_', ' ').title()) for s in StatusProcesso],
-        validators=[Optional()]
+        choices=[('', 'Todos os Status'),
+            (StatusProcesso.AGUARDANDO_DOWNLOAD.value, 'Aguardando Download'),
+            (StatusProcesso.AGUARDANDO_APROVACAO.value, 'Aguardando Aprovação'),
+            (StatusProcesso.AGUARDANDO_ENVIO_SAT.value, 'Aguardando Envio SAT'),
+            (StatusProcesso.UPLOAD_REALIZADO.value, 'Upload Realizado')
+        ]
     )
 
     mes_ano = StringField(
@@ -61,21 +65,12 @@ class ProcessoForm(FlaskForm):
     status_processo = SelectField(
         'Status do Processo',
         choices=[
-            ('AGUARDANDO_DOWNLOAD', 'Aguardando Download'),
-            ('DOWNLOAD_COMPLETO', 'Download Completo'),
-            ('UPLOAD_SAT_REALIZADO', 'Upload SAT Realizado'),
-            ('DOWNLOAD_EM_ANDAMENTO', 'Download em Andamento'),
-            ('DOWNLOAD_FALHOU', 'Download Falhou'),
-            ('AGUARDANDO_APROVACAO', 'Aguardando Aprovação'),
-            ('APROVADO', 'Aprovado'),
-            ('REJEITADO', 'Rejeitado'),
-            ('ENVIANDO_SAT', 'Enviando para SAT'),
-            ('ENVIADO_SAT', 'Enviado para SAT'),
-            ('FALHA_ENVIO_SAT', 'Falha no Envio SAT'),
-            ('CONCLUIDO', 'Concluído'),
-            ('CANCELADO', 'Cancelado')
+            (StatusProcesso.AGUARDANDO_DOWNLOAD.value, 'Aguardando Download'),
+            (StatusProcesso.AGUARDANDO_APROVACAO.value, 'Aguardando Aprovação'),
+            (StatusProcesso.AGUARDANDO_ENVIO_SAT.value, 'Aguardando Envio SAT'),
+            (StatusProcesso.UPLOAD_REALIZADO.value, 'Upload Realizado')
         ],
-        default='AGUARDANDO_DOWNLOAD',
+        default=StatusProcesso.AGUARDANDO_DOWNLOAD.value,
         validators=[DataRequired()]
     )
 

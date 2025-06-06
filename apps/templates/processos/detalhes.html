@@ -59,18 +59,12 @@
                                                     <p class="mb-3">
                                                         {% if processo.status_processo == 'AGUARDANDO_DOWNLOAD' %}
                                                             <span class="badge badge-light-warning">Aguardando Download</span>
-                                                        {% elif processo.status_processo == 'DOWNLOAD_COMPLETO' %}
-                                                            <span class="badge badge-light-primary">Download Completo</span>
-                                                        {% elif processo.status_processo == 'UPLOAD_SAT_REALIZADO' %}
-                                                            <span class="badge badge-success">Upload SAT Realizado</span>
                                                         {% elif processo.status_processo == 'AGUARDANDO_APROVACAO' %}
                                                             <span class="badge badge-warning">Aguardando Aprovação</span>
-                                                        {% elif processo.status_processo == 'APROVADO' %}
-                                                            <span class="badge badge-info">Aprovado - Pronto para SAT</span>
-                                                        {% elif processo.status_processo == 'CONCLUIDO' %}
-                                                            <span class="badge badge-success">Concluído</span>
-                                                        {% elif processo.status_processo == 'REJEITADO' %}
-                                                            <span class="badge badge-danger">Rejeitado</span>
+                                                        {% elif processo.status_processo == 'AGUARDANDO_ENVIO_SAT' %}
+                                                            <span class="badge badge-info">Aguardando Envio SAT</span>
+                                                        {% elif processo.status_processo == 'UPLOAD_REALIZADO' %}
+                                                            <span class="badge badge-success">Upload Realizado</span>
                                                         {% else %}
                                                             <span class="badge badge-light">{{ processo.status_processo }}</span>
                                                         {% endif %}
