@@ -531,9 +531,7 @@
 
 {% endblock content %}
 
-{% block javascripts %}{% endblock javascripts %}
-
-
+{% block javascripts %}
 <script>
 // Função para visualizar fatura - obtém dados da fatura e abre em nova aba
 function visualizarFatura(processoId) {
@@ -720,3 +718,4 @@ function abrirFaturaNovaAba(processoId) {
     });
 }
 </script>
+{% endblock javascripts %}
