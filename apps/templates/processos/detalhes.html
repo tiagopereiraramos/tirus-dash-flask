@@ -32,6 +32,47 @@
     color: #1976d2;
     font-size: 1.1em;
 }
+
+.fatura-container {
+    height: 500px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f8f9fa;
+    position: relative;
+}
+
+.fatura-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.error-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(248,249,250,0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
 </style>
 {% endblock stylesheets %}
 
@@ -130,7 +171,7 @@
                                                     </div>
                                                 </div>
 
-                                                <!-- Visualizador de Fatura -->
+                                                <!-- Visualizador de Fatura Simplificado -->
                                                 {% if processo.url_fatura %}
                                                 <div class="row mt-4">
                                                     <div class="col-12">
@@ -139,21 +180,21 @@
                                                                 <h6 class="text-white mb-0">
                                                                     <i class="feather icon-file-text mr-2"></i>
                                                                     Visualizador de Fatura
-                                                                    <button type="button" class="btn btn-sm btn-light float-right" onclick="abrirFaturaNovaAba('{{ processo.id }}')">
+                                                                    <button type="button" class="btn btn-sm btn-light float-right" onclick="abrirFaturaNovaAba()">
                                                                         <i class="feather icon-external-link"></i> Nova Aba
                                                                     </button>
                                                                 </h6>
                                                             </div>
                                                             <div class="card-body p-0">
-                                                                <div id="fatura-viewer-container" style="height: 600px; position: relative;">
+                                                                <div class="fatura-container">
                                                                     <iframe 
-                                                                        id="fatura-iframe" 
-                                                                        src="{{ processo.url_fatura }}" 
-                                                                        style="width: 100%; height: 100%; border: none;"
-                                                                        onload="window.onFaturaLoad()"
-                                                                        onerror="window.onFaturaError()">
+                                                                        id="fatura-iframe"
+                                                                        src="{{ processo.url_fatura }}"
+                                                                        onload="faturaCarregou()"
+                                                                        onerror="faturaErro()">
                                                                     </iframe>
-                                                                    <div id="loading-fatura" class="d-flex justify-content-center align-items-center" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9);">
+
+                                                                    <div id="loading-fatura" class="loading-overlay">
                                                                         <div class="text-center">
                                                                             <div class="spinner-border text-primary" role="status">
                                                                                 <span class="sr-only">Carregando...</span>
@@ -161,11 +202,12 @@
                                                                             <p class="mt-2 text-muted">Carregando fatura...</p>
                                                                         </div>
                                                                     </div>
-                                                                    <div id="erro-fatura" class="d-none justify-content-center align-items-center" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(248,249,250,0.9);">
+
+                                                                    <div id="error-fatura" class="error-overlay">
                                                                         <div class="text-center">
                                                                             <i class="feather icon-alert-triangle text-warning" style="font-size: 3rem;"></i>
                                                                             <p class="mt-2 text-muted">Erro ao carregar fatura</p>
-                                                                            <button type="button" class="btn btn-primary btn-sm" onclick="window.recarregarFatura()">
+                                                                            <button type="button" class="btn btn-primary btn-sm" onclick="recarregarFatura()">
                                                                                 <i class="feather icon-refresh-cw"></i> Tentar Novamente
                                                                             </button>
                                                                         </div>
@@ -325,15 +367,9 @@
                                             </a>
                                             {% endif %}
 
-                                            {% if processo.url_fatura %}
-                                            <button type="button" class="btn btn-primary btn-block mb-2" onclick="window.visualizarFatura('{{ processo.id }}')">
-                                                <i class="feather icon-file-text"></i> Visualizar Fatura
-                                            </button>
-                                            {% endif %}
-
                                             {% if processo.pode_ser_aprovado %}
                                                 {% if processo.url_fatura %}
-                                                <button type="button" class="btn btn-success btn-block mb-2" data-toggle="modal" data-target="#modalAprovar">
+                                                <button type="button" class="btn btn-success btn-block mb-2" onclick="aprovarProcesso()">
                                                     <i class="feather icon-check"></i> Aprovar Processo
                                                 </button>
                                                 {% else %}
@@ -344,7 +380,7 @@
                                             {% endif %}
 
                                             {% if processo.esta_pendente_aprovacao %}
-                                            <button type="button" class="btn btn-danger btn-block mb-2" data-toggle="modal" data-target="#modalRejeitar">
+                                            <button type="button" class="btn btn-danger btn-block mb-2" onclick="rejeitarProcesso()">
                                                 <i class="feather icon-x"></i> Rejeitar Processo
                                             </button>
                                             {% endif %}
@@ -379,291 +415,146 @@
         </div>
     </div>
 
-    <!-- Modal Aprovar -->
-    {% if processo.pode_ser_aprovado %}
-    <div class="modal fade" id="modalAprovar" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Aprovar Processo</h5>
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
-                </div>
-                <form id="formAprovarModal" onsubmit="aprovarProcessoModal(event, '{{ processo.id }}')">
-                    <div class="modal-body">
-                        <p>Deseja aprovar o processo de <strong>{{ processo.cliente.razao_social }}</strong> para <strong>{{ processo.mes_ano }}</strong>?</p>
-                        <div class="form-group">
-                            <label for="observacoes_modal">Observações da aprovação:</label>
-                            <textarea id="observacoes_modal" name="observacoes" class="form-control" rows="3" placeholder="Digite observações sobre a aprovação (opcional)"></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-success">Aprovar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Modal Rejeitar -->
-    {% if processo.esta_pendente_aprovacao %}
-    <div class="modal fade" id="modalRejeitar" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Rejeitar Processo</h5>
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
-                </div>
-                <form method="POST" action="{{ url_for('processos_bp.rejeitar', id=processo.id) }}">
-                    <div class="modal-body">
-                        <p>Deseja rejeitar o processo de <strong>{{ processo.cliente.razao_social }}</strong> para <strong>{{ processo.mes_ano }}</strong>?</p>
-                        <div class="form-group">
-                            <label for="observacoes">Motivo da rejeição *</label>
-                            <textarea name="observacoes" class="form-control" rows="3" placeholder="Explique o motivo da rejeição..." required></textarea>
-                        </div>
-                        <input type="hidden" name="acao" value="rejeitar">
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger">Rejeitar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Modal Visualizar Fatura -->
-    <div class="modal fade" id="faturaModal" tabindex="-1" role="dialog" aria-labelledby="faturaModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="faturaModalLabel">Visualizar Fatura</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <!-- Conteúdo da fatura será carregado aqui -->
-                    <div id="fatura-content"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
 {% endblock content %}
 
 {% block javascripts %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 <script>
-// JavaScript específico da página de detalhes do processo
-$(document).ready(function() {
-    console.log('Página de detalhes carregada');
+// Variáveis globais
+var faturaUrl = "{{ processo.url_fatura }}";
 
-    // Aplicar máscaras se necessário
-    if (typeof $.fn.mask !== 'undefined') {
-        // Aplicar máscaras para campos se existirem
-        if ($('#data_vencimento').length) {
-            $('#data_vencimento').mask('00/00/0000');
-        }
-        if ($('#valor_fatura').length) {
-            $('#valor_fatura').mask('#.##0,00', {reverse: true});
-        }
-        if ($('#mes_ano').length) {
-            $('#mes_ano').mask('00/0000');
-        }
+// Função quando a fatura carrega com sucesso
+function faturaCarregou() {
+    console.log('Fatura carregada com sucesso');
+    var loading = document.getElementById('loading-fatura');
+    if (loading) {
+        loading.style.display = 'none';
     }
-});
+}
 
-function visualizarFatura(processoId) {
-    // Fazer requisição para obter dados da fatura
-    $.get('/processos/fatura-dados/' + processoId)
+// Função quando há erro no carregamento da fatura
+function faturaErro() {
+    console.log('Erro ao carregar fatura');
+    var loading = document.getElementById('loading-fatura');
+    var error = document.getElementById('error-fatura');
+
+    if (loading) {
+        loading.style.display = 'none';
+    }
+    if (error) {
+        error.style.display = 'flex';
+    }
+}
+
+// Função para recarregar a fatura
+function recarregarFatura() {
+    var iframe = document.getElementById('fatura-iframe');
+    var loading = document.getElementById('loading-fatura');
+    var error = document.getElementById('error-fatura');
+
+    if (loading) {
+        loading.style.display = 'flex';
+    }
+    if (error) {
+        error.style.display = 'none';
+    }
+    if (iframe) {
+        iframe.src = iframe.src;
+    }
+}
+
+// Função para abrir fatura em nova aba
+function abrirFaturaNovaAba() {
+    if (faturaUrl) {
+        window.open(faturaUrl, '_blank');
+    } else {
+        alert('URL da fatura não encontrada');
+    }
+}
+
+// Função para aprovar processo
+function aprovarProcesso() {
+    var observacoes = prompt('Observações da aprovação (opcional):');
+    if (observacoes === null) return; // Cancelou
+
+    // Fazer requisição AJAX se jQuery estiver disponível
+    if (typeof $ !== 'undefined') {
+        $.post('/processos/aprovar/{{ processo.id }}', {
+            observacoes: observacoes
+        })
         .done(function(response) {
             if (response.success) {
-                faturaCarregada = true;
-
-                let modalContent = `
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>Cliente:</strong> ${response.cliente}</p>
-                            <p><strong>Mês/Ano:</strong> ${response.mes_ano}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>Valor:</strong> R$ ${response.valor_fatura || 'N/A'}</p>
-                            <p><strong>Vencimento:</strong> ${response.data_vencimento || 'N/A'}</p>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="text-center">
-                        ${response.url_fatura ? 
-                            `<iframe src="${response.url_fatura}" width="100%" height="400px" frameborder="0"></iframe>` :
-                            '<p class="text-muted">Fatura não disponível para visualização</p>'
-                        }
-                    </div>
-                `;
-
-                $('#fatura-content').html(modalContent);
-                $('#faturaModal').modal('show');
-
+                alert(response.message);
+                location.reload();
             } else {
-                alert('Erro ao carregar fatura: ' + response.message);
+                alert('Erro: ' + response.message);
             }
         })
         .fail(function() {
-            alert('Erro ao carregar dados da fatura');
-        });
-}
-
-function aprovarProcessoModal(event, processoId) {
-    event.preventDefault();
-
-    const observacoes = $('#observacoes_modal').val();
-
-    if (typeof $ !== 'undefined') {
-        $.post(
-            '/processos/aprovar/' + processoId,
-            { observacoes: observacoes },
-            function(response) {
-                if (response.success) {
-                    alert(response.message);
-                    location.reload();
-                } else {
-                    alert('Erro: ' + response.message);
-                }
-            }
-        ).fail(function() {
             alert('Erro ao aprovar processo');
         });
-
-        // Fechar modal se disponível
-        if ($.fn.modal) {
-            $('#modalAprovar').modal('hide');
-        }
     } else {
-        alert('Sistema não carregou corretamente');
+        // Fallback sem jQuery
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/processos/aprovar/{{ processo.id }}';
+
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'observacoes';
+        input.value = observacoes;
+
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
     }
 }
 
+// Função para rejeitar processo
 function rejeitarProcesso() {
-    const motivo = prompt('Motivo da rejeição (obrigatório):');
-
-    if (motivo && motivo.trim()) {
-        $.post(
-            '{{ url_for("processos_bp.rejeitar", id=processo.id) }}',
-            { observacoes: motivo },
-            function(response) {
-                if (response.success) {
-                    alert(response.message);
-                    location.reload();
-                } else {
-                    alert('Erro: ' + response.message);
-                }
-            }
-        ).fail(function() {
-            alert('Erro ao rejeitar processo');
-        });
-    } else if (motivo !== null) {
-        alert('Motivo da rejeição é obrigatório');
+    var motivo = prompt('Motivo da rejeição (obrigatório):');
+    if (!motivo || motivo.trim() === '') {
+        if (motivo !== null) {
+            alert('Motivo da rejeição é obrigatório');
+        }
+        return;
     }
-}
 
-function enviarParaSAT() {
-    if (confirm('Confirma o envio deste processo para o SAT?')) {
-        $.post(
-            '{{ url_for("processos_bp.enviar_sat", id=processo.id) }}',
-            function(response) {
-                if (response.success) {
-                    alert(response.message);
-                    location.reload();
-                } else {
-                    alert('Erro: ' + response.message);
-                }
-            }
-        ).fail(function() {
-            alert('Erro ao enviar processo para SAT');
-        });
-    }
-}
-
-// Função para toggle do tema (se necessário também nesta página)
-function toggleTheme() {
-    const body = document.body;
-    const themeIcon = document.getElementById('theme-icon');
-
-    if (body.classList.contains('dark-mode')) {
-        body.classList.remove('dark-mode');
-        themeIcon.className = 'feather icon-sun';
-        localStorage.setItem('theme', 'light');
-    } else {
-        body.classList.add('dark-mode');
-        themeIcon.className = 'feather icon-moon';
-        localStorage.setItem('theme', 'dark');
-    }
-}
-
-function abrirFaturaNovaAba(processoId) {
+    // Fazer requisição AJAX se jQuery estiver disponível
     if (typeof $ !== 'undefined') {
-        $.get('/processos/fatura-dados/' + processoId)
+        $.post('/processos/rejeitar/{{ processo.id }}', {
+            observacoes: motivo
+        })
         .done(function(response) {
-            if (response.success && response.url_fatura) {
-                window.open(response.url_fatura, '_blank');
+            if (response.success) {
+                alert(response.message);
+                location.reload();
             } else {
-                alert('Erro ao abrir fatura em nova aba: ' + (response.message || 'URL da fatura não encontrada.'));
+                alert('Erro: ' + response.message);
             }
         })
         .fail(function() {
-            alert('Erro ao carregar dados da fatura.');
+            alert('Erro ao rejeitar processo');
         });
     } else {
-        console.error('jQuery não disponível');
+        // Fallback sem jQuery
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/processos/rejeitar/{{ processo.id }}';
+
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'observacoes';
+        input.value = motivo;
+
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
     }
 }
 
-function onFaturaLoad() {
-    window.faturaIframeCarregado = true;
-    const loadingElement = document.getElementById('loading-fatura');
-    if (loadingElement) {
-        loadingElement.style.display = 'none';
-    }
-}
-
-function onFaturaError() {
-    const loadingElement = document.getElementById('loading-fatura');
-    const erroElement = document.getElementById('erro-fatura');
-    
-    if (loadingElement) {
-        loadingElement.style.display = 'none';
-    }
-    if (erroElement) {
-        erroElement.classList.remove('d-none');
-        erroElement.classList.add('d-flex');
-    }
-}
-
-function recarregarFatura() {
-    const iframe = document.getElementById('fatura-iframe');
-    const loadingElement = document.getElementById('loading-fatura');
-    const erroElement = document.getElementById('erro-fatura');
-    
-    if (iframe) {
-        if (loadingElement) {
-            loadingElement.style.display = 'flex';
-        }
-        if (erroElement) {
-            erroElement.classList.add('d-none');
-            erroElement.classList.remove('d-flex');
-        }
-        iframe.src = iframe.src; // Recarrega o iframe
-    }
-}
+// Aguardar documento carregar
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Página de detalhes carregada');
+});
 </script>
 {% endblock %}

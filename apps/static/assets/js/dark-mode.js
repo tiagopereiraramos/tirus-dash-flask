@@ -1,4 +1,3 @@
-
 // Script para alternar tema escuro/claro
 document.addEventListener('DOMContentLoaded', function() {
     const themeSwitch = document.getElementById('theme-switch');
@@ -171,7 +170,7 @@ function exibirFaturaModal(data) {
 
         $('#fatura-content').html(modalContent);
         
-        // Tentar usar Bootstrap modal se disponível
+        // Tentar usar Bootstrap modal si disponível
         if ($.fn.modal) {
             $('#faturaModal').modal('show');
         } else {
