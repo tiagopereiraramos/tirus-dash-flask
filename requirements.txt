@@ -7,3 +7,10 @@ Flask-Minify==0.42
 Flask-Dance==7.0.0
 SQLAlchemy==2.0.21
 python-dotenv==1.0.0
+Flask==2.3.3
+Flask-Login==0.6.3
+Flask-Minify==0.42
+Flask-SQLAlchemy==3.0.5
+flask-wtf
+requests
+SQLAlchemy==2.0.21

@@ -1,0 +1,489 @@
+# PROMPT DE TRANSFERÊNCIA DE CONTEXTO
+## Sistema de Orquestração RPA BEG Telecomunicações - Tirus Dashboard Flask
+
+**Data:** 2025-01-14
+**Versão do Sistema:** 1.0.0 (Beta)
+**Propósito:** Transferência completa de contexto para finalização e refinamento do SaaS
+
+---
+
+## CONTEXTO DO PROJETO
+
+Você está assumindo o desenvolvimento e finalização de um **Sistema de Orquestração RPA (Robotic Process Automation)** para a BEG Telecomunicações. O sistema automatiza o download de faturas de telecomunicações de múltiplas operadoras (Embratel, Vivo, Oi, DigitalNet) e o envio automático para o sistema SAT (Sistema de Apuração de Tributos).
+
+### Informações Principais
+
+- **Nome do Projeto:** Tirus Dashboard Flask
+- **Tipo:** SaaS interno para automação de processos de faturamento
+- **Stack Principal:** Flask 2.3.3 + PostgreSQL + Selenium + APIs Externas
+- **Estado Atual:** Beta funcional, requer refinamento e finalização
+- **Objetivo Final:** Sistema de produção completo, robusto e escalável
+
+---
+
+## DOCUMENTAÇÃO DISPONÍVEL
+
+Você possui **documentação global completa** em 2 partes que devem ser sua referência principal:
+
+### 1. `DOCUMENTACAO_GLOBAL_PARTE1.md`
+Contém:
+- Visão geral executiva do sistema
+- Arquitetura de alto nível com diagramas
+- Guias completos de setup (local, Docker, produção)
+- Inventário detalhado de todos os módulos Flask
+- Modelagem completa de dados (ER, modelos, enums, constraints)
+
+### 2. `DOCUMENTACAO_GLOBAL_PARTE2.md`
+Contém:
+- Integrações e APIs externas (contratos, payloads, autenticação)
+- Plataforma RPA detalhada (arquitetura, implementações, fluxos)
+- Processos de negócio completos (workflows, exceções, KPIs)
+- Frontend e UX (templates, componentes, convenções)
+- Jobs, scripts e ferramentas auxiliares
+- Monitoramento, logs e notificações
+- Segurança e compliance
+- Qualidade e testes
+- Governança de código
+- Roadmap e histórico
+
+### Documentação Adicional
+
+- `DOCUMENTACAO_PADROES_DESENVOLVIMENTO.md` - Padrões de código e desenvolvimento
+- `PLAYBOOKS/` - 27 playbooks detalhados por módulo (Backend, Frontend, Negócio)
+- `APISEXTERNAS/` - Documentação de integrações externas
+- `README.md` - Informações básicas do projeto
+
+**IMPORTANTE:** Leia primeiro a documentação global completa antes de iniciar qualquer trabalho.
+
+---
+
+## ESTADO ATUAL DO SISTEMA
+
+### Funcionalidades Implementadas ✅
+
+1. **Gestão Completa de Entidades:**
+   - CRUD de Clientes, Operadoras, Processos, Usuários, Agendamentos
+   - Sistema de autenticação e autorização por perfis (ADMIN, APROVADOR, OPERADOR)
+   - Validações de negócio e constraints de integridade
+
+2. **Sistema RPA:**
+   - Integração com API externa de RPA terceirizado
+   - Sistema de RPA interno (Selenium) para casos específicos
+   - Monitoramento em tempo real de execuções
+   - Logs detalhados de execuções
+
+3. **Workflow de Processos:**
+   - Criação automática de processos mensais
+   - Download automatizado de faturas
+   - Sistema de aprovação/rejeição
+   - Upload automatizado para SAT
+
+4. **Monitoramento:**
+   - Dashboard de estatísticas e métricas
+   - Monitoramento em tempo real de jobs
+   - Logs estruturados
+   - Relatórios básicos
+
+5. **Infraestrutura:**
+   - Docker e Docker Compose configurados
+   - Deploy scripts para produção
+   - Migrações de banco de dados
+   - Scripts de manutenção
+
+### Funcionalidades Pendentes/Incompletas ⏳
+
+1. **Testes:**
+   - Cobertura de testes muito baixa (< 20%)
+   - Falta testes de integração completos
+   - Falta testes end-to-end
+
+2. **Notificações:**
+   - Apenas Toastr (web) implementado
+   - Email, Slack, Telegram pendentes
+   - Sistema de notificações não finalizado
+
+3. **Performance:**
+   - Queries N+1 em alguns endpoints
+   - Falta sistema de cache robusto
+   - Otimização de queries necessária
+
+4. **RPA Interno:**
+   - OiRPA não implementado (usa apenas terceirizado)
+   - Algumas implementações são stubs
+
+5. **API REST:**
+   - Falta documentação completa (Swagger/OpenAPI)
+   - Alguns endpoints não padronizados
+   - Versionamento de API não implementado
+
+6. **Relatórios:**
+   - Exportação PDF/Excel não implementada
+   - Dashboard de analytics básico
+   - Relatórios customizados limitados
+
+---
+
+## OBJETIVOS PARA FINALIZAÇÃO
+
+### Prioridade ALTA (Bloqueadores para Produção)
+
+1. **Testes Automatizados:**
+   - [ ] Cobertura mínima de 80%
+   - [ ] Testes unitários para todos os modelos
+   - [ ] Testes de integração para fluxos principais
+   - [ ] Testes de API externa
+   - [ ] CI/CD básico
+
+2. **Sistema de Notificações:**
+   - [ ] Implementar envio de email
+   - [ ] Integração com Slack (opcional mas desejado)
+   - [ ] Integração com Telegram (opcional mas desejado)
+   - [ ] Painel de configuração de notificações
+
+3. **Otimização de Performance:**
+   - [ ] Resolver queries N+1
+   - [ ] Implementar cache (Redis ou memória)
+   - [ ] Otimizar queries lentas
+   - [ ] Implementar paginação adequada
+
+4. **Segurança:**
+   - [ ] Auditoria completa de segurança
+   - [ ] Rate limiting
+   - [ ] Validação de entrada mais rigorosa
+   - [ ] Proteção contra vulnerabilidades conhecidas
+
+### Prioridade MÉDIA (Melhorias Importantes)
+
+1. **Documentação de API:**
+   - [ ] Swagger/OpenAPI completo
+   - [ ] Exemplos de uso
+   - [ ] Guia de integração
+
+2. **Monitoramento Avançado:**
+   - [ ] Métricas com Prometheus (opcional)
+   - [ ] Alertas automáticos
+   - [ ] Dashboard de saúde do sistema
+
+3. **Relatórios:**
+   - [ ] Exportação PDF
+   - [ ] Exportação Excel
+   - [ ] Relatórios customizados
+
+4. **UX/UI:**
+   - [ ] Melhorias de interface
+   - [ ] Feedback visual melhorado
+   - [ ] Mobile responsivo aprimorado
+
+### Prioridade BAIXA (Nice to Have)
+
+1. **Funcionalidades Avançadas:**
+   - [ ] WebSocket para tempo real
+   - [ ] Sistema de filas (Celery + Redis)
+   - [ ] Multi-tenancy (se necessário)
+   - [ ] Backup automático
+
+2. **DevOps:**
+   - [ ] Kubernetes deployment
+   - [ ] CI/CD completo
+   - [ ] Monitoramento com Grafana
+
+---
+
+## ESTRUTURA DO PROJETO
+
+```
+tirus-dash-flask/
+├── apps/                          # Aplicação principal
+│   ├── __init__.py               # Factory Flask
+│   ├── config.py                 # Configurações
+│   ├── models/                   # Modelos SQLAlchemy
+│   ├── authentication/           # Autenticação
+│   ├── home/                     # Dashboard
+│   ├── clientes/                 # Gestão de clientes
+│   ├── operadoras/               # Gestão de operadoras
+│   ├── processos/                # Gestão de processos
+│   ├── usuarios/                 # Gestão de usuários
+│   ├── agendamentos/             # Agendamentos
+│   ├── api_externa/              # Integração API externa
+│   ├── rpa/                      # Sistema RPA
+│   ├── static/                   # Arquivos estáticos
+│   └── templates/                # Templates Jinja2
+├── DOCUMENTACAO_GLOBAL_PARTE1.md # Documentação parte 1
+├── DOCUMENTACAO_GLOBAL_PARTE2.md # Documentação parte 2
+├── DOCUMENTACAO_PADROES_DESENVOLVIMENTO.md
+├── PLAYBOOKS/                    # Playbooks detalhados
+├── APISEXTERNAS/                 # Docs APIs externas
+├── requirements.txt              # Dependências
+├── pyproject.toml                # Configuração projeto
+├── Dockerfile                    # Container
+├── docker-compose.yml            # Orquestração
+└── run.py                        # Entry point
+```
+
+---
+
+## PADRÕES E CONVENÇÕES
+
+### Código
+
+- **Linguagem:** Python 3.11+
+- **Framework:** Flask 2.3.3
+- **ORM:** SQLAlchemy 2.0.21
+- **Banco:** PostgreSQL (produção) / SQLite (dev)
+- **Nomenclatura:**
+  - Classes: PascalCase (`MeuModelo`)
+  - Funções/Variáveis: snake_case (`minha_funcao`)
+  - Constantes: UPPER_SNAKE_CASE (`MAX_TENTATIVAS`)
+
+### Documentação
+
+- **Idioma:** Português brasileiro
+- **Docstrings:** Obrigatórias em todas as funções/classes
+- **Comentários:** Em português, claros e objetivos
+
+### Git
+
+- **Commits:** Formato conventional commits
+- **Branches:** `main` (produção), `develop` (dev), `feature/`, `fix/`
+
+### Testes
+
+- **Framework:** pytest
+- **Cobertura:** Meta de 80%+
+- **Estrutura:** `tests/unit/`, `tests/integration/`
+
+---
+
+## INFORMAÇÕES TÉCNICAS CRÍTICAS
+
+### Variáveis de Ambiente Essenciais
+
+```bash
+# Banco de Dados
+DB_ENGINE=postgresql
+DB_HOST=localhost
+DB_NAME=tirus_production
+DB_USERNAME=usuario
+DB_PASS=senha_segura
+DB_PORT=5432
+
+# API Externa
+API_EXTERNA_URL=http://191.252.218.230:8000
+API_EXTERNA_TOKEN=token_jwt_aqui
+API_EXTERNA_USERNAME=username
+API_EXTERNA_PASSWORD=password
+
+# Segurança
+SECRET_KEY=chave_secreta_aleatoria_aqui
+DEBUG=False
+
+# Assets
+ASSETS_ROOT=/static/assets
+```
+
+### Fluxos Críticos do Sistema
+
+1. **Download de Fatura:**
+   - Processo criado → RPA executa → Fatura baixada → Aguarda aprovação
+
+2. **Aprovação:**
+   - Aprovador visualiza → Aprova/Rejeita → Se aprovado: aguarda envio SAT
+
+3. **Envio SAT:**
+   - Processo aprovado → RPA SAT executa → Upload realizado → Processo finalizado
+
+### Integrações Externas
+
+- **API Externa RPA:** `http://191.252.218.230:8000`
+- **Autenticação:** JWT Bearer Token
+- **Endpoints:** `/executar/{operadora}`, `/executar/sat`, `/status/{job_id}`
+- **Payloads:** Modelos Pydantic em `apps/api_externa/models.py`
+
+### Modelos de Dados Principais
+
+- `Usuario` - Usuários do sistema
+- `Operadora` - Operadoras de telecomunicações
+- `Cliente` - Clientes que possuem faturas
+- `Processo` - Processos mensais de faturamento
+- `Execucao` - Execuções RPA associadas a processos
+- `Agendamento` - Agendamentos para execução automática
+
+Todos os modelos herdam de `BaseModel` que fornece `id` (GUID), `data_criacao`, `data_atualizacao`.
+
+---
+
+## TAREFAS IMEDIATAS SUGERIDAS
+
+### Semana 1: Análise e Planejamento
+
+1. **Leitura Completa da Documentação:**
+   - [ ] Ler `DOCUMENTACAO_GLOBAL_PARTE1.md` completamente
+   - [ ] Ler `DOCUMENTACAO_GLOBAL_PARTE2.md` completamente
+   - [ ] Revisar playbooks relevantes
+   - [ ] Mapear funcionalidades vs documentação
+
+2. **Análise do Código:**
+   - [ ] Executar sistema localmente
+   - [ ] Revisar estrutura de código
+   - [ ] Identificar pontos críticos
+   - [ ] Mapear dependências
+
+3. **Plano de Ação:**
+   - [ ] Priorizar tarefas
+   - [ ] Definir sprints/milestones
+   - [ ] Estimar esforço
+
+### Semana 2-3: Testes e Qualidade
+
+1. **Implementar Testes:**
+   - [ ] Setup de infraestrutura de testes
+   - [ ] Testes unitários para modelos
+   - [ ] Testes de integração para rotas
+   - [ ] Testes de API externa
+
+2. **Melhorias de Qualidade:**
+   - [ ] Resolver queries N+1
+   - [ ] Implementar cache básico
+   - [ ] Otimizar queries lentas
+
+### Semana 4-5: Funcionalidades Pendentes
+
+1. **Sistema de Notificações:**
+   - [ ] Implementar email
+   - [ ] Integrar Slack (se necessário)
+   - [ ] Painel de configuração
+
+2. **Documentação API:**
+   - [ ] Swagger/OpenAPI
+   - [ ] Exemplos e guias
+
+### Semana 6+: Refinamento e Deploy
+
+1. **Refinamentos:**
+   - [ ] Melhorias de UX
+   - [ ] Otimizações finais
+   - [ ] Revisão de segurança
+
+2. **Preparação para Produção:**
+   - [ ] Testes de carga
+   - [ ] Documentação de deploy
+   - [ ] Runbook operacional
+
+---
+
+## RESTRIÇÕES E CONSIDERAÇÕES
+
+### Não Quebrar
+
+1. **Estrutura de Dados:**
+   - Não alterar modelos principais sem migração
+   - Manter compatibilidade com dados existentes
+
+2. **APIs Externas:**
+   - Não alterar contratos de API externa sem comunicação
+   - Manter compatibilidade com payloads existentes
+
+3. **Fluxos de Negócio:**
+   - Manter workflow de processos inalterado
+   - Não remover funcionalidades existentes sem aprovação
+
+### Considerações de Negócio
+
+1. **Operação Crítica:**
+   - Sistema é usado em produção
+   - Mudanças devem ser testadas cuidadosamente
+   - Sempre manter rollback disponível
+
+2. **Dados Sensíveis:**
+   - Credenciais de clientes armazenadas
+   - Dados pessoais (CNPJ, CPF)
+   - Seguir LGPD (planejado)
+
+3. **Disponibilidade:**
+   - Sistema deve estar disponível durante horário comercial
+   - Manutenções preferencialmente fora de horário
+
+---
+
+## PERGUNTAS FREQUENTES
+
+### Como executar o sistema localmente?
+
+1. Clone o repositório
+2. Crie ambiente virtual: `python3.11 -m venv venv`
+3. Ative: `source venv/bin/activate`
+4. Instale dependências: `pip install -r requirements.txt`
+5. Configure `.env` (copie de `env.sample`)
+6. Inicialize banco: `python create_tables.py`
+7. Execute: `python run.py`
+
+### Como fazer deploy?
+
+Veja `DOCUMENTACAO_GLOBAL_PARTE1.md` seção "3. SETUP E DEPLOY" para detalhes completos.
+
+### Onde está a lógica de negócio principal?
+
+- Modelos: `apps/models/`
+- Serviços: `apps/api_externa/services.py`, `apps/rpa/base.py`
+- Rotas: `apps/{modulo}/routes.py`
+
+### Como funciona a integração com API externa?
+
+Veja `DOCUMENTACAO_GLOBAL_PARTE2.md` seção "6. INTEGRAÇÕES E APIs EXTERNAS".
+
+### Como adicionar uma nova operadora?
+
+1. Criar registro na tabela `operadoras`
+2. Configurar `rpa_terceirizado` e `url_endpoint_rpa` se usar terceirizado
+3. Ou implementar classe RPA em `apps/rpa/rpas/` se usar interno
+4. Registrar no `ConcentradorRPA`
+
+---
+
+## CONTATO E SUPORTE
+
+**Documentação:** Esta documentação é sua principal referência.
+**Playbooks:** `PLAYBOOKS/` contém detalhes específicos por módulo.
+**Código:** O código-fonte é bem documentado com docstrings.
+
+---
+
+## INSTRUÇÕES FINAIS
+
+1. **LEIA PRIMEIRO:** `DOCUMENTACAO_GLOBAL_PARTE1.md` e `DOCUMENTACAO_GLOBAL_PARTE2.md` completamente antes de começar.
+
+2. **ENTENDA O SISTEMA:** Execute localmente, explore a interface, teste os fluxos principais.
+
+3. **PRIORIZE:** Foque primeiro em testes e qualidade (bloqueadores para produção).
+
+4. **MANTENHA PADRÕES:** Siga os padrões estabelecidos em `DOCUMENTACAO_PADROES_DESENVOLVIMENTO.md`.
+
+5. **DOCUMENTE:** Mantenha documentação atualizada ao fazer mudanças.
+
+6. **TESTE:** Sempre teste mudanças antes de commitar.
+
+7. **COMUNIQUE:** Se encontrar problemas ou ambiguidades, documente e resolva.
+
+---
+
+## CHECKLIST DE INÍCIO
+
+Antes de começar a trabalhar, certifique-se de:
+
+- [ ] Li e compreendi `DOCUMENTACAO_GLOBAL_PARTE1.md`
+- [ ] Li e compreendi `DOCUMENTACAO_GLOBAL_PARTE2.md`
+- [ ] Executei o sistema localmente com sucesso
+- [ ] Entendi os fluxos principais de negócio
+- [ ] Revisei a estrutura de código
+- [ ] Identifiquei as prioridades de trabalho
+- [ ] Configurei ambiente de desenvolvimento
+- [ ] Acesso ao repositório e documentação
+
+---
+
+**Boa sorte no desenvolvimento! O sistema está funcional e bem estruturado. Seu trabalho é refiná-lo, completá-lo e prepará-lo para produção escalável.**
+
+---
+
+**Última Atualização:** 2025-01-14
+**Versão do Prompt:** 1.0.0

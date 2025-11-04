@@ -112,6 +112,9 @@ class APIExternaClient:
             if response.status_code >= 500:
                 raise requests.RequestException(
                     f"Erro {response.status_code}: {response.text}")
+            
+            # Fallback para outros códigos de status
+            return response
 
         except (requests.RequestException, requests.Timeout) as e:
             logger.warning(f"Erro na requisição {method} {url}: {str(e)}")
@@ -195,6 +198,7 @@ class APIExternaClient:
                 logger.error(
                     f"Erro {response.status_code} ao executar {operadora}: {response.text}")
                 response.raise_for_status()
+                raise ValueError(f"Erro HTTP {response.status_code}")
 
         except Exception as e:
             logger.error(f"Erro ao executar operadora {operadora}: {str(e)}")
@@ -245,6 +249,7 @@ class APIExternaClient:
                 logger.error(
                     f"Erro {response.status_code} ao executar SAT: {response.text}")
                 response.raise_for_status()
+                raise ValueError(f"Erro HTTP {response.status_code}")
 
         except Exception as e:
             logger.error(f"Erro ao executar SAT: {str(e)}")
@@ -275,6 +280,7 @@ class APIExternaClient:
                 logger.error(
                     f"Erro {response.status_code} ao consultar status: {response.text}")
                 response.raise_for_status()
+                raise ValueError(f"Erro HTTP {response.status_code}")
 
         except Exception as e:
             logger.error(f"Erro ao consultar status do job {job_id}: {str(e)}")
@@ -303,6 +309,7 @@ class APIExternaClient:
                 logger.error(
                     f"Erro {response.status_code} ao listar jobs: {response.text}")
                 response.raise_for_status()
+                raise ValueError(f"Erro HTTP {response.status_code}")
 
         except Exception as e:
             logger.error(f"Erro ao listar jobs: {str(e)}")
@@ -389,12 +396,13 @@ class APIExternaClient:
                 logger.error(
                     f"Erro {response.status_code} ao obter logs: {response.text}")
                 response.raise_for_status()
+                raise ValueError(f"Erro HTTP {response.status_code}")
 
         except Exception as e:
             logger.error(f"Erro ao obter logs do job {job_id}: {str(e)}")
             raise
 
-    def obter_logs_tempo_real(self, job_id: str = None) -> requests.Response:
+    def obter_logs_tempo_real(self, job_id: Optional[str] = None) -> requests.Response:
         """
         Obtém logs em tempo real via Server-Sent Events
 
@@ -423,12 +431,13 @@ class APIExternaClient:
                 logger.error(
                     f"Erro {response.status_code} ao conectar ao stream de logs: {response.text}")
                 response.raise_for_status()
+                raise ValueError(f"Erro HTTP {response.status_code}")
 
         except Exception as e:
             logger.error(f"Erro ao conectar ao stream de logs: {str(e)}")
             raise
 
-    def obter_status_tempo_real(self, job_id: str = None) -> requests.Response:
+    def obter_status_tempo_real(self, job_id: Optional[str] = None) -> requests.Response:
         """
         Obtém status em tempo real via Server-Sent Events
 
@@ -457,6 +466,7 @@ class APIExternaClient:
                 logger.error(
                     f"Erro {response.status_code} ao conectar ao stream de status: {response.text}")
                 response.raise_for_status()
+                raise ValueError(f"Erro HTTP {response.status_code}")
 
         except Exception as e:
             logger.error(f"Erro ao conectar ao stream de status: {str(e)}")

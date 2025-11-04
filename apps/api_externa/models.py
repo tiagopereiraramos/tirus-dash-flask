@@ -484,11 +484,7 @@ class JobStatus:
     created_at: Optional[str] = None
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
-    logs: List[Dict[str, Any]] = None
-
-    def __post_init__(self):
-        if self.logs is None:
-            self.logs = []
+    logs: List[Dict[str, Any]] = field(default_factory=list)
 
     @classmethod
     def from_api_response(cls, data: Dict[str, Any]) -> 'JobStatus':

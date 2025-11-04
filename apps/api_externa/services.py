@@ -264,6 +264,9 @@ class APIExternaService:
 
     def enviar_para_rpa_externo(self, processo: Processo, url_endpoint: Optional[str] = None) -> RespostaRPAExterno:
         """Envia processo para RPA externo"""
+        execucao = None
+        payload = None
+        
         try:
             # Usar endpoint da operadora se não fornecido manualmente
             if not url_endpoint:
@@ -360,8 +363,9 @@ class APIExternaService:
 
         except requests.exceptions.Timeout:
             erro_msg = "Timeout na requisição para RPA externo"
-            execucao.marcar_timeout()
-            db.session.commit()
+            if execucao:
+                execucao.marcar_timeout()
+                db.session.commit()
 
             logger.error(
                 f"Timeout ao enviar processo {processo.id} para RPA externo")
@@ -369,13 +373,14 @@ class APIExternaService:
                 success=False,
                 processo_id=str(processo.id),
                 erro=erro_msg,
-                request_id=payload.metadata.request_id if 'payload' in locals() else None
+                request_id=payload.metadata.request_id if payload else None
             )
 
         except requests.exceptions.RequestException as e:
             erro_msg = f"Erro de conexão: {str(e)}"
-            execucao.finalizar_com_erro(Exception(erro_msg))
-            db.session.commit()
+            if execucao:
+                execucao.finalizar_com_erro(Exception(erro_msg))
+                db.session.commit()
 
             logger.error(
                 f"Erro de conexão ao enviar processo {processo.id}: {str(e)}")
@@ -383,13 +388,14 @@ class APIExternaService:
                 success=False,
                 processo_id=str(processo.id),
                 erro=erro_msg,
-                request_id=payload.metadata.request_id if 'payload' in locals() else None
+                request_id=payload.metadata.request_id if payload else None
             )
 
         except Exception as e:
             erro_msg = f"Erro inesperado: {str(e)}"
-            execucao.finalizar_com_erro(Exception(erro_msg))
-            db.session.commit()
+            if execucao:
+                execucao.finalizar_com_erro(Exception(erro_msg))
+                db.session.commit()
 
             logger.error(
                 f"Erro inesperado ao enviar processo {processo.id}: {str(e)}")
@@ -397,7 +403,7 @@ class APIExternaService:
                 success=False,
                 processo_id=str(processo.id),
                 erro=erro_msg,
-                request_id=payload.metadata.request_id if 'payload' in locals() else None
+                request_id=payload.metadata.request_id if payload else None
             )
 
     def enviar_para_sat_externo(self, processo: Processo, url_endpoint: Optional[str] = None) -> RespostaSATExterno:
@@ -428,6 +434,8 @@ class APIExternaService:
 
     def enviar_para_rpa_producao(self, processo: Processo, url_base: str = "http://191.252.218.230:8000") -> RespostaProducao:
         """Envia processo para RPA em produção"""
+        execucao = None
+        
         try:
             operadora = processo.cliente.operadora
             if not operadora:
@@ -515,8 +523,9 @@ class APIExternaService:
 
         except requests.exceptions.Timeout:
             erro_msg = "Timeout na requisição para RPA produção"
-            execucao.marcar_timeout()
-            db.session.commit()
+            if execucao:
+                execucao.marcar_timeout()
+                db.session.commit()
 
             logger.error(
                 f"Timeout ao enviar processo {processo.id} para RPA produção")
@@ -528,8 +537,9 @@ class APIExternaService:
 
         except requests.exceptions.RequestException as e:
             erro_msg = f"Erro de conexão: {str(e)}"
-            execucao.finalizar_com_erro(Exception(erro_msg))
-            db.session.commit()
+            if execucao:
+                execucao.finalizar_com_erro(Exception(erro_msg))
+                db.session.commit()
 
             logger.error(
                 f"Erro de conexão ao enviar processo {processo.id}: {str(e)}")
@@ -541,8 +551,9 @@ class APIExternaService:
 
         except Exception as e:
             erro_msg = f"Erro inesperado: {str(e)}"
-            execucao.finalizar_com_erro(Exception(erro_msg))
-            db.session.commit()
+            if execucao:
+                execucao.finalizar_com_erro(Exception(erro_msg))
+                db.session.commit()
 
             logger.error(
                 f"Erro inesperado ao enviar processo {processo.id}: {str(e)}")
@@ -554,6 +565,8 @@ class APIExternaService:
 
     def enviar_para_sat_producao(self, processo: Processo, url_base: str = "http://191.252.218.230:8000") -> RespostaProducao:
         """Envia processo para SAT em produção"""
+        execucao = None
+        
         try:
             logger.info(f"Enviando processo {processo.id} para SAT produção")
 
@@ -635,8 +648,9 @@ class APIExternaService:
 
         except requests.exceptions.Timeout:
             erro_msg = "Timeout na requisição para SAT produção"
-            execucao.marcar_timeout()
-            db.session.commit()
+            if execucao:
+                execucao.marcar_timeout()
+                db.session.commit()
 
             logger.error(
                 f"Timeout ao enviar processo {processo.id} para SAT produção")
@@ -648,8 +662,9 @@ class APIExternaService:
 
         except requests.exceptions.RequestException as e:
             erro_msg = f"Erro de conexão: {str(e)}"
-            execucao.finalizar_com_erro(Exception(erro_msg))
-            db.session.commit()
+            if execucao:
+                execucao.finalizar_com_erro(Exception(erro_msg))
+                db.session.commit()
 
             logger.error(
                 f"Erro de conexão ao enviar processo {processo.id}: {str(e)}")
@@ -661,8 +676,9 @@ class APIExternaService:
 
         except Exception as e:
             erro_msg = f"Erro inesperado: {str(e)}"
-            execucao.finalizar_com_erro(Exception(erro_msg))
-            db.session.commit()
+            if execucao:
+                execucao.finalizar_com_erro(Exception(erro_msg))
+                db.session.commit()
 
             logger.error(
                 f"Erro inesperado ao enviar processo {processo.id}: {str(e)}")
