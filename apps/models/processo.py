@@ -289,6 +289,24 @@ class Processo(BaseModel):
         self.enviado_para_sat = True
         self.data_envio_sat = datetime.now()
 
+    def registrar_tentativa_download(self) -> None:
+        """Registra uma tentativa de download"""
+        self.tentativas_download = (self.tentativas_download or 0) + 1
+        self.ultima_tentativa_download = datetime.now()
+
+    def registrar_tentativa_upload_sat(self) -> None:
+        """Registra uma tentativa de upload SAT"""
+        self.tentativas_upload_sat = (self.tentativas_upload_sat or 0) + 1
+        self.ultima_tentativa_upload_sat = datetime.now()
+
+    def pode_tentar_download_novamente(self, max_tentativas: int = 3) -> bool:
+        """Verifica se pode tentar download novamente"""
+        return (self.tentativas_download or 0) < max_tentativas
+
+    def pode_tentar_upload_sat_novamente(self, max_tentativas: int = 3) -> bool:
+        """Verifica se pode tentar upload SAT novamente"""
+        return (self.tentativas_upload_sat or 0) < max_tentativas
+
     def atualizar_status(self, novo_status: StatusProcesso) -> None:
         """Atualiza o status do processo"""
         self.status_processo = novo_status.value
