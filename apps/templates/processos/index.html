@@ -129,13 +129,21 @@
                                             </td>
                                                             <td>
                                                 {% if processo.status_processo == 'AGUARDANDO_DOWNLOAD' %}
-                                                    <span class="badge badge-warning badge-sm">Aguard. DL</span>
+                                                    <span class="badge badge-primary badge-sm">
+                                                        <i class="fas fa-download"></i> Aguard. Download
+                                                    </span>
                                                 {% elif processo.status_processo == 'AGUARDANDO_APROVACAO' %}
-                                                    <span class="badge badge-warning badge-sm">Pend. Apr.</span>
+                                                    <span class="badge badge-warning badge-sm">
+                                                        <i class="fas fa-clock"></i> Aguard. Aprovação
+                                                    </span>
                                                 {% elif processo.status_processo == 'AGUARDANDO_ENVIO_SAT' %}
-                                                    <span class="badge badge-info badge-sm">Pronto SAT</span>
+                                                    <span class="badge badge-info badge-sm">
+                                                        <i class="fas fa-upload"></i> Aguard. Envio SAT
+                                                    </span>
                                                 {% elif processo.status_processo == 'UPLOAD_REALIZADO' %}
-                                                    <span class="badge badge-success badge-sm">Concluído</span>
+                                                    <span class="badge badge-success badge-sm">
+                                                        <i class="fas fa-check-circle"></i> Concluído
+                                                    </span>
                                                 {% else %}
                                                     <span class="badge badge-light badge-sm">{{ processo.status_processo[:8] }}</span>
                                                 {% endif %}
@@ -156,25 +164,62 @@
                                             </td>
                                                             <td class="text-center">
                                                 <div class="btn-group btn-group-sm" role="group">
+                                                    <!-- Botão Visualizar (sempre visível) -->
                                                     <a href="{{ url_for('processos_bp.visualizar', id=processo.id) }}" 
                                                        class="btn btn-sm btn-info btn-xs" title="Ver Detalhes">
                                                         <i class="feather icon-eye"></i>
                                                     </a>
-                                                    <a href="{{ url_for('processos_bp.editar', id=processo.id) }}" 
-                                                       class="btn btn-sm btn-warning btn-xs" title="Editar">
-                                                        <i class="feather icon-edit"></i>
-                                                    </a>
+                                                    
+                                                    <!-- Botão Executar Download (AGUARDANDO_DOWNLOAD) -->
+                                                    {% if processo.status_processo == 'AGUARDANDO_DOWNLOAD' %}
+                                                        <button class="btn btn-sm btn-primary btn-executar-download btn-xs" 
+                                                                data-id="{{ processo.id }}" 
+                                                                data-cliente="{{ processo.cliente.razao_social }}"
+                                                                title="Executar Download via RPA">
+                                                            <i class="fas fa-download"></i>
+                                                        </button>
+                                                    {% endif %}
+                                                    
+                                                    <!-- Botão Visualizar Fatura (quando tem fatura) -->
+                                                    {% if processo.tem_fatura_para_visualizar %}
+                                                        <button class="btn btn-sm btn-secondary btn-visualizar-fatura btn-xs" 
+                                                                data-id="{{ processo.id }}" title="Visualizar Fatura">
+                                                            <i class="fas fa-file-invoice"></i>
+                                                        </button>
+                                                    {% endif %}
+                                                    
+                                                    <!-- Botão Aprovar (AGUARDANDO_APROVACAO) -->
                                                     {% if processo.pode_ser_aprovado %}
                                                         <button class="btn btn-sm btn-success btn-aprovar btn-xs" 
-                                                                data-id="{{ processo.id }}" title="Aprovar">
+                                                                data-id="{{ processo.id }}" title="Aprovar Processo">
                                                             <i class="feather icon-check"></i>
                                                         </button>
                                                     {% endif %}
-                                                    {% if processo.pode_enviar_sat %}
-                                                        <button class="btn btn-sm btn-primary btn-enviar-sat btn-xs" 
-                                                                data-id="{{ processo.id }}" title="Enviar para SAT">
-                                                            <i class="feather icon-send"></i>
+                                                    
+                                                    <!-- Botão Rejeitar (AGUARDANDO_APROVACAO) -->
+                                                    {% if processo.pode_ser_aprovado %}
+                                                        <button class="btn btn-sm btn-danger btn-rejeitar btn-xs" 
+                                                                data-id="{{ processo.id }}" title="Rejeitar Processo">
+                                                            <i class="feather icon-x"></i>
                                                         </button>
+                                                    {% endif %}
+                                                    
+                                                    <!-- Botão Enviar SAT (AGUARDANDO_ENVIO_SAT) -->
+                                                    {% if processo.pode_enviar_sat %}
+                                                        <button class="btn btn-sm btn-primary btn-executar-sat btn-xs" 
+                                                                data-id="{{ processo.id }}" 
+                                                                data-cliente="{{ processo.cliente.razao_social }}"
+                                                                title="Executar Upload SAT via RPA">
+                                                            <i class="fas fa-upload"></i>
+                                                        </button>
+                                                    {% endif %}
+                                                    
+                                                    <!-- Botão Editar (exceto quando concluído) -->
+                                                    {% if processo.status_processo != 'UPLOAD_REALIZADO' %}
+                                                        <a href="{{ url_for('processos_bp.editar', id=processo.id) }}" 
+                                                           class="btn btn-sm btn-warning btn-xs" title="Editar">
+                                                            <i class="feather icon-edit"></i>
+                                                        </a>
                                                     {% endif %}
                                                 </div>
                                             </td>
@@ -283,53 +328,308 @@
 
 {% block javascripts %}
 <script>
+// ============================================================================
+// VARIÁVEIS GLOBAIS
+// ============================================================================
+let jobsMonitorados = {};
+let eventSource = null;
+
 $(document).ready(function() {
-    // Máscara para o campo Mês/Ano (se campo existir)
-    if ($('#mes_ano').length) {
-        // Remover máscara por enquanto devido a erro de biblioteca
-        // $('#mes_ano').mask('00/0000', {placeholder: 'MM/AAAA'});
-    }
+    // Conectar SSE para monitoramento em tempo real
+    conectarSSE();
+    
+    // Verificar API Externa ao carregar
+    verificarAPIExterna();
 });
 
-// Função para visualizar fatura e aprovar
-function visualizarFaturaParaAprovacao(processoId) {
-    // Modal para visualização da fatura e aprovação
-    if (confirm('Deseja visualizar a fatura para aprovação?\n\nEm seguida você será redirecionado para a tela de aprovação.')) {
-        // Por enquanto redireciona para a tela de detalhes onde implementaremos a aprovação
-        window.location.href = '/processos/visualizar/' + processoId + '?acao=aprovar';
+// ============================================================================
+// MONITORAMENTO EM TEMPO REAL (SSE)
+// ============================================================================
+function conectarSSE() {
+    if (typeof(EventSource) !== "undefined") {
+        eventSource = new EventSource('/processos/sse/status');
+        
+        eventSource.addEventListener('job_started', function(e) {
+            const data = JSON.parse(e.data);
+            console.log('Job iniciado:', data.job_id);
+            mostrarNotificacao('info', `Job ${data.operadora} iniciado`);
+        });
+        
+        eventSource.addEventListener('job_progress', function(e) {
+            const data = JSON.parse(e.data);
+            atualizarProgressoJob(data.job_id, data.progress);
+        });
+        
+        eventSource.addEventListener('job_completed', function(e) {
+            const data = JSON.parse(e.data);
+            console.log('Job concluído:', data.job_id);
+            mostrarNotificacao('success', `Job concluído com sucesso!`);
+            setTimeout(() => location.reload(), 2000);
+        });
+        
+        eventSource.addEventListener('job_failed', function(e) {
+            const data = JSON.parse(e.data);
+            console.log('Job falhou:', data.job_id, data.error);
+            mostrarNotificacao('error', `Job falhou: ${data.error}`);
+            setTimeout(() => location.reload(), 2000);
+        });
+        
+        eventSource.addEventListener('status_changed', function(e) {
+            const data = JSON.parse(e.data);
+            console.log('Status mudou:', data.processo_id, data.status_novo);
+            mostrarNotificacao('info', `Status atualizado para ${data.status_novo}`);
+            setTimeout(() => location.reload(), 1500);
+        });
+        
+        eventSource.onerror = function() {
+            console.error('Erro na conexão SSE. Tentando reconectar...');
+            eventSource.close();
+            setTimeout(conectarSSE, 5000);
+        };
     }
 }
 
-// Função para enviar para SAT
-function enviarParaSAT(processoId) {
-    if (confirm('Confirma o envio desta fatura para o SAT?\n\nEsta ação não pode ser desfeita.')) {
-        // Fazer requisição AJAX para envio
+// ============================================================================
+// EXECUTAR DOWNLOAD VIA RPA
+// ============================================================================
+$(document).on('click', '.btn-executar-download', function(e) {
+    e.preventDefault();
+    const processoId = $(this).data('id');
+    const cliente = $(this).data('cliente');
+    
+    if (confirm(`Executar download da fatura via RPA?\n\nCliente: ${cliente}\n\nO processo será executado na API Externa em background.`)) {
+        const $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+        
         $.ajax({
-            url: '/processos/enviar-sat/' + processoId,
+            url: `/processos/executar-download/${processoId}`,
             type: 'POST',
-            data: {
-                'csrf_token': $('input[name="csrf_token"]').val()
-            },
             success: function(response) {
                 if (response.success) {
-                    alert('Fatura enviada para o SAT com sucesso!');
-                    location.reload(); // Recarrega a página para atualizar status
+                    mostrarNotificacao('success', `Download iniciado! Job ID: ${response.job_id}`);
+                    monitorarJob(response.job_id, processoId);
                 } else {
-                    alert('Erro ao enviar para SAT: ' + response.message);
+                    mostrarNotificacao('error', response.message);
+                    $btn.prop('disabled', false).html('<i class="fas fa-download"></i>');
                 }
             },
-            error: function() {
-                alert('Erro ao enviar para SAT. Tente novamente.');
+            error: function(xhr) {
+                const msg = xhr.responseJSON?.message || 'Erro ao executar download';
+                mostrarNotificacao('error', msg);
+                $btn.prop('disabled', false).html('<i class="fas fa-download"></i>');
             }
         });
     }
+});
+
+// ============================================================================
+// EXECUTAR UPLOAD SAT VIA RPA
+// ============================================================================
+$(document).on('click', '.btn-executar-sat', function(e) {
+    e.preventDefault();
+    const processoId = $(this).data('id');
+    const cliente = $(this).data('cliente');
+    
+    if (confirm(`Executar upload para SAT via RPA?\n\nCliente: ${cliente}\n\nO processo será executado na API Externa em background.`)) {
+        const $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+        
+        $.ajax({
+            url: `/processos/executar-upload-sat/${processoId}`,
+            type: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    mostrarNotificacao('success', `Upload SAT iniciado! Job ID: ${response.job_id}`);
+                    monitorarJob(response.job_id, processoId);
+                } else {
+                    mostrarNotificacao('error', response.message);
+                    $btn.prop('disabled', false).html('<i class="fas fa-upload"></i>');
+                }
+            },
+            error: function(xhr) {
+                const msg = xhr.responseJSON?.message || 'Erro ao executar upload SAT';
+                mostrarNotificacao('error', msg);
+                $btn.prop('disabled', false).html('<i class="fas fa-upload"></i>');
+            }
+        });
+    }
+});
+
+// ============================================================================
+// APROVAR PROCESSO
+// ============================================================================
+$(document).on('click', '.btn-aprovar', function(e) {
+    e.preventDefault();
+    const processoId = $(this).data('id');
+    
+    const observacoes = prompt('Observações da aprovação (opcional):');
+    if (observacoes === null) return; // Cancelou
+    
+    $.ajax({
+        url: `/processos/aprovar/${processoId}`,
+        type: 'POST',
+        data: { observacoes: observacoes },
+        success: function(response) {
+            if (response.success) {
+                mostrarNotificacao('success', 'Processo aprovado com sucesso!');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                mostrarNotificacao('error', response.message);
+            }
+        },
+        error: function() {
+            mostrarNotificacao('error', 'Erro ao aprovar processo');
+        }
+    });
+});
+
+// ============================================================================
+// REJEITAR PROCESSO
+// ============================================================================
+$(document).on('click', '.btn-rejeitar', function(e) {
+    e.preventDefault();
+    const processoId = $(this).data('id');
+    
+    const motivo = prompt('Motivo da rejeição (obrigatório):');
+    if (!motivo) {
+        alert('Motivo da rejeição é obrigatório');
+        return;
+    }
+    
+    $.ajax({
+        url: `/processos/rejeitar/${processoId}`,
+        type: 'POST',
+        data: { observacoes: motivo },
+        success: function(response) {
+            if (response.success) {
+                mostrarNotificacao('success', 'Processo rejeitado. Voltou para aguardando download.');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                mostrarNotificacao('error', response.message);
+            }
+        },
+        error: function() {
+            mostrarNotificacao('error', 'Erro ao rejeitar processo');
+        }
+    });
+});
+
+// ============================================================================
+// VISUALIZAR FATURA
+// ============================================================================
+$(document).on('click', '.btn-visualizar-fatura', function(e) {
+    e.preventDefault();
+    const processoId = $(this).data('id');
+    
+    $.ajax({
+        url: `/processos/fatura-dados/${processoId}`,
+        type: 'GET',
+        success: function(response) {
+            if (response.success && response.url_fatura) {
+                window.open(response.url_fatura, '_blank');
+            } else {
+                mostrarNotificacao('error', 'Fatura não disponível');
+            }
+        },
+        error: function() {
+            mostrarNotificacao('error', 'Erro ao carregar fatura');
+        }
+    });
+});
+
+// ============================================================================
+// MONITORAR JOB (Polling até SSE funcionar)
+// ============================================================================
+function monitorarJob(jobId, processoId) {
+    jobsMonitorados[jobId] = setInterval(function() {
+        $.ajax({
+            url: `/processos/consultar-status-job/${jobId}`,
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    console.log(`Job ${jobId}: ${response.status} (${response.progress}%)`);
+                    
+                    if (response.status === 'completed') {
+                        clearInterval(jobsMonitorados[jobId]);
+                        delete jobsMonitorados[jobId];
+                        mostrarNotificacao('success', 'Job concluído!');
+                        setTimeout(() => location.reload(), 2000);
+                    } else if (response.status === 'failed') {
+                        clearInterval(jobsMonitorados[jobId]);
+                        delete jobsMonitorados[jobId];
+                        mostrarNotificacao('error', `Job falhou: ${response.error}`);
+                        setTimeout(() => location.reload(), 2000);
+                    }
+                }
+            }
+        });
+    }, 5000); // Consulta a cada 5 segundos
 }
 
-// Event handler para botão enviar SAT
-$(document).on('click', '.btn-enviar-sat', function(e) {
-    e.preventDefault();
-    var processoId = $(this).data('id');
-    enviarParaSAT(processoId);
+function atualizarProgressoJob(jobId, progress) {
+    console.log(`Job ${jobId}: ${progress}%`);
+    // TODO: Adicionar barra de progresso visual
+}
+
+// ============================================================================
+// VERIFICAR API EXTERNA
+// ============================================================================
+function verificarAPIExterna() {
+    $.ajax({
+        url: '/processos/health-api-externa',
+        type: 'GET',
+        success: function(response) {
+            if (response.success && response.api_externa_online) {
+                console.log('✅ API Externa: ONLINE');
+            } else {
+                console.warn('⚠️  API Externa: OFFLINE');
+                mostrarNotificacao('warning', 'API Externa offline. Funcionalidades RPA indisponíveis.');
+            }
+        },
+        error: function() {
+            console.error('❌ Erro ao verificar API Externa');
+        }
+    });
+}
+
+// ============================================================================
+// NOTIFICAÇÕES
+// ============================================================================
+function mostrarNotificacao(tipo, mensagem) {
+    const cores = {
+        success: '#28a745',
+        error: '#dc3545',
+        warning: '#ffc107',
+        info: '#17a2b8'
+    };
+    
+    const icones = {
+        success: 'fas fa-check-circle',
+        error: 'fas fa-exclamation-circle',
+        warning: 'fas fa-exclamation-triangle',
+        info: 'fas fa-info-circle'
+    };
+    
+    const notificacao = $(`
+        <div class="alert alert-${tipo} alert-dismissible fade show position-fixed" 
+             style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+            <i class="${icones[tipo]}"></i> ${mensagem}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+    `);
+    
+    $('body').append(notificacao);
+    setTimeout(() => notificacao.alert('close'), 5000);
+}
+
+// Limpar conexões ao sair
+$(window).on('beforeunload', function() {
+    if (eventSource) {
+        eventSource.close();
+    }
+    Object.keys(jobsMonitorados).forEach(jobId => {
+        clearInterval(jobsMonitorados[jobId]);
+    });
 });
 </script>
 {% endblock javascripts %}
