@@ -1,0 +1,678 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Dashboard de Monitoramento - Jobs{% endblock %}
+
+{% block content %}
+<div class="pcoded-content">
+    <div class="page-header">
+        <div class="page-block">
+            <div class="row align-items-center">
+                <div class="col-md-12">
+                    <div class="page-header-title">
+                        <h5 class="m-b-10">Dashboard de Monitoramento</h5>
+                    </div>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('home.index') }}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('processos.index') }}">Processos</a></li>
+                        <li class="breadcrumb-item active">Monitoramento</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Estatísticas Gerais -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="text-uppercase text-muted mb-1">Jobs Ativos</h6>
+                            <h2 class="mb-0" id="jobs-ativos">0</h2>
+                        </div>
+                        <div class="col-auto">
+                            <span class="h2 text-muted">
+                                <i class="fas fa-play-circle text-primary"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="text-uppercase text-muted mb-1">Concluídos Hoje</h6>
+                            <h2 class="mb-0" id="concluidos-hoje">0</h2>
+                        </div>
+                        <div class="col-auto">
+                            <span class="h2 text-muted">
+                                <i class="fas fa-check-circle text-success"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="text-uppercase text-muted mb-1">Falhas Hoje</h6>
+                            <h2 class="mb-0" id="falhas-hoje">0</h2>
+                        </div>
+                        <div class="col-auto">
+                            <span class="h2 text-muted">
+                                <i class="fas fa-times-circle text-danger"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="text-uppercase text-muted mb-1">Taxa de Sucesso</h6>
+                            <h2 class="mb-0" id="taxa-sucesso">0%</h2>
+                        </div>
+                        <div class="col-auto">
+                            <span class="h2 text-muted">
+                                <i class="fas fa-chart-line text-info"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Jobs Ativos -->
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Jobs Ativos</h5>
+                    <div class="card-header-right">
+                        <button class="btn btn-sm btn-primary" onclick="atualizarJobsAtivos()">
+                            <i class="fas fa-sync-alt"></i> Atualizar
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="jobs-ativos-container">
+                        <div class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                            <p class="mt-2 text-muted">Carregando jobs ativos...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico por Operadora -->
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Execuções por Operadora</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="chart-operadoras" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Histórico Recente -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Histórico Recente</h5>
+                    <div class="card-header-right">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="carregarHistorico()">
+                            <i class="fas fa-history"></i> Carregar Mais
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="tabela-historico">
+                            <thead>
+                                <tr>
+                                    <th>Job ID</th>
+                                    <th>Processo</th>
+                                    <th>Operadora</th>
+                                    <th>Tipo</th>
+                                    <th>Status</th>
+                                    <th>Progresso</th>
+                                    <th>Início</th>
+                                    <th>Fim</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="9" class="text-center py-4">
+                                        <i class="fas fa-spinner fa-spin text-muted"></i>
+                                        <p class="mt-2 text-muted">Carregando histórico...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalhes do Job -->
+<div class="modal fade" id="modal-job-detalhes" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalhes do Job</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modal-job-content">
+                <!-- Conteúdo será carregado dinamicamente -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Logs -->
+<div class="modal fade" id="modal-logs" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Logs do Job</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modal-logs-content">
+                <!-- Logs serão carregados dinamicamente -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='assets/js/api-externa-funcional.js') }}"></script>
+<script>
+// Dashboard de Monitoramento
+class DashboardMonitoramento {
+    constructor() {
+        this.chartOperadoras = null;
+        this.init();
+    }
+
+    init() {
+        this.carregarEstatisticas();
+        this.carregarJobsAtivos();
+        this.carregarHistorico();
+        this.inicializarGrafico();
+
+        // Atualizar a cada 30 segundos
+        setInterval(() => {
+            this.carregarEstatisticas();
+            this.carregarJobsAtivos();
+        }, 30000);
+    }
+
+    async carregarEstatisticas() {
+        try {
+            const response = await fetch('/api/v2/externos/estatisticas', {
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                }
+            });
+
+            if (response.ok) {
+                const stats = await response.json();
+                this.atualizarEstatisticas(stats.estatisticas);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar estatísticas:', error);
+        }
+    }
+
+    atualizarEstatisticas(stats) {
+        // Atualizar contadores
+        document.getElementById('jobs-ativos').textContent = stats.monitor?.active_jobs || 0;
+        document.getElementById('concluidos-hoje').textContent = stats.monitor?.completed_today || 0;
+        document.getElementById('falhas-hoje').textContent = stats.monitor?.failed_today || 0;
+
+        // Calcular taxa de sucesso
+        const total = (stats.monitor?.completed_today || 0) + (stats.monitor?.failed_today || 0);
+        const taxa = total > 0 ? Math.round(((stats.monitor?.completed_today || 0) / total) * 100) : 0;
+        document.getElementById('taxa-sucesso').textContent = taxa + '%';
+    }
+
+    async carregarJobsAtivos() {
+        try {
+            const response = await fetch('/api/v2/externos/jobs/ativos', {
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.renderizarJobsAtivos(data.jobs);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar jobs ativos:', error);
+        }
+    }
+
+    renderizarJobsAtivos(jobs) {
+        const container = document.getElementById('jobs-ativos-container');
+
+        if (jobs.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-inbox fa-2x text-muted"></i>
+                    <p class="mt-2 text-muted">Nenhum job ativo no momento</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = jobs.map(job => `
+            <div class="job-card mb-3 p-3 border rounded" data-job-id="${job.job_id}">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <h6 class="mb-1">${job.operadora}</h6>
+                        <small class="text-muted">${job.tipo}</small>
+                    </div>
+                    <div class="col-md-2">
+                        <span class="badge ${this.getStatusBadgeClass(job.status)}">
+                            ${this.getStatusText(job.status)}
+                        </span>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar" role="progressbar"
+                                 style="width: ${job.progress || 0}%"
+                                 aria-valuenow="${job.progress || 0}"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                            </div>
+                        </div>
+                        <small class="text-muted">${job.progress || 0}%</small>
+                    </div>
+                    <div class="col-md-2">
+                        <small class="text-muted">
+                            ${this.formatDuration(job.duration)}
+                        </small>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="dashboard.visualizarDetalhes('${job.job_id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-info" onclick="dashboard.visualizarLogs('${job.job_id}')">
+                                <i class="fas fa-list"></i>
+                            </button>
+                            ${job.status === 'RUNNING' ? `
+                                <button class="btn btn-outline-danger" onclick="dashboard.cancelarJob('${job.job_id}')">
+                                    <i class="fas fa-stop"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async carregarHistorico() {
+        try {
+            const response = await fetch('/api/v2/externos/jobs/historico', {
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.renderizarHistorico(data.jobs);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar histórico:', error);
+        }
+    }
+
+    renderizarHistorico(jobs) {
+        const tbody = document.querySelector('#tabela-historico tbody');
+
+        if (jobs.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center py-4">
+                        <i class="fas fa-inbox text-muted"></i>
+                        <p class="mt-2 text-muted">Nenhum job no histórico</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = jobs.map(job => `
+            <tr>
+                <td><code>${job.job_id}</code></td>
+                <td>${job.processo_id || '-'}</td>
+                <td>${job.operadora}</td>
+                <td>${job.tipo}</td>
+                <td>
+                    <span class="badge ${this.getStatusBadgeClass(job.status)}">
+                        ${this.getStatusText(job.status)}
+                    </span>
+                </td>
+                <td>
+                    <div class="progress" style="height: 4px;">
+                        <div class="progress-bar" role="progressbar"
+                             style="width: ${job.progress || 0}%"
+                             aria-valuenow="${job.progress || 0}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                </td>
+                <td>${this.formatDateTime(job.created_at)}</td>
+                <td>${job.completed_at ? this.formatDateTime(job.completed_at) : '-'}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="dashboard.visualizarDetalhes('${job.job_id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-info" onclick="dashboard.visualizarLogs('${job.job_id}')">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    inicializarGrafico() {
+        const ctx = document.getElementById('chart-operadoras').getContext('2d');
+        this.chartOperadoras = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['OI', 'VIVO', 'EMBRATEL', 'DIGITALNET', 'SAT'],
+                datasets: [{
+                    data: [0, 0, 0, 0, 0],
+                    backgroundColor: [
+                        '#007bff',
+                        '#28a745',
+                        '#ffc107',
+                        '#dc3545',
+                        '#6c757d'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        this.atualizarGrafico();
+    }
+
+    async atualizarGrafico() {
+        try {
+            const response = await fetch('/api/v2/externos/estatisticas/operadoras', {
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.chartOperadoras.data.datasets[0].data = [
+                    data.oi || 0,
+                    data.vivo || 0,
+                    data.embratel || 0,
+                    data.digitalnet || 0,
+                    data.sat || 0
+                ];
+                this.chartOperadoras.update();
+            }
+        } catch (error) {
+            console.error('Erro ao atualizar gráfico:', error);
+        }
+    }
+
+    async visualizarDetalhes(jobId) {
+        try {
+            const response = await fetch(`/api/v2/externos/status/${jobId}`, {
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const modal = new bootstrap.Modal(document.getElementById('modal-job-detalhes'));
+                document.getElementById('modal-job-content').innerHTML = this.renderizarDetalhesJob(data.status);
+                modal.show();
+            }
+        } catch (error) {
+            console.error('Erro ao carregar detalhes:', error);
+        }
+    }
+
+    async visualizarLogs(jobId) {
+        try {
+            const response = await fetch(`/api/v2/externos/logs/${jobId}`, {
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const modal = new bootstrap.Modal(document.getElementById('modal-logs'));
+                document.getElementById('modal-logs-content').innerHTML = this.renderizarLogs(data.logs);
+                modal.show();
+            }
+        } catch (error) {
+            console.error('Erro ao carregar logs:', error);
+        }
+    }
+
+    async cancelarJob(jobId) {
+        if (!confirm('Tem certeza que deseja cancelar este job?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/v2/externos/cancelar/${jobId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                }
+            });
+
+            if (response.ok) {
+                this.carregarJobsAtivos();
+                if (typeof toastr !== 'undefined') {
+                    toastr.success('Job cancelado com sucesso!');
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao cancelar job:', error);
+            if (typeof toastr !== 'undefined') {
+                toastr.error('Erro ao cancelar job');
+            }
+        }
+    }
+
+    renderizarDetalhesJob(job) {
+        return `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Informações Gerais</h6>
+                    <table class="table table-sm">
+                        <tr><td>Job ID:</td><td><code>${job.job_id}</code></td></tr>
+                        <tr><td>Operadora:</td><td>${job.operadora}</td></tr>
+                        <tr><td>Status:</td><td><span class="badge ${this.getStatusBadgeClass(job.status)}">${this.getStatusText(job.status)}</span></td></tr>
+                        <tr><td>Progresso:</td><td>${job.progress || 0}%</td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6>Timestamps</h6>
+                    <table class="table table-sm">
+                        <tr><td>Criado:</td><td>${this.formatDateTime(job.created_at)}</td></tr>
+                        <tr><td>Iniciado:</td><td>${job.started_at ? this.formatDateTime(job.started_at) : '-'}</td></tr>
+                        <tr><td>Concluído:</td><td>${job.completed_at ? this.formatDateTime(job.completed_at) : '-'}</td></tr>
+                    </table>
+                </div>
+            </div>
+            ${job.error ? `
+                <div class="alert alert-danger mt-3">
+                    <strong>Erro:</strong> ${job.error}
+                </div>
+            ` : ''}
+            ${job.result ? `
+                <div class="alert alert-success mt-3">
+                    <strong>Resultado:</strong> ${job.result}
+                </div>
+            ` : ''}
+        `;
+    }
+
+    renderizarLogs(logs) {
+        if (logs.length === 0) {
+            return '<p class="text-muted">Nenhum log disponível</p>';
+        }
+
+        return `
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Level</th>
+                            <th>Mensagem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${logs.map(log => `
+                            <tr class="${this.getLogRowClass(log.level)}">
+                                <td>${log.timestamp || '-'}</td>
+                                <td><span class="badge ${this.getLogBadgeClass(log.level)}">${log.level}</span></td>
+                                <td>${log.message || '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    getStatusText(status) {
+        const statusMap = {
+            'PENDING': 'Aguardando',
+            'RUNNING': 'Executando',
+            'COMPLETED': 'Concluído',
+            'FAILED': 'Falhou',
+            'CANCELLED': 'Cancelado'
+        };
+        return statusMap[status] || status;
+    }
+
+    getStatusBadgeClass(status) {
+        const classMap = {
+            'PENDING': 'bg-warning',
+            'RUNNING': 'bg-info',
+            'COMPLETED': 'bg-success',
+            'FAILED': 'bg-danger',
+            'CANCELLED': 'bg-secondary'
+        };
+        return classMap[status] || 'bg-secondary';
+    }
+
+    getLogRowClass(level) {
+        const classMap = {
+            'ERROR': 'table-danger',
+            'WARNING': 'table-warning',
+            'INFO': 'table-info',
+            'DEBUG': 'table-secondary'
+        };
+        return classMap[level] || '';
+    }
+
+    getLogBadgeClass(level) {
+        const classMap = {
+            'ERROR': 'bg-danger',
+            'WARNING': 'bg-warning',
+            'INFO': 'bg-info',
+            'DEBUG': 'bg-secondary'
+        };
+        return classMap[level] || 'bg-secondary';
+    }
+
+    formatDateTime(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleString('pt-BR');
+    }
+
+    formatDuration(seconds) {
+        if (!seconds) return '-';
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+
+        if (hours > 0) {
+            return `${hours}h ${minutes}m ${secs}s`;
+        } else if (minutes > 0) {
+            return `${minutes}m ${secs}s`;
+        } else {
+            return `${secs}s`;
+        }
+    }
+}
+
+// Funções globais
+function atualizarJobsAtivos() {
+    dashboard.carregarJobsAtivos();
+}
+
+function carregarHistorico() {
+    dashboard.carregarHistorico();
+}
+
+// Inicializar dashboard
+let dashboard;
+document.addEventListener('DOMContentLoaded', () => {
+    dashboard = new DashboardMonitoramento();
+});
+</script>
+{% endblock %}

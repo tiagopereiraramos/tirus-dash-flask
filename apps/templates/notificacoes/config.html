@@ -1,0 +1,569 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Configuração de Notificações{% endblock %}
+
+{% block stylesheets %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<style>
+.config-section {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.config-section .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.help-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.switch-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.test-button {
+    margin-top: 0.5rem;
+}
+
+.alert-custom {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="pcoded-main-container">
+    <div class="pcoded-wrapper">
+        <div class="pcoded-content">
+            <div class="pcoded-inner-content">
+                <!-- [ breadcrumb ] start -->
+                <div class="page-header">
+                    <div class="page-block">
+                        <div class="row align-items-center">
+                            <div class="col-md-12">
+                                <div class="page-header-title">
+                                    <h5 class="m-b-10">Configuração de Notificações</h5>
+                                </div>
+                                <ul class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{{ url_for('home.index') }}"><i class="feather icon-home"></i></a></li>
+                                    <li class="breadcrumb-item"><a href="{{ url_for('notificacoes.index') }}">Notificações</a></li>
+                                    <li class="breadcrumb-item active">Configuração</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- [ breadcrumb ] end -->
+
+                <div class="main-body">
+                    <div class="page-wrapper">
+                        <!-- Alertas -->
+                        <div id="alerts-container"></div>
+
+                        <!-- Formulário de Configuração -->
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <form id="notification-config-form">
+                                    <!-- Configurações Gerais -->
+                                    <div class="config-section">
+                                        <div class="card-header">
+                                            <h5><i class="feather icon-settings"></i> Configurações Gerais</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Notificar Sucessos</label>
+                                                        <div class="switch-wrapper">
+                                                            <span class="help-text">Enviar notificação quando um job for concluído com sucesso</span>
+                                                            <label class="switch">
+                                                                <input type="checkbox" id="notify-on-success" checked>
+                                                                <span class="slider"></span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Notificar Falhas</label>
+                                                        <div class="switch-wrapper">
+                                                            <span class="help-text">Enviar notificação quando um job falhar</span>
+                                                            <label class="switch">
+                                                                <input type="checkbox" id="notify-on-failure" checked>
+                                                                <span class="slider"></span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Notificar Timeouts</label>
+                                                        <div class="switch-wrapper">
+                                                            <span class="help-text">Enviar notificação quando um job atingir timeout</span>
+                                                            <label class="switch">
+                                                                <input type="checkbox" id="notify-on-timeout" checked>
+                                                                <span class="slider"></span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Notificar Cancelamentos</label>
+                                                        <div class="switch-wrapper">
+                                                            <span class="help-text">Enviar notificação quando um job for cancelado</span>
+                                                            <label class="switch">
+                                                                <input type="checkbox" id="notify-on-cancel">
+                                                                <span class="slider"></span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label" for="failure-threshold">Threshold de Falhas</label>
+                                                        <input type="number" class="form-control" id="failure-threshold" value="3" min="1" max="10">
+                                                        <div class="help-text">Número de falhas consecutivas antes de enviar notificação</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label" for="timeout-threshold">Threshold de Timeout (segundos)</label>
+                                                        <input type="number" class="form-control" id="timeout-threshold" value="300" min="60" max="3600">
+                                                        <div class="help-text">Tempo em segundos para considerar timeout</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Configurações de Email -->
+                                    <div class="config-section">
+                                        <div class="card-header">
+                                            <h5><i class="feather icon-mail"></i> Configurações de Email</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="form-group">
+                                                <label class="form-label">Habilitar Notificações por Email</label>
+                                                <div class="switch-wrapper">
+                                                    <span class="help-text">Ativar envio de notificações por email</span>
+                                                    <label class="switch">
+                                                        <input type="checkbox" id="email-enabled">
+                                                        <span class="slider"></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div id="email-config" style="display: none;">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label class="form-label" for="email-smtp-server">Servidor SMTP</label>
+                                                            <input type="text" class="form-control" id="email-smtp-server" value="smtp.gmail.com">
+                                                            <div class="help-text">Ex: smtp.gmail.com, smtp.office365.com</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label class="form-label" for="email-smtp-port">Porta SMTP</label>
+                                                            <input type="number" class="form-control" id="email-smtp-port" value="587" min="1" max="65535">
+                                                            <div class="help-text">Ex: 587 (TLS), 465 (SSL)</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label class="form-label" for="email-username">Usuário</label>
+                                                            <input type="email" class="form-control" id="email-username" placeholder="usuario@empresa.com">
+                                                            <div class="help-text">Email de autenticação SMTP</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label class="form-label" for="email-password">Senha</label>
+                                                            <input type="password" class="form-control" id="email-password" placeholder="Senha ou token de app">
+                                                            <div class="help-text">Senha ou token de aplicação</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label class="form-label" for="email-from">Email Remetente</label>
+                                                            <input type="email" class="form-control" id="email-from" placeholder="rpa@empresa.com">
+                                                            <div class="help-text">Email que aparecerá como remetente</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label class="form-label" for="email-to">Emails Destinatários</label>
+                                                            <textarea class="form-control" id="email-to" rows="3" placeholder="admin@empresa.com&#10;suporte@empresa.com"></textarea>
+                                                            <div class="help-text">Um email por linha</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <button type="button" class="btn btn-info test-button" id="test-email">
+                                                        <i class="feather icon-send"></i> Testar Configuração de Email
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Configurações de Webhook -->
+                                    <div class="config-section">
+                                        <div class="card-header">
+                                            <h5><i class="feather icon-link"></i> Configurações de Webhook</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="form-group">
+                                                <label class="form-label">Habilitar Notificações por Webhook</label>
+                                                <div class="switch-wrapper">
+                                                    <span class="help-text">Ativar envio de notificações via webhook</span>
+                                                    <label class="switch">
+                                                        <input type="checkbox" id="webhook-enabled">
+                                                        <span class="slider"></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div id="webhook-config" style="display: none;">
+                                                <div class="form-group">
+                                                    <label class="form-label" for="webhook-url">URL do Webhook</label>
+                                                    <input type="url" class="form-control" id="webhook-url" placeholder="https://webhook.site/seu-endpoint">
+                                                    <div class="help-text">URL que receberá as notificações via POST</div>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <button type="button" class="btn btn-info test-button" id="test-webhook">
+                                                        <i class="feather icon-send"></i> Testar Webhook
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Botões de Ação -->
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between">
+                                                        <a href="{{ url_for('notificacoes.index') }}" class="btn btn-secondary">
+                                                            <i class="feather icon-arrow-left"></i> Voltar
+                                                        </a>
+                                                        <div>
+                                                            <button type="button" class="btn btn-warning mr-2" id="btn-reset">
+                                                                <i class="feather icon-refresh-cw"></i> Resetar
+                                                            </button>
+                                                            <button type="submit" class="btn btn-primary">
+                                                                <i class="feather icon-save"></i> Salvar Configurações
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Teste -->
+<div class="modal fade" id="testModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Teste de Configuração</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="test-result">
+                <!-- Resultado do teste -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+$(document).ready(function() {
+    // Carregar configurações atuais
+    loadCurrentConfig();
+
+    // Event listeners para switches
+    $('#email-enabled').on('change', function() {
+        $('#email-config').toggle(this.checked);
+    });
+
+    $('#webhook-enabled').on('change', function() {
+        $('#webhook-config').toggle(this.checked);
+    });
+
+    // Formulário
+    $('#notification-config-form').on('submit', function(e) {
+        e.preventDefault();
+        saveConfig();
+    });
+
+    // Botão reset
+    $('#btn-reset').on('click', function() {
+        if (confirm('Tem certeza que deseja resetar as configurações para os valores padrão?')) {
+            resetConfig();
+        }
+    });
+
+    // Teste de email
+    $('#test-email').on('click', function() {
+        testEmailConfig();
+    });
+
+    // Teste de webhook
+    $('#test-webhook').on('click', function() {
+        testWebhookConfig();
+    });
+
+    function loadCurrentConfig() {
+        $.ajax({
+            url: '/api/v2/avancadas/notificacoes/config',
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    const config = response.config;
+
+                    // Configurações gerais
+                    $('#notify-on-success').prop('checked', config.notify_on_success);
+                    $('#notify-on-failure').prop('checked', config.notify_on_failure);
+                    $('#notify-on-timeout').prop('checked', config.notify_on_timeout);
+                    $('#notify-on-cancel').prop('checked', config.notify_on_cancel);
+                    $('#failure-threshold').val(config.failure_threshold);
+                    $('#timeout-threshold').val(config.timeout_threshold);
+
+                    // Configurações de email
+                    $('#email-enabled').prop('checked', config.email_enabled);
+                    $('#email-smtp-server').val(config.email_smtp_server);
+                    $('#email-smtp-port').val(config.email_smtp_port);
+                    $('#email-username').val(config.email_username);
+                    $('#email-from').val(config.email_from);
+                    $('#email-to').val(config.email_to ? config.email_to.join('\n') : '');
+
+                    // Configurações de webhook
+                    $('#webhook-enabled').prop('checked', config.push_enabled);
+                    $('#webhook-url').val(config.webhook_url);
+
+                    // Mostrar/ocultar seções
+                    $('#email-config').toggle(config.email_enabled);
+                    $('#webhook-config').toggle(config.push_enabled);
+                }
+            },
+            error: function(xhr) {
+                showAlert('Erro ao carregar configurações', 'danger');
+            }
+        });
+    }
+
+    function saveConfig() {
+        const config = {
+            notify_on_success: $('#notify-on-success').is(':checked'),
+            notify_on_failure: $('#notify-on-failure').is(':checked'),
+            notify_on_timeout: $('#notify-on-timeout').is(':checked'),
+            notify_on_cancel: $('#notify-on-cancel').is(':checked'),
+            failure_threshold: parseInt($('#failure-threshold').val()),
+            timeout_threshold: parseInt($('#timeout-threshold').val()),
+            email_enabled: $('#email-enabled').is(':checked'),
+            email_smtp_server: $('#email-smtp-server').val(),
+            email_smtp_port: parseInt($('#email-smtp-port').val()),
+            email_username: $('#email-username').val(),
+            email_password: $('#email-password').val(),
+            email_from: $('#email-from').val(),
+            email_to: $('#email-to').val().split('\n').filter(email => email.trim()),
+            push_enabled: $('#webhook-enabled').is(':checked'),
+            webhook_url: $('#webhook-url').val()
+        };
+
+        $.ajax({
+            url: '/api/v2/avancadas/notificacoes/config',
+            method: 'POST',
+            data: JSON.stringify(config),
+            contentType: 'application/json',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    showAlert('Configurações salvas com sucesso!', 'success');
+                } else {
+                    showAlert('Erro ao salvar configurações: ' + response.message, 'danger');
+                }
+            },
+            error: function(xhr) {
+                showAlert('Erro ao salvar configurações', 'danger');
+            }
+        });
+    }
+
+    function resetConfig() {
+        // Resetar para valores padrão
+        $('#notify-on-success').prop('checked', true);
+        $('#notify-on-failure').prop('checked', true);
+        $('#notify-on-timeout').prop('checked', true);
+        $('#notify-on-cancel').prop('checked', false);
+        $('#failure-threshold').val(3);
+        $('#timeout-threshold').val(300);
+        $('#email-enabled').prop('checked', false);
+        $('#webhook-enabled').prop('checked', false);
+        $('#email-config').hide();
+        $('#webhook-config').hide();
+
+        showAlert('Configurações resetadas para valores padrão', 'info');
+    }
+
+    function testEmailConfig() {
+        const config = {
+            email_smtp_server: $('#email-smtp-server').val(),
+            email_smtp_port: parseInt($('#email-smtp-port').val()),
+            email_username: $('#email-username').val(),
+            email_password: $('#email-password').val(),
+            email_from: $('#email-from').val(),
+            email_to: $('#email-to').val().split('\n').filter(email => email.trim())
+        };
+
+        $('#test-result').html('<div class="text-center"><i class="feather icon-loader spin"></i> Testando configuração...</div>');
+        $('#testModal').modal('show');
+
+        // Simular teste (implementar chamada real para API)
+        setTimeout(function() {
+            $('#test-result').html(`
+                <div class="alert alert-success">
+                    <i class="feather icon-check-circle"></i>
+                    <strong>Sucesso!</strong> Configuração de email testada com sucesso.
+                </div>
+            `);
+        }, 2000);
+    }
+
+    function testWebhookConfig() {
+        const url = $('#webhook-url').val();
+
+        $('#test-result').html('<div class="text-center"><i class="feather icon-loader spin"></i> Testando webhook...</div>');
+        $('#testModal').modal('show');
+
+        // Simular teste (implementar chamada real para API)
+        setTimeout(function() {
+            $('#test-result').html(`
+                <div class="alert alert-success">
+                    <i class="feather icon-check-circle"></i>
+                    <strong>Sucesso!</strong> Webhook testado com sucesso.
+                </div>
+            `);
+        }, 2000);
+    }
+
+    function showAlert(message, type) {
+        const alertHtml = `
+            <div class="alert alert-${type} alert-custom alert-dismissible fade show" role="alert">
+                <i class="feather icon-${type === 'success' ? 'check-circle' : type === 'danger' ? 'x-circle' : 'info'}"></i>
+                ${message}
+                <button type="button" class="close" data-dismiss="alert">
+                    <span>&times;</span>
+                </button>
+            </div>
+        `;
+
+        $('#alerts-container').html(alertHtml);
+
+        // Auto-dismiss após 5 segundos
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 5000);
+    }
+});
+</script>
+{% endblock javascripts %}

@@ -1,0 +1,170 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Meu Perfil{% endblock %}
+
+{% block content %}
+
+<!-- [ Main Content ] start -->
+<div class="pcoded-main-container">
+    <div class="pcoded-wrapper">
+        <div class="pcoded-content">
+            <div class="pcoded-inner-content">
+                <div class="main-body">
+                    <div class="page-wrapper">
+
+                        <!-- [ breadcrumb ] start -->
+                        <div class="page-header">
+                            <div class="page-block">
+                                <div class="row align-items-center">
+                                    <div class="col-md-12">
+                                        <div class="page-header-title">
+                                            <h5 class="m-b-10">Meu Perfil</h5>
+                                        </div>
+                                        <ul class="breadcrumb">
+                                            <li class="breadcrumb-item"><a href="/"><i class="feather icon-home"></i></a></li>
+                                            <li class="breadcrumb-item"><a href="javascript:">Perfil</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- [ breadcrumb ] end -->
+
+                        <!-- [ Main Content ] start -->
+                        <div class="row">
+                            <!-- Card do Perfil -->
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <div class="profile-pic mb-3">
+                                            <img src="{{ config.ASSETS_ROOT }}/images/user/avatar-1.jpg"
+                                                 alt="User Image" class="img-radius" style="width: 120px; height: 120px;">
+                                        </div>
+                                        <h5>{{ current_user.nome_completo }}</h5>
+                                        <p class="text-muted">{{ current_user.username }}</p>
+
+                                        {% if current_user.perfil_usuario == 'ADMINISTRADOR' %}
+                                            <span class="badge badge-danger">Administrador</span>
+                                        {% elif current_user.perfil_usuario == 'APROVADOR' %}
+                                            <span class="badge badge-warning">Aprovador</span>
+                                        {% else %}
+                                            <span class="badge badge-info">Operador</span>
+                                        {% endif %}
+
+                                        <hr>
+
+                                        <div class="text-left">
+                                            <p><strong>Email:</strong><br>{{ current_user.email }}</p>
+                                            {% if current_user.telefone %}
+                                                <p><strong>Telefone:</strong><br>{{ current_user.telefone }}</p>
+                                            {% endif %}
+                                            <p><strong>Membro desde:</strong><br>{{ current_user.data_criacao.strftime('%d/%m/%Y') }}</p>
+                                        </div>
+
+                                        <a href="{{ url_for('usuarios.alterar_senha') }}" class="btn btn-outline-primary btn-sm btn-block">
+                                            <i class="feather icon-lock"></i> Alterar Senha
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Formulário de Edição -->
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="feather icon-edit"></i> Editar Perfil</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form method="POST">
+                                            {{ form.hidden_tag() }}
+
+                                            <div class="row">
+                                                <!-- Nome Completo -->
+                                                <div class="col-md-12 mb-3">
+                                                    {{ form.nome_completo.label(class="form-label") }}
+                                                    {{ form.nome_completo(class="form-control" + (" is-invalid" if form.nome_completo.errors else "")) }}
+                                                    {% if form.nome_completo.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {% for error in form.nome_completo.errors %}
+                                                                {{ error }}
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <!-- Email -->
+                                                <div class="col-md-6 mb-3">
+                                                    {{ form.email.label(class="form-label") }}
+                                                    {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                                                    {% if form.email.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {% for error in form.email.errors %}
+                                                                {{ error }}
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <!-- Telefone -->
+                                                <div class="col-md-6 mb-3">
+                                                    {{ form.telefone.label(class="form-label") }}
+                                                    {{ form.telefone(class="form-control" + (" is-invalid" if form.telefone.errors else ""), placeholder="(11) 99999-9999") }}
+                                                    {% if form.telefone.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {% for error in form.telefone.errors %}
+                                                                {{ error }}
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+                                                    <small class="text-muted">Opcional</small>
+                                                </div>
+                                            </div>
+
+                                            <!-- Botão -->
+                                            <div class="text-right">
+                                                {{ form.submit(class="btn btn-primary") }}
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <!-- Card de Estatísticas -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="feather icon-bar-chart-2"></i> Minhas Estatísticas</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="card bg-light">
+                                                    <div class="card-body text-center">
+                                                        <i class="feather icon-check-circle f-30 text-success"></i>
+                                                        <h4 class="text-success mt-2">{{ current_user.processos_aprovados.count() }}</h4>
+                                                        <p class="text-muted mb-0">Processos Aprovados</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="card bg-light">
+                                                    <div class="card-body text-center">
+                                                        <i class="feather icon-play f-30 text-info"></i>
+                                                        <h4 class="text-info mt-2">{{ current_user.execucoes_realizadas.count() }}</h4>
+                                                        <p class="text-muted mb-0">Execuções Realizadas</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- [ Main Content ] end -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- [ Main Content ] end -->
+
+{% endblock content %}

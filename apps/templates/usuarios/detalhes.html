@@ -1,0 +1,232 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Detalhes do Usuário{% endblock %}
+
+<!-- CSRF Token -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
+{% block content %}
+
+<!-- [ Main Content ] start -->
+<div class="pcoded-main-container">
+    <div class="pcoded-wrapper">
+        <div class="pcoded-content">
+            <div class="pcoded-inner-content">
+                <div class="main-body">
+                    <div class="page-wrapper">
+
+                        <!-- [ breadcrumb ] start -->
+                        <div class="page-header">
+                            <div class="page-block">
+                                <div class="row align-items-center">
+                                    <div class="col-md-12">
+                                        <div class="page-header-title">
+                                            <h5 class="m-b-10">Detalhes do Usuário</h5>
+                                        </div>
+                                        <ul class="breadcrumb">
+                                            <li class="breadcrumb-item"><a href="/"><i class="feather icon-home"></i></a></li>
+                                            <li class="breadcrumb-item"><a href="{{ url_for('usuarios.index') }}">Usuários</a></li>
+                                            <li class="breadcrumb-item"><a href="javascript:">{{ usuario.nome_completo }}</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- [ breadcrumb ] end -->
+
+                        <!-- [ Main Content ] start -->
+                        <div class="row">
+                            <!-- Card de Informações do Usuário -->
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <div class="profile-pic mb-3">
+                                            <img src="{{ config.ASSETS_ROOT }}/images/user/avatar-1.jpg"
+                                                 alt="User Image" class="img-radius" style="width: 120px; height: 120px;">
+                                        </div>
+                                        <h5>{{ usuario.nome_completo }}</h5>
+                                        <p class="text-muted">{{ usuario.username }}</p>
+
+                                        {% if usuario.perfil_usuario == 'ADMINISTRADOR' %}
+                                            <span class="badge badge-danger">Administrador</span>
+                                        {% elif usuario.perfil_usuario == 'APROVADOR' %}
+                                            <span class="badge badge-warning">Aprovador</span>
+                                        {% else %}
+                                            <span class="badge badge-info">Operador</span>
+                                        {% endif %}
+
+                                        {% if usuario.status_ativo %}
+                                            <span class="badge badge-success ml-2">Ativo</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary ml-2">Inativo</span>
+                                        {% endif %}
+
+                                        <hr>
+
+                                        <!-- Ações -->
+                                        <div class="btn-group-vertical btn-group-sm w-100">
+                                            <a href="{{ url_for('usuarios.editar', id=usuario.id) }}" class="btn btn-primary">
+                                                <i class="feather icon-edit"></i>
+                                                <span class="ml-1">Editar Usuário</span>
+                                            </a>
+
+                                            {% if usuario.status_ativo %}
+                                                {% if current_user.id != usuario.id %}
+                                                <button onclick="alterarStatus('{{ usuario.id }}', 'desativar')" class="btn btn-warning">
+                                                    <i class="feather icon-pause"></i>
+                                                    <span class="ml-1">Desativar</span>
+                                                </button>
+                                                {% endif %}
+                                            {% else %}
+                                                <button onclick="alterarStatus('{{ usuario.id }}', 'ativar')" class="btn btn-success">
+                                                    <i class="feather icon-play"></i>
+                                                    <span class="ml-1">Ativar</span>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card de Informações Detalhadas -->
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="feather icon-info"></i> Informações Pessoais</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <strong>Nome Completo:</strong>
+                                                <p>{{ usuario.nome_completo }}</p>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <strong>Nome de Usuário:</strong>
+                                                <p>{{ usuario.username }}</p>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <strong>Email:</strong>
+                                                <p>{{ usuario.email }}</p>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <strong>Telefone:</strong>
+                                                <p>{{ usuario.telefone or 'Não informado' }}</p>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <strong>Perfil:</strong>
+                                                <p>{{ usuario.perfil_usuario.replace('_', ' ').title() }}</p>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <strong>Status:</strong>
+                                                <p>
+                                                    {% if usuario.status_ativo %}
+                                                        <span class="text-success">Ativo</span>
+                                                    {% else %}
+                                                        <span class="text-danger">Inativo</span>
+                                                    {% endif %}
+                                                </p>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <strong>Membro desde:</strong>
+                                                <p>{{ usuario.data_criacao.strftime('%d/%m/%Y às %H:%M') }}</p>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <strong>Última atualização:</strong>
+                                                <p>{{ usuario.data_atualizacao.strftime('%d/%m/%Y às %H:%M') }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Card de Estatísticas -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="feather icon-bar-chart-2"></i> Estatísticas de Atividade</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="card bg-light">
+                                                    <div class="card-body text-center">
+                                                        <i class="feather icon-check-circle f-30 text-success"></i>
+                                                        <h4 class="text-success mt-2">{{ total_processos_aprovados }}</h4>
+                                                        <p class="text-muted mb-0">Processos Aprovados</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="card bg-light">
+                                                    <div class="card-body text-center">
+                                                        <i class="feather icon-play f-30 text-info"></i>
+                                                        <h4 class="text-info mt-2">{{ total_execucoes }}</h4>
+                                                        <p class="text-muted mb-0">Execuções Realizadas</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Card de Permissões -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="feather icon-lock"></i> Permissões do Sistema</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            {% for permissao in usuario.get_permissoes() %}
+                                            <div class="col-md-6 mb-2">
+                                                <span class="badge badge-outline-success">
+                                                    <i class="feather icon-check"></i> {{ permissao.replace('_', ' ').title() }}
+                                                </span>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- [ Main Content ] end -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- [ Main Content ] end -->
+
+<script>
+function alterarStatus(usuarioId, acao) {
+    const url = acao === 'ativar' ?
+        `/usuarios/ativar/${usuarioId}` :
+        `/usuarios/desativar/${usuarioId}`;
+
+    const mensagem = acao === 'ativar' ?
+        'Tem certeza que deseja ativar este usuário?' :
+        'Tem certeza que deseja desativar este usuário?';
+
+    if (confirm(mensagem)) {
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erro: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao alterar status do usuário');
+        });
+    }
+}
+</script>
+
+{% endblock content %}

@@ -1,0 +1,209 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ acao }} Usuário{% endblock %}
+
+{% block content %}
+
+<!-- [ Main Content ] start -->
+<div class="pcoded-main-container">
+    <div class="pcoded-wrapper">
+        <div class="pcoded-content">
+            <div class="pcoded-inner-content">
+                <div class="main-body">
+                    <div class="page-wrapper">
+
+                        <!-- [ breadcrumb ] start -->
+                        <div class="page-header">
+                            <div class="page-block">
+                                <div class="row align-items-center">
+                                    <div class="col-md-12">
+                                        <div class="page-header-title">
+                                            <h5 class="m-b-10">{{ acao }} Usuário</h5>
+                                        </div>
+                                        <ul class="breadcrumb">
+                                            <li class="breadcrumb-item"><a href="/"><i class="feather icon-home"></i></a></li>
+                                            <li class="breadcrumb-item"><a href="{{ url_for('usuarios.index') }}">Usuários</a></li>
+                                            <li class="breadcrumb-item"><a href="javascript:">{{ acao }}</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- [ breadcrumb ] end -->
+
+                        <!-- [ Main Content ] start -->
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="feather icon-user"></i> {{ acao }} Usuário</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form method="POST">
+                                            {{ form.hidden_tag() }}
+
+                                            <div class="row">
+                                                <!-- Nome Completo -->
+                                                <div class="col-md-12 mb-3">
+                                                    {{ form.nome_completo.label(class="form-label") }}
+                                                    {{ form.nome_completo(class="form-control" + (" is-invalid" if form.nome_completo.errors else "")) }}
+                                                    {% if form.nome_completo.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {% for error in form.nome_completo.errors %}
+                                                                {{ error }}
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <!-- Email -->
+                                                <div class="col-md-6 mb-3">
+                                                    {{ form.email.label(class="form-label") }}
+                                                    {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                                                    {% if form.email.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {% for error in form.email.errors %}
+                                                                {{ error }}
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <!-- Username -->
+                                                <div class="col-md-6 mb-3">
+                                                    {{ form.username.label(class="form-label") }}
+                                                    {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
+                                                    {% if form.username.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {% for error in form.username.errors %}
+                                                                {{ error }}
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <!-- Telefone -->
+                                                <div class="col-md-6 mb-3">
+                                                    {{ form.telefone.label(class="form-label") }}
+                                                    {{ form.telefone(class="form-control" + (" is-invalid" if form.telefone.errors else ""), placeholder="(11) 99999-9999") }}
+                                                    {% if form.telefone.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {% for error in form.telefone.errors %}
+                                                                {{ error }}
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <!-- Perfil -->
+                                                <div class="col-md-6 mb-3">
+                                                    {{ form.perfil_usuario.label(class="form-label") }}
+                                                    {{ form.perfil_usuario(class="form-control" + (" is-invalid" if form.perfil_usuario.errors else "")) }}
+                                                    {% if form.perfil_usuario.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {% for error in form.perfil_usuario.errors %}
+                                                                {{ error }}
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <!-- Status -->
+                                                <div class="col-md-12 mb-3">
+                                                    <div class="form-check">
+                                                        {{ form.status_ativo(class="form-check-input") }}
+                                                        {{ form.status_ativo.label(class="form-check-label") }}
+                                                    </div>
+                                                </div>
+
+                                                <!-- Seção de Senha -->
+                                                <div class="col-md-12">
+                                                    <hr>
+                                                    <h6 class="text-muted">
+                                                        {% if usuario %}
+                                                            <i class="feather icon-lock"></i> Alterar Senha (deixe em branco para manter a atual)
+                                                        {% else %}
+                                                            <i class="feather icon-lock"></i> Senha de Acesso
+                                                        {% endif %}
+                                                    </h6>
+                                                </div>
+
+                                                <!-- Nova Senha -->
+                                                <div class="col-md-6 mb-3">
+                                                    {{ form.password.label(class="form-label") }}
+                                                    {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+                                                    {% if form.password.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {% for error in form.password.errors %}
+                                                                {{ error }}
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+                                                    {% if not usuario %}
+                                                        <small class="text-muted">Mínimo 6 caracteres</small>
+                                                    {% endif %}
+                                                </div>
+
+                                                <!-- Confirmar Senha -->
+                                                <div class="col-md-6 mb-3">
+                                                    {{ form.confirm_password.label(class="form-label") }}
+                                                    {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else "")) }}
+                                                    {% if form.confirm_password.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {% for error in form.confirm_password.errors %}
+                                                                {{ error }}
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+
+                                            <!-- Botões -->
+                                            <div class="d-flex justify-content-between align-items-center mt-4">
+                                                <a href="{{ url_for('usuarios.index') }}" class="btn btn-light">
+                                                    <i class="feather icon-arrow-left"></i> Voltar
+                                                </a>
+                                                {{ form.submit(class="btn btn-primary") }}
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card de Ajuda -->
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="feather icon-help-circle"></i> Ajuda</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <h6>Perfis de Usuário:</h6>
+                                        <ul class="list-unstyled">
+                                            <li><strong>Operador:</strong> Acesso básico ao sistema</li>
+                                            <li><strong>Aprovador:</strong> Pode aprovar processos</li>
+                                            <li><strong>Administrador:</strong> Acesso total</li>
+                                        </ul>
+
+                                        <hr>
+
+                                        <h6>Dicas:</h6>
+                                        <ul class="list-unstyled">
+                                            <li>• Nome de usuário deve ser único</li>
+                                            <li>• Email deve ser válido e único</li>
+                                            <li>• Senha deve ter pelo menos 6 caracteres</li>
+                                            <li>• Usuários inativos não podem fazer login</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- [ Main Content ] end -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- [ Main Content ] end -->
+
+{% endblock content %}

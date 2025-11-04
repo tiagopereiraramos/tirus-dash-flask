@@ -1,0 +1,1076 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Configurações da API{% endblock %}
+
+{% block stylesheets %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<style>
+.config-section {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.config-section .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.help-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.switch-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.test-button {
+    margin-top: 0.5rem;
+}
+
+.alert-custom {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.operator-config {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.operator-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.operator-name {
+    font-weight: 600;
+    color: #495057;
+}
+
+.operator-status {
+    font-size: 0.875rem;
+}
+
+.status-active {
+    color: #28a745;
+}
+
+.status-inactive {
+    color: #dc3545;
+}
+
+.loading-spinner {
+    display: none;
+}
+
+.loading-spinner.show {
+    display: inline-block;
+}
+
+.json-editor {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    min-height: 120px;
+}
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="pcoded-main-container">
+    <div class="pcoded-wrapper">
+        <div class="pcoded-content">
+            <div class="pcoded-inner-content">
+                <!-- [ breadcrumb ] start -->
+                <div class="page-header">
+                    <div class="page-block">
+                        <div class="row align-items-center">
+                            <div class="col-md-12">
+                                <div class="page-header-title">
+                                    <h5 class="m-b-10">Configurações da API</h5>
+                                </div>
+                                <ul class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{{ url_for('home.index') }}"><i class="feather icon-home"></i></a></li>
+                                    <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+                                    <li class="breadcrumb-item active">API</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- [ breadcrumb ] end -->
+
+                <div class="main-body">
+                    <div class="page-wrapper">
+                        <!-- Alertas -->
+                        <div id="alerts-container"></div>
+
+                        <!-- Formulário de Configuração -->
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <form id="api-config-form">
+                                    <!-- Configurações Gerais da API -->
+                                    <div class="config-section">
+                                        <div class="card-header">
+                                            <h5><i class="feather icon-settings"></i> Configurações Gerais da API</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label" for="api-base-url">URL Base da API</label>
+                                                        <input type="url" class="form-control" id="api-base-url" value="http://191.252.218.230:8000" required>
+                                                        <div class="help-text">URL base da API externa de produção</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label" for="api-timeout">Timeout Padrão (segundos)</label>
+                                                        <input type="number" class="form-control" id="api-timeout" value="90" min="30" max="300" required>
+                                                        <div class="help-text">Tempo máximo de espera para respostas da API</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label" for="api-retries">Tentativas Máximas</label>
+                                                        <input type="number" class="form-control" id="api-retries" value="3" min="1" max="10" required>
+                                                        <div class="help-text">Número de tentativas em caso de falha</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label" for="api-retry-delay">Delay entre Tentativas (segundos)</label>
+                                                        <input type="number" class="form-control" id="api-retry-delay" value="5" min="1" max="60" required>
+                                                        <div class="help-text">Tempo de espera entre tentativas</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Habilitar Cache</label>
+                                                        <div class="switch-wrapper">
+                                                            <span class="help-text">Ativar cache para otimizar performance</span>
+                                                            <label class="switch">
+                                                                <input type="checkbox" id="api-cache-enabled" checked>
+                                                                <span class="slider"></span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label" for="api-cache-ttl">TTL do Cache (minutos)</label>
+                                                        <input type="number" class="form-control" id="api-cache-ttl" value="30" min="5" max="1440">
+                                                        <div class="help-text">Tempo de vida do cache em minutos</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <button type="button" class="btn btn-info test-button" id="test-api-connection">
+                                                    <i class="feather icon-wifi"></i> Testar Conexão com API
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Configurações por Operadora -->
+                                    <div class="config-section">
+                                        <div class="card-header">
+                                            <h5><i class="feather icon-users"></i> Configurações por Operadora</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="form-group">
+                                                <p class="text-muted">Configure parâmetros específicos para cada operadora. Estas configurações são usadas para personalizar o comportamento do RPA e da API externa.</p>
+                                            </div>
+
+                                            <div id="operators-config">
+                                                <!-- Configurações das operadoras serão carregadas via JavaScript -->
+                                            </div>
+
+                                            <div class="form-group">
+                                                <button type="button" class="btn btn-success" id="add-operator-config">
+                                                    <i class="feather icon-plus"></i> Adicionar Operadora
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Configurações de Segurança -->
+                                    <div class="config-section">
+                                        <div class="card-header">
+                                            <h5><i class="feather icon-shield"></i> Configurações de Segurança</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Habilitar SSL/TLS</label>
+                                                        <div class="switch-wrapper">
+                                                            <span class="help-text">Forçar conexões HTTPS</span>
+                                                            <label class="switch">
+                                                                <input type="checkbox" id="api-ssl-enabled" checked>
+                                                                <span class="slider"></span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Verificar Certificado SSL</label>
+                                                        <div class="switch-wrapper">
+                                                            <span class="help-text">Verificar validade do certificado SSL</span>
+                                                            <label class="switch">
+                                                                <input type="checkbox" id="api-ssl-verify" checked>
+                                                                <span class="slider"></span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label" for="api-rate-limit">Rate Limit (req/min)</label>
+                                                        <input type="number" class="form-control" id="api-rate-limit" value="60" min="10" max="1000">
+                                                        <div class="help-text">Limite de requisições por minuto</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label" for="api-user-agent">User Agent</label>
+                                                        <input type="text" class="form-control" id="api-user-agent" value="Tirus-Dash-Flask/1.0">
+                                                        <div class="help-text">User Agent para requisições HTTP</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Configurações de Logs -->
+                                    <div class="config-section">
+                                        <div class="card-header">
+                                            <h5><i class="feather icon-file-text"></i> Configurações de Logs</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Habilitar Logs Detalhados</label>
+                                                        <div class="switch-wrapper">
+                                                            <span class="help-text">Registrar logs detalhados das requisições</span>
+                                                            <label class="switch">
+                                                                <input type="checkbox" id="api-detailed-logs">
+                                                                <span class="slider"></span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label" for="api-log-level">Nível de Log</label>
+                                                        <select class="form-control" id="api-log-level">
+                                                            <option value="ERROR">Erro</option>
+                                                            <option value="WARNING">Aviso</option>
+                                                            <option value="INFO" selected>Informação</option>
+                                                            <option value="DEBUG">Debug</option>
+                                                        </select>
+                                                        <div class="help-text">Nível de detalhamento dos logs</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label class="form-label" for="api-log-retention">Retenção de Logs (dias)</label>
+                                                <input type="number" class="form-control" id="api-log-retention" value="30" min="1" max="365">
+                                                <div class="help-text">Tempo de retenção dos logs da API</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Botões de Ação -->
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between">
+                                                        <a href="{{ url_for('configuracoes.index') }}" class="btn btn-secondary">
+                                                            <i class="feather icon-arrow-left"></i> Voltar
+                                                        </a>
+                                                        <div>
+                                                            <button type="button" class="btn btn-warning mr-2" id="btn-reset">
+                                                                <i class="feather icon-refresh-cw"></i> Resetar
+                                                            </button>
+                                                            <button type="submit" class="btn btn-primary">
+                                                                <i class="feather icon-save"></i> Salvar Configurações
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Teste de Conexão -->
+<div class="modal fade" id="testModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Teste de Conexão com API</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="test-result">
+                <!-- Resultado do teste -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Configuração de Operadora -->
+<div class="modal fade" id="operatorModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Configuração de Operadora</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="operator-config-form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label" for="operator-name">Nome da Operadora</label>
+                                <input type="text" class="form-control" id="operator-name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label" for="operator-code">Código</label>
+                                <input type="text" class="form-control" id="operator-code" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Possui RPA</label>
+                                <div class="switch-wrapper">
+                                    <span class="help-text">Operadora possui RPA configurado</span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="operator-has-rpa">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">RPA Terceirizado</label>
+                                <div class="switch-wrapper">
+                                    <span class="help-text">Usa RPA terceirizado</span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="operator-outsourced-rpa">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label" for="operator-url-portal">URL do Portal</label>
+                                <input type="url" class="form-control" id="operator-url-portal">
+                                <div class="help-text">URL de acesso ao portal da operadora</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label" for="operator-endpoint-rpa">Endpoint RPA</label>
+                                <input type="url" class="form-control" id="operator-endpoint-rpa">
+                                <div class="help-text">URL do endpoint RPA terceirizado</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="operator-instructions">Instruções de Acesso</label>
+                        <textarea class="form-control" id="operator-instructions" rows="3"></textarea>
+                        <div class="help-text">Instruções detalhadas para acesso ao portal</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="operator-rpa-config">Configuração RPA (JSON)</label>
+                        <textarea class="form-control json-editor" id="operator-rpa-config" rows="6" placeholder='{
+  "classe_rpa": "EmbratelRPA",
+  "timeout_padrao": 300,
+  "tentativas_maximas": 3,
+  "parametros_especiais": {
+    "login_selector": "#username",
+    "password_selector": "#password"
+  }
+}'></textarea>
+                        <div class="help-text">Configuração JSON específica do RPA</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btn-save-operator">Salvar Operadora</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+$(document).ready(function() {
+    let operators = [];
+    let editingOperatorId = null;
+
+    // Carregar configurações atuais
+    loadCurrentConfig();
+    loadOperators();
+
+    // Formulário principal
+    $('#api-config-form').on('submit', function(e) {
+        e.preventDefault();
+        saveConfig();
+    });
+
+    // Botão reset
+    $('#btn-reset').on('click', function() {
+        if (confirm('Tem certeza que deseja resetar as configurações para os valores padrão?')) {
+            resetConfig();
+        }
+    });
+
+    // Teste de conexão
+    $('#test-api-connection').on('click', function() {
+        testAPIConnection();
+    });
+
+    // Adicionar operadora
+    $('#add-operator-config').on('click', function() {
+        editingOperatorId = null;
+        clearOperatorForm();
+        $('#operatorModal').modal('show');
+    });
+
+    // Salvar operadora
+    $('#btn-save-operator').on('click', function() {
+        saveOperator();
+    });
+
+    function loadCurrentConfig() {
+        $.ajax({
+            url: '/api/v2/avancadas/configuracoes/api',
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    const config = response.config;
+
+                    // Configurações gerais
+                    $('#api-base-url').val(config.base_url || 'http://191.252.218.230:8000');
+                    $('#api-timeout').val(config.timeout || 90);
+                    $('#api-retries').val(config.retries || 3);
+                    $('#api-retry-delay').val(config.retry_delay || 5);
+                    $('#api-cache-enabled').prop('checked', config.cache_enabled !== false);
+                    $('#api-cache-ttl').val(config.cache_ttl || 30);
+
+                    // Configurações de segurança
+                    $('#api-ssl-enabled').prop('checked', config.ssl_enabled !== false);
+                    $('#api-ssl-verify').prop('checked', config.ssl_verify !== false);
+                    $('#api-rate-limit').val(config.rate_limit || 60);
+                    $('#api-user-agent').val(config.user_agent || 'Tirus-Dash-Flask/1.0');
+
+                    // Configurações de logs
+                    $('#api-detailed-logs').prop('checked', config.detailed_logs || false);
+                    $('#api-log-level').val(config.log_level || 'INFO');
+                    $('#api-log-retention').val(config.log_retention || 30);
+                }
+            },
+            error: function(xhr) {
+                console.log('Erro ao carregar configurações da API');
+            }
+        });
+    }
+
+    function loadOperatorsFromDB() {
+        $.ajax({
+            url: '/api/v2/avancadas/operadoras',
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    operators = response.operadoras || [];
+                    renderOperatorsFromDB();
+                } else {
+                    showAlert('Erro ao carregar operadoras: ' + response.message, 'danger');
+                }
+            },
+            error: function(xhr, status, error) {
+                showAlert('Erro ao carregar operadoras: ' + error, 'danger');
+            }
+        });
+    }
+
+    function loadOperators() {
+        // Mantém compatibilidade com a função antiga
+        loadOperatorsFromDB();
+    }
+
+    function renderOperatorsFromDB() {
+        const container = $('#operators-config');
+        container.empty();
+
+        if (operators.length === 0) {
+            container.append(`
+                <div class="text-center text-muted">
+                    <i class="feather icon-users" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <p class="mt-2">Nenhuma operadora encontrada no banco de dados</p>
+                </div>
+            `);
+            return;
+        }
+
+        operators.forEach(function(operator) {
+            const configHtml = createOperatorConfigHtmlFromDB(operator);
+            container.append(configHtml);
+        });
+    }
+
+    function renderOperators() {
+        // Mantém compatibilidade com a função antiga
+        renderOperatorsFromDB();
+    }
+
+    function createOperatorConfigHtmlFromDB(operator) {
+        const statusClass = operator.status_ativo ? 'status-active' : 'status-inactive';
+        const statusText = operator.status_ativo ? 'Ativa' : 'Inativa';
+        const rpaStatus = operator.possui_rpa ? 'RPA Externo Ativo' : 'RPA Externo Inativo';
+        const rpaType = 'Externo via API';  // Sempre externo - só usa API externa
+        const rpaConfigStatus = operator.tem_rpa_configurado ? 'status-active' : 'status-inactive';
+        const rpaConfigText = operator.tem_rpa_configurado ? 'Configurado' : 'Não Configurado';
+
+        return `
+            <div class="operator-config" data-operator-id="${operator.id}">
+                <div class="operator-header">
+                    <div>
+                        <div class="operator-name">${operator.nome} (${operator.codigo})</div>
+                        <div class="operator-status">
+                            <span class="${statusClass}">${statusText}</span> |
+                            <span class="${operator.possui_rpa ? 'status-active' : 'status-inactive'}">${rpaStatus}</span> |
+                            <span class="${rpaConfigStatus}">${rpaConfigText}</span> |
+                            <span class="text-muted">${rpaType}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-info mr-2" onclick="viewOperatorDetails('${operator.id}')" title="Ver Detalhes">
+                            <i class="feather icon-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary mr-2" onclick="editOperator('${operator.id}')" title="Editar">
+                            <i class="feather icon-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-success mr-2" onclick="testOperatorRPA('${operator.id}')" title="Testar RPA">
+                            <i class="feather icon-play"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <strong>Portal:</strong> ${operator.url_portal || 'Não configurado'}<br>
+                            <strong>Endpoint RPA:</strong> ${operator.url_endpoint_rpa || 'Não configurado'}
+                        </small>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <strong>Classe RPA:</strong> ${operator.configuracao_rpa?.classe_rpa || 'Não configurado'}<br>
+                            <strong>Timeout:</strong> ${operator.configuracao_rpa?.timeout_padrao || 'Padrão'}s
+                        </small>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <strong>Clientes:</strong> ${operator.clientes_count || 0}<br>
+                            <strong>Processos:</strong> ${operator.processos_count || 0}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function createOperatorConfigHtml(operator) {
+        // Mantém compatibilidade com a função antiga
+        return createOperatorConfigHtmlFromDB(operator);
+    }
+
+    function saveConfig() {
+        const config = {
+            base_url: $('#api-base-url').val(),
+            timeout: parseInt($('#api-timeout').val()),
+            retries: parseInt($('#api-retries').val()),
+            retry_delay: parseInt($('#api-retry-delay').val()),
+            cache_enabled: $('#api-cache-enabled').is(':checked'),
+            cache_ttl: parseInt($('#api-cache-ttl').val()),
+            ssl_enabled: $('#api-ssl-enabled').is(':checked'),
+            ssl_verify: $('#api-ssl-verify').is(':checked'),
+            rate_limit: parseInt($('#api-rate-limit').val()),
+            user_agent: $('#api-user-agent').val(),
+            detailed_logs: $('#api-detailed-logs').is(':checked'),
+            log_level: $('#api-log-level').val(),
+            log_retention: parseInt($('#api-log-retention').val())
+        };
+
+        $.ajax({
+            url: '/api/v2/avancadas/configuracoes/api',
+            method: 'POST',
+            data: JSON.stringify(config),
+            contentType: 'application/json',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    showAlert('Configurações salvas com sucesso!', 'success');
+                } else {
+                    showAlert('Erro ao salvar configurações: ' + response.message, 'danger');
+                }
+            },
+            error: function(xhr) {
+                showAlert('Erro ao salvar configurações', 'danger');
+            }
+        });
+    }
+
+    function resetConfig() {
+        // Resetar para valores padrão
+        $('#api-base-url').val('http://191.252.218.230:8000');
+        $('#api-timeout').val(90);
+        $('#api-retries').val(3);
+        $('#api-retry-delay').val(5);
+        $('#api-cache-enabled').prop('checked', true);
+        $('#api-cache-ttl').val(30);
+        $('#api-ssl-enabled').prop('checked', true);
+        $('#api-ssl-verify').prop('checked', true);
+        $('#api-rate-limit').val(60);
+        $('#api-user-agent').val('Tirus-Dash-Flask/1.0');
+        $('#api-detailed-logs').prop('checked', false);
+        $('#api-log-level').val('INFO');
+        $('#api-log-retention').val(30);
+
+        showAlert('Configurações resetadas para valores padrão', 'info');
+    }
+
+    function testAPIConnection() {
+        $('#test-result').html('<div class="text-center"><i class="feather icon-loader spin"></i> Testando conexão...</div>');
+        $('#testModal').modal('show');
+
+        $.ajax({
+            url: '/api/v2/avancadas/configuracoes/api/teste',
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#test-result').html(`
+                        <div class="alert alert-success">
+                            <i class="feather icon-check-circle"></i>
+                            <strong>Sucesso!</strong> Conexão com a API estabelecida.
+                            <br><small>Tempo de resposta: ${response.response_time}ms</small>
+                        </div>
+                        <div class="mt-3">
+                            <h6>Detalhes da Conexão:</h6>
+                            <ul>
+                                <li><strong>URL:</strong> ${response.url}</li>
+                                <li><strong>Status:</strong> ${response.status_code}</li>
+                                <li><strong>Versão:</strong> ${response.version || 'N/A'}</li>
+                            </ul>
+                        </div>
+                    `);
+                } else {
+                    $('#test-result').html(`
+                        <div class="alert alert-danger">
+                            <i class="feather icon-x-circle"></i>
+                            <strong>Erro!</strong> ${response.message}
+                        </div>
+                    `);
+                }
+            },
+            error: function(xhr) {
+                $('#test-result').html(`
+                    <div class="alert alert-danger">
+                        <i class="feather icon-x-circle"></i>
+                        <strong>Erro!</strong> Falha na conexão com a API.
+                    </div>
+                `);
+            }
+        });
+    }
+
+    function clearOperatorForm() {
+        $('#operator-name').val('');
+        $('#operator-code').val('');
+        $('#operator-has-rpa').prop('checked', false);
+        $('#operator-outsourced-rpa').prop('checked', false);
+        $('#operator-url-portal').val('');
+        $('#operator-endpoint-rpa').val('');
+        $('#operator-instructions').val('');
+        $('#operator-rpa-config').val('{\n  "classe_rpa": "",\n  "timeout_padrao": 300,\n  "tentativas_maximas": 3,\n  "parametros_especiais": {}\n}');
+    }
+
+    function saveOperator() {
+        const operatorData = {
+            nome: $('#operator-name').val(),
+            codigo: $('#operator-code').val(),
+            possui_rpa: $('#operator-has-rpa').is(':checked'),
+            rpa_terceirizado: $('#operator-outsourced-rpa').is(':checked'),
+            url_portal: $('#operator-url-portal').val(),
+            url_endpoint_rpa: $('#operator-endpoint-rpa').val(),
+            instrucoes_acesso: $('#operator-instructions').val()
+        };
+
+        // Parse JSON configuration
+        try {
+            const rpaConfig = JSON.parse($('#operator-rpa-config').val());
+            operatorData.configuracao_rpa = rpaConfig;
+        } catch (e) {
+            showAlert('Erro no JSON da configuração RPA: ' + e.message, 'danger');
+            return;
+        }
+
+                const url = editingOperatorId ?
+            `/api/v2/avancadas/operadoras/${editingOperatorId}` :
+            '/api/v2/avancadas/operadoras';
+
+        const method = editingOperatorId ? 'PUT' : 'POST';
+
+        $.ajax({
+            url: url,
+            method: method,
+            data: JSON.stringify(operatorData),
+            contentType: 'application/json',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    showAlert('Operadora salva com sucesso!', 'success');
+                    $('#operatorModal').modal('hide');
+                    loadOperators(); // Recarregar lista
+                } else {
+                    showAlert('Erro ao salvar operadora: ' + response.message, 'danger');
+                }
+            },
+            error: function(xhr) {
+                showAlert('Erro ao salvar operadora', 'danger');
+            }
+        });
+    }
+
+    function showAlert(message, type) {
+        const alertHtml = `
+            <div class="alert alert-${type} alert-custom alert-dismissible fade show" role="alert">
+                <i class="feather icon-${type === 'success' ? 'check-circle' : type === 'danger' ? 'x-circle' : 'info'}"></i>
+                ${message}
+                <button type="button" class="close" data-dismiss="alert">
+                    <span>&times;</span>
+                </button>
+            </div>
+        `;
+
+        $('#alerts-container').html(alertHtml);
+
+        // Auto-dismiss após 5 segundos
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 5000);
+    }
+});
+
+// Funções globais
+function editOperator(operatorId) {
+    // Buscar dados da operadora do banco de dados
+    $.ajax({
+        url: `/api/v2/avancadas/operadoras/${operatorId}`,
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            if (response.success) {
+                const operator = response.operadora;
+                editingOperatorId = operatorId;
+
+                // Preencher formulário
+                $('#operator-name').val(operator.nome);
+                $('#operator-code').val(operator.codigo);
+                $('#operator-has-rpa').prop('checked', operator.possui_rpa);
+                $('#operator-outsourced-rpa').prop('checked', operator.rpa_terceirizado);
+                $('#operator-url-portal').val(operator.url_portal);
+                $('#operator-endpoint-rpa').val(operator.url_endpoint_rpa);
+                $('#operator-instructions').val(operator.instrucoes_acesso);
+                $('#operator-rpa-config').val(JSON.stringify(operator.configuracao_rpa || {}, null, 2));
+
+                $('#operatorModal').modal('show');
+            } else {
+                showAlert('Erro ao carregar dados da operadora: ' + response.message, 'danger');
+            }
+        },
+        error: function(xhr, status, error) {
+            showAlert('Erro ao carregar dados da operadora: ' + error, 'danger');
+        }
+    });
+}
+
+function viewOperatorDetails(operatorId) {
+    // Buscar dados detalhados da operadora
+    $.ajax({
+        url: `/api/v2/avancadas/operadoras/${operatorId}`,
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            if (response.success) {
+                const operator = response.operadora;
+
+                // Criar modal de detalhes
+                const detailsHtml = `
+                    <div class="modal fade" id="operatorDetailsModal" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Detalhes da Operadora: ${operator.nome}</h5>
+                                    <button type="button" class="close" data-dismiss="modal">
+                                        <span>&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>Informações Gerais</h6>
+                                            <p><strong>Código:</strong> ${operator.codigo}</p>
+                                            <p><strong>Status:</strong> ${operator.status_ativo ? 'Ativa' : 'Inativa'}</p>
+                                            <p><strong>Possui RPA:</strong> ${operator.possui_rpa ? 'Sim' : 'Não'}</p>
+                                            <p><strong>RPA Terceirizado:</strong> ${operator.rpa_terceirizado ? 'Sim' : 'Não'}</p>
+                                            <p><strong>RPA Configurado:</strong> ${operator.tem_rpa_configurado ? 'Sim' : 'Não'}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>Configurações RPA Externo</h6>
+                                            <p><strong>API Externa:</strong> http://191.252.218.230:8000</p>
+                                            <p><strong>Portal:</strong> ${operator.url_portal || 'Não configurado'}</p>
+                                            <p><strong>Endpoint RPA:</strong> ${operator.url_endpoint_rpa || 'Não configurado'}</p>
+                                            <p><strong>Classe RPA:</strong> ${operator.configuracao_rpa?.classe_rpa || 'Não configurado'}</p>
+                                            <p><strong>Timeout:</strong> ${operator.configuracao_rpa?.timeout_padrao || 'Padrão'}s</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mt-3">
+                                        <div class="col-md-12">
+                                            <h6>Clientes Associados (${operator.clientes_count})</h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Razão Social</th>
+                                                            <th>CNPJ</th>
+                                                            <th>Serviço</th>
+                                                            <th>Status</th>
+                                                            <th>RPA</th>
+                                                            <th>SAT</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        ${operator.clientes.map(cliente => `
+                                                            <tr>
+                                                                <td>${cliente.razao_social}</td>
+                                                                <td>${cliente.cnpj}</td>
+                                                                <td>${cliente.servico}</td>
+                                                                <td><span class="badge badge-${cliente.status_ativo ? 'success' : 'danger'}">${cliente.status_ativo ? 'Ativo' : 'Inativo'}</span></td>
+                                                                <td><span class="badge badge-${cliente.pode_usar_rpa ? 'success' : 'secondary'}">${cliente.pode_usar_rpa ? 'Sim' : 'Não'}</span></td>
+                                                                <td><span class="badge badge-${cliente.pode_usar_sat ? 'success' : 'secondary'}">${cliente.pode_usar_sat ? 'Sim' : 'Não'}</span></td>
+                                                            </tr>
+                                                        `).join('')}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                                    <button type="button" class="btn btn-primary" onclick="editOperator('${operatorId}')">Editar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Remover modal anterior se existir
+                $('#operatorDetailsModal').remove();
+
+                // Adicionar novo modal e mostrar
+                $('body').append(detailsHtml);
+                $('#operatorDetailsModal').modal('show');
+            } else {
+                showAlert('Erro ao carregar detalhes: ' + response.message, 'danger');
+            }
+        },
+        error: function(xhr, status, error) {
+            showAlert('Erro ao carregar detalhes da operadora: ' + error, 'danger');
+        }
+    });
+}
+
+function testOperatorRPA(operatorId) {
+    if (!confirm('Deseja testar a conexão com a API externa de RPA desta operadora?')) {
+        return;
+    }
+
+    $.ajax({
+        url: `/api/v2/avancadas/operadoras/${operatorId}/teste-rpa`,
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            if (response.success) {
+                const test = response.teste;
+                showAlert(`Teste da API externa de RPA realizado com sucesso!<br>
+                    <strong>Operadora:</strong> ${test.operadora}<br>
+                    <strong>API Externa:</strong> http://191.252.218.230:8000<br>
+                    <strong>Status:</strong> ${test.status}<br>
+                    <strong>Tempo de Resposta:</strong> ${test.tempo_resposta}<br>
+                    <strong>Versão:</strong> ${test.versao}`, 'success');
+            } else {
+                showAlert('Erro no teste RPA: ' + response.message, 'danger');
+            }
+        },
+        error: function(xhr, status, error) {
+            showAlert('Erro ao testar RPA: ' + error, 'danger');
+        }
+    });
+}
+
+function deleteOperator(operatorId) {
+    if (confirm('Tem certeza que deseja excluir esta operadora?')) {
+        $.ajax({
+            url: `/api/v2/avancadas/configuracoes/operadoras/${operatorId}`,
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('Erro ao excluir operadora: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                alert('Erro ao excluir operadora');
+            }
+        });
+    }
+}
+</script>
+{% endblock javascripts %}

@@ -1,0 +1,777 @@
+{% extends "layouts/base.html" %}
+{% block title %}Estatísticas de Notificações{% endblock %}
+
+{% block stylesheets %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 15px;
+        color: white;
+        transition: transform 0.3s ease;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stats-card.success {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+
+    .stats-card.warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .stats-card.info {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .stats-card.danger {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    .stats-change {
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+    }
+
+    .stats-change.positive {
+        color: #38ef7d;
+    }
+
+    .stats-change.negative {
+        color: #f5576c;
+    }
+
+    .chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+
+    .chart-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #333;
+    }
+
+    .filter-section {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+
+    .metric-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .metric-item:last-child {
+        border-bottom: none;
+    }
+
+    .metric-label {
+        font-weight: 500;
+        color: #555;
+    }
+
+    .metric-value {
+        font-weight: bold;
+        color: #333;
+    }
+
+    .metric-percentage {
+        font-size: 0.8rem;
+        color: #666;
+        margin-left: 0.5rem;
+    }
+
+    .trend-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+    }
+
+    .trend-indicator.up {
+        background-color: #38ef7d;
+    }
+
+    .trend-indicator.down {
+        background-color: #f5576c;
+    }
+
+    .trend-indicator.stable {
+        background-color: #ffc107;
+    }
+
+    .export-buttons {
+        margin-bottom: 1.5rem;
+    }
+
+    .export-btn {
+        margin-right: 0.5rem;
+        border-radius: 25px;
+        padding: 0.5rem 1.5rem;
+    }
+
+    .refresh-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 25px;
+        color: white;
+        padding: 0.5rem 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .refresh-btn:hover {
+        transform: scale(1.05);
+        color: white;
+    }
+
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .no-data {
+        text-align: center;
+        padding: 3rem;
+        color: #666;
+    }
+
+    .no-data i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<!-- [ breadcrumb ] start -->
+<div class="page-header">
+    <div class="page-block">
+        <div class="row align-items-center">
+            <div class="col-md-12">
+                <div class="page-header-title">
+                    <h5 class="m-b-10">Estatísticas de Notificações</h5>
+                </div>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('processos.index') }}">Processos</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('processos.notificacoes') }}">Notificações</a></li>
+                    <li class="breadcrumb-item active">Estatísticas</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- [ breadcrumb ] end -->
+
+<div class="main-body">
+    <div class="page-wrapper">
+        <!-- Alertas -->
+        <div id="alerts-container"></div>
+
+        <!-- Filtros -->
+        <div class="filter-section">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="period-select">Período</label>
+                    <select id="period-select" class="form-control">
+                        <option value="today">Hoje</option>
+                        <option value="week" selected>Última Semana</option>
+                        <option value="month">Último Mês</option>
+                        <option value="quarter">Último Trimestre</option>
+                        <option value="year">Último Ano</option>
+                        <option value="custom">Personalizado</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="start-date">Data Início</label>
+                    <input type="date" id="start-date" class="form-control" disabled>
+                </div>
+                <div class="col-md-3">
+                    <label for="end-date">Data Fim</label>
+                    <input type="date" id="end-date" class="form-control" disabled>
+                </div>
+                <div class="col-md-3">
+                    <label>&nbsp;</label>
+                    <div>
+                        <button id="apply-filters" class="btn btn-primary">
+                            <i data-feather="filter"></i> Aplicar
+                        </button>
+                        <button id="refresh-stats" class="refresh-btn">
+                            <i data-feather="refresh-cw"></i> Atualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botões de Exportação -->
+        <div class="export-buttons">
+            <button class="btn btn-success export-btn" onclick="exportStats('pdf')">
+                <i data-feather="file-text"></i> Exportar PDF
+            </button>
+            <button class="btn btn-info export-btn" onclick="exportStats('excel')">
+                <i data-feather="file"></i> Exportar Excel
+            </button>
+            <button class="btn btn-warning export-btn" onclick="exportStats('csv')">
+                <i data-feather="download"></i> Exportar CSV
+            </button>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading-spinner" class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Carregando...</span>
+            </div>
+            <p class="mt-2">Carregando estatísticas...</p>
+        </div>
+
+        <!-- Conteúdo Principal -->
+        <div id="stats-content">
+            <!-- Cards de Estatísticas -->
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card stats-card success">
+                        <div class="card-body text-center">
+                            <div class="stats-number" id="total-notifications">0</div>
+                            <div class="stats-label">Total de Notificações</div>
+                            <div class="stats-change positive" id="total-change">
+                                <i data-feather="trending-up"></i> +0%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stats-card info">
+                        <div class="card-body text-center">
+                            <div class="stats-number" id="success-rate">0%</div>
+                            <div class="stats-label">Taxa de Sucesso</div>
+                            <div class="stats-change positive" id="success-change">
+                                <i data-feather="trending-up"></i> +0%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stats-card warning">
+                        <div class="card-body text-center">
+                            <div class="stats-number" id="avg-response-time">0s</div>
+                            <div class="stats-label">Tempo Médio de Resposta</div>
+                            <div class="stats-change negative" id="response-change">
+                                <i data-feather="trending-down"></i> +0%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stats-card danger">
+                        <div class="card-body text-center">
+                            <div class="stats-number" id="error-count">0</div>
+                            <div class="stats-label">Erros</div>
+                            <div class="stats-change negative" id="error-change">
+                                <i data-feather="trending-down"></i> +0%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <h5 class="chart-title">Notificações por Tipo</h5>
+                        <canvas id="notifications-by-type" width="400" height="200"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <h5 class="chart-title">Notificações por Operadora</h5>
+                        <canvas id="notifications-by-operator" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="chart-container">
+                        <h5 class="chart-title">Evolução Temporal</h5>
+                        <canvas id="temporal-evolution" width="400" height="200"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="chart-container">
+                        <h5 class="chart-title">Métricas Detalhadas</h5>
+                        <div id="detailed-metrics">
+                            <!-- Métricas serão carregadas via JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Top Operadoras -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="chart-container">
+                        <h5 class="chart-title">Top 10 Operadoras por Volume</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="top-operators-table">
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Operadora</th>
+                                        <th>Total Notificações</th>
+                                        <th>Taxa de Sucesso</th>
+                                        <th>Tempo Médio</th>
+                                        <th>Erros</th>
+                                        <th>Tendência</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dados serão carregados via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado sem dados -->
+        <div id="no-data" class="no-data" style="display: none;">
+            <i data-feather="bar-chart-2"></i>
+            <h4>Nenhum dado disponível</h4>
+            <p>Não há notificações no período selecionado.</p>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+$(document).ready(function() {
+    // Inicializar Feather Icons
+    feather.replace();
+
+    // Configurar datas padrão
+    const today = new Date();
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    $('#start-date').val(weekAgo.toISOString().split('T')[0]);
+    $('#end-date').val(today.toISOString().split('T')[0]);
+
+    // Carregar estatísticas iniciais
+    loadStatistics();
+
+    // Event listeners
+    $('#period-select').change(function() {
+        const period = $(this).val();
+        if (period === 'custom') {
+            $('#start-date, #end-date').prop('disabled', false);
+        } else {
+            $('#start-date, #end-date').prop('disabled', true);
+            setPeriodDates(period);
+        }
+    });
+
+    $('#apply-filters').click(function() {
+        loadStatistics();
+    });
+
+    $('#refresh-stats').click(function() {
+        loadStatistics();
+    });
+});
+
+// Função para definir datas baseadas no período
+function setPeriodDates(period) {
+    const today = new Date();
+    let startDate = new Date();
+
+    switch(period) {
+        case 'today':
+            startDate = today;
+            break;
+        case 'week':
+            startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+        case 'month':
+            startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+        case 'quarter':
+            startDate = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
+            break;
+        case 'year':
+            startDate = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
+            break;
+    }
+
+    $('#start-date').val(startDate.toISOString().split('T')[0]);
+    $('#end-date').val(today.toISOString().split('T')[0]);
+}
+
+// Função para carregar estatísticas
+function loadStatistics() {
+    showLoading();
+
+    const period = $('#period-select').val();
+    const startDate = $('#start-date').val();
+    const endDate = $('#end-date').val();
+
+    const params = {
+        period: period,
+        start_date: startDate,
+        end_date: endDate
+    };
+
+    $.ajax({
+        url: '/api/v2/avancadas/notificacoes/estatisticas',
+        method: 'GET',
+        data: params,
+        headers: {
+            'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            hideLoading();
+            if (response.success) {
+                updateStatistics(response.data);
+            } else {
+                showAlert('Erro ao carregar estatísticas: ' + response.error, 'danger');
+            }
+        },
+        error: function(xhr, status, error) {
+            hideLoading();
+            showAlert('Erro ao carregar estatísticas: ' + error, 'danger');
+        }
+    });
+}
+
+// Função para atualizar estatísticas
+function updateStatistics(data) {
+    if (!data || Object.keys(data).length === 0) {
+        $('#stats-content').hide();
+        $('#no-data').show();
+        return;
+    }
+
+    $('#stats-content').show();
+    $('#no-data').hide();
+
+    // Atualizar cards principais
+    $('#total-notifications').text(data.total_notifications || 0);
+    $('#success-rate').text((data.success_rate || 0) + '%');
+    $('#avg-response-time').text((data.avg_response_time || 0) + 's');
+    $('#error-count').text(data.error_count || 0);
+
+    // Atualizar mudanças
+    updateChangeIndicator('#total-change', data.total_change);
+    updateChangeIndicator('#success-change', data.success_change);
+    updateChangeIndicator('#response-change', data.response_change);
+    updateChangeIndicator('#error-change', data.error_change);
+
+    // Atualizar gráficos
+    updateCharts(data);
+
+    // Atualizar métricas detalhadas
+    updateDetailedMetrics(data.detailed_metrics);
+
+    // Atualizar tabela de top operadoras
+    updateTopOperatorsTable(data.top_operators);
+}
+
+// Função para atualizar indicadores de mudança
+function updateChangeIndicator(selector, change) {
+    const element = $(selector);
+    const icon = change > 0 ? 'trending-up' : change < 0 ? 'trending-down' : 'minus';
+    const color = change > 0 ? 'positive' : change < 0 ? 'negative' : 'stable';
+
+    element.removeClass('positive negative stable').addClass(color);
+    element.html(`<i data-feather="${icon}"></i> ${change > 0 ? '+' : ''}${change}%`);
+    feather.replace();
+}
+
+// Função para atualizar gráficos
+function updateCharts(data) {
+    // Gráfico de notificações por tipo
+    if (data.notifications_by_type) {
+        updatePieChart('notifications-by-type', 'Notificações por Tipo', data.notifications_by_type);
+    }
+
+    // Gráfico de notificações por operadora
+    if (data.notifications_by_operator) {
+        updateBarChart('notifications-by-operator', 'Notificações por Operadora', data.notifications_by_operator);
+    }
+
+    // Gráfico de evolução temporal
+    if (data.temporal_evolution) {
+        updateLineChart('temporal-evolution', 'Evolução Temporal', data.temporal_evolution);
+    }
+}
+
+// Função para criar gráfico de pizza
+function updatePieChart(canvasId, title, data) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+
+    if (window.charts && window.charts[canvasId]) {
+        window.charts[canvasId].destroy();
+    }
+
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+    const colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'];
+
+    window.charts = window.charts || {};
+    window.charts[canvasId] = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: colors.slice(0, labels.length),
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+// Função para criar gráfico de barras
+function updateBarChart(canvasId, title, data) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+
+    if (window.charts && window.charts[canvasId]) {
+        window.charts[canvasId].destroy();
+    }
+
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+
+    window.charts = window.charts || {};
+    window.charts[canvasId] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Notificações',
+                data: values,
+                backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                borderColor: 'rgba(102, 126, 234, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Função para criar gráfico de linha
+function updateLineChart(canvasId, title, data) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+
+    if (window.charts && window.charts[canvasId]) {
+        window.charts[canvasId].destroy();
+    }
+
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+
+    window.charts = window.charts || {};
+    window.charts[canvasId] = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Notificações',
+                data: values,
+                borderColor: 'rgba(102, 126, 234, 1)',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Função para atualizar métricas detalhadas
+function updateDetailedMetrics(metrics) {
+    if (!metrics) return;
+
+    const container = $('#detailed-metrics');
+    container.empty();
+
+    Object.entries(metrics).forEach(([key, value]) => {
+        const item = $(`
+            <div class="metric-item">
+                <span class="metric-label">${formatMetricLabel(key)}</span>
+                <span class="metric-value">${formatMetricValue(value)}</span>
+            </div>
+        `);
+        container.append(item);
+    });
+}
+
+// Função para atualizar tabela de top operadoras
+function updateTopOperatorsTable(operators) {
+    if (!operators) return;
+
+    const tbody = $('#top-operators-table tbody');
+    tbody.empty();
+
+    operators.forEach((operator, index) => {
+        const trendClass = operator.trend > 0 ? 'up' : operator.trend < 0 ? 'down' : 'stable';
+        const row = $(`
+            <tr>
+                <td><strong>${index + 1}</strong></td>
+                <td>${operator.name}</td>
+                <td>${operator.total_notifications}</td>
+                <td>${operator.success_rate}%</td>
+                <td>${operator.avg_response_time}s</td>
+                <td>${operator.error_count}</td>
+                <td>
+                    <span class="trend-indicator ${trendClass}"></span>
+                    ${operator.trend > 0 ? '+' : ''}${operator.trend}%
+                </td>
+            </tr>
+        `);
+        tbody.append(row);
+    });
+}
+
+// Função para formatar labels de métricas
+function formatMetricLabel(key) {
+    const labels = {
+        'avg_daily_notifications': 'Média Diária',
+        'peak_hour': 'Hora de Pico',
+        'most_common_error': 'Erro Mais Comum',
+        'notification_frequency': 'Frequência (min)',
+        'response_time_95th': 'Tempo 95º Percentil',
+        'success_rate_trend': 'Tendência Sucesso'
+    };
+    return labels[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+// Função para formatar valores de métricas
+function formatMetricValue(value) {
+    if (typeof value === 'number') {
+        return value.toFixed(2);
+    }
+    return value;
+}
+
+// Função para exportar estatísticas
+function exportStats(format) {
+    const period = $('#period-select').val();
+    const startDate = $('#start-date').val();
+    const endDate = $('#end-date').val();
+
+    const params = {
+        period: period,
+        start_date: startDate,
+        end_date: endDate,
+        format: format
+    };
+
+    // Criar URL de download
+    const queryString = Object.keys(params)
+        .map(key => key + '=' + encodeURIComponent(params[key]))
+        .join('&');
+
+    const downloadUrl = `/api/v2/avancadas/notificacoes/estatisticas/export?${queryString}`;
+
+    // Fazer download
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `estatisticas_notificacoes_${period}_${startDate}_${endDate}.${format}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showAlert(`Exportação em ${format.toUpperCase()} iniciada!`, 'success');
+}
+
+// Função para mostrar loading
+function showLoading() {
+    $('#loading-spinner').show();
+    $('#stats-content').hide();
+    $('#no-data').hide();
+}
+
+// Função para esconder loading
+function hideLoading() {
+    $('#loading-spinner').hide();
+}
+
+// Função para mostrar alertas
+function showAlert(message, type) {
+    const alert = $(`
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `);
+
+    $('#alerts-container').append(alert);
+
+    // Auto-remover após 5 segundos
+    setTimeout(function() {
+        alert.alert('close');
+    }, 5000);
+}
+</script>
+{% endblock javascripts %}

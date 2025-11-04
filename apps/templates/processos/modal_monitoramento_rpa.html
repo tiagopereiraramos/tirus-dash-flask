@@ -1,0 +1,188 @@
+<!-- Modal de Monitoramento RPA -->
+<div class="modal fade" id="modalMonitoramentoRPA" tabindex="-1" role="dialog" aria-labelledby="modalMonitoramentoRPALabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalMonitoramentoRPALabel">
+                    <i class="feather icon-monitor"></i> Monitoramento RPA - Processo <span id="processo-id-monitor"></span>
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Status Atual -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <div class="alert alert-info" id="status-atual">
+                            <i class="feather icon-info"></i> <strong>Status:</strong> <span id="status-texto">Iniciando...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progresso -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label class="form-label">Progresso da Execução:</label>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                 role="progressbar"
+                                 id="progresso-barra"
+                                 style="width: 0%"
+                                 aria-valuenow="0"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                                <span id="progresso-texto">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informações do Job -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="feather icon-info"></i> Informações do Job</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm mb-0">
+                                    <tr>
+                                        <td><strong>Job ID:</strong></td>
+                                        <td><code id="job-id">-</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Operadora:</strong></td>
+                                        <td id="operadora-nome">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Cliente:</strong></td>
+                                        <td id="cliente-nome">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Mês/Ano:</strong></td>
+                                        <td id="mes-ano">-</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="feather icon-clock"></i> Timestamps</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm mb-0">
+                                    <tr>
+                                        <td><strong>Iniciado:</strong></td>
+                                        <td id="timestamp-inicio">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Última Atualização:</strong></td>
+                                        <td id="timestamp-atualizacao">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Duração:</strong></td>
+                                        <td id="duracao">-</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logs em Tempo Real -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0"><i class="feather icon-list"></i> Logs da Execução</h6>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="limparLogs()">
+                                        <i class="feather icon-trash-2"></i> Limpar
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="toggleAutoScroll()">
+                                        <i class="feather icon-arrow-down" id="auto-scroll-icon"></i> Auto-scroll
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div id="logs-container" style="height: 300px; overflow-y: auto; background: #f8f9fa; padding: 15px; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.4;">
+                                    <div class="text-muted">Aguardando logs...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resultado Final -->
+                <div class="row mt-3" id="resultado-container" style="display: none;">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="feather icon-check-circle"></i> Resultado Final</h6>
+                            </div>
+                            <div class="card-body" id="resultado-conteudo">
+                                <!-- Conteúdo será preenchido dinamicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" id="btn-fechar">
+                    <i class="feather icon-x"></i> Fechar
+                </button>
+                <button type="button" class="btn btn-danger" id="btn-cancelar" style="display: none;" onclick="cancelarJob()">
+                    <i class="feather icon-stop"></i> Cancelar Job
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-atualizar-processo" style="display: none;" onclick="atualizarProcesso()">
+                    <i class="feather icon-refresh-cw"></i> Atualizar Processo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.log-entry {
+    margin-bottom: 5px;
+    padding: 2px 0;
+}
+
+.log-entry.info {
+    color: #0066cc;
+}
+
+.log-entry.success {
+    color: #28a745;
+}
+
+.log-entry.warning {
+    color: #ffc107;
+}
+
+.log-entry.error {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.log-entry.debug {
+    color: #6c757d;
+}
+
+.log-timestamp {
+    color: #6c757d;
+    font-size: 11px;
+}
+
+.progress-bar-animated {
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+@keyframes progress-bar-stripes {
+    0% { background-position: 1rem 0; }
+    100% { background-position: 0 0; }
+}
+</style>

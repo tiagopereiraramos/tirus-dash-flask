@@ -1,0 +1,751 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Configurações{% endblock %}
+
+{% block stylesheets %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<style>
+.config-card {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    height: 100%;
+}
+
+.config-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.config-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.config-status {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.config-status.valid {
+    background-color: #28a745;
+}
+
+.config-status.warning {
+    background-color: #ffc107;
+}
+
+.config-status.error {
+    background-color: #dc3545;
+}
+
+.config-status.unknown {
+    background-color: #6c757d;
+}
+
+.config-summary {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+.quick-actions {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.action-button {
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.alert-custom {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.stats-card {
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.loading-spinner {
+    display: none;
+}
+
+.loading-spinner.show {
+    display: inline-block;
+}
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="pcoded-main-container">
+    <div class="pcoded-wrapper">
+        <div class="pcoded-content">
+            <div class="pcoded-inner-content">
+                <!-- [ breadcrumb ] start -->
+                <div class="page-header">
+                    <div class="page-block">
+                        <div class="row align-items-center">
+                            <div class="col-md-12">
+                                <div class="page-header-title">
+                                    <h5 class="m-b-10">Configurações do Sistema</h5>
+                                </div>
+                                <ul class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{{ url_for('home.index') }}"><i class="feather icon-home"></i></a></li>
+                                    <li class="breadcrumb-item active">Configurações</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- [ breadcrumb ] end -->
+
+                <div class="main-body">
+                    <div class="page-wrapper">
+                        <!-- Alertas -->
+                        <div id="alerts-container"></div>
+
+                        <!-- Estatísticas Gerais -->
+                        <div class="row mb-4">
+                            <div class="col-xl-3 col-md-6">
+                                <div class="card stats-card">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col">
+                                                <h6 class="text-uppercase text-muted mb-1">Configurações</h6>
+                                                <h2 class="mb-0" id="total-configs">0</h2>
+                                            </div>
+                                            <div class="col-auto">
+                                                <span class="h2 text-muted">
+                                                    <i class="fas fa-cog text-primary"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-xl-3 col-md-6">
+                                <div class="card stats-card">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col">
+                                                <h6 class="text-uppercase text-muted mb-1">Válidas</h6>
+                                                <h2 class="mb-0" id="valid-configs">0</h2>
+                                            </div>
+                                            <div class="col-auto">
+                                                <span class="h2 text-muted">
+                                                    <i class="fas fa-check-circle text-success"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-xl-3 col-md-6">
+                                <div class="card stats-card">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col">
+                                                <h6 class="text-uppercase text-muted mb-1">Atenção</h6>
+                                                <h2 class="mb-0" id="warning-configs">0</h2>
+                                            </div>
+                                            <div class="col-auto">
+                                                <span class="h2 text-muted">
+                                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-xl-3 col-md-6">
+                                <div class="card stats-card">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col">
+                                                <h6 class="text-uppercase text-muted mb-1">Erros</h6>
+                                                <h2 class="mb-0" id="error-configs">0</h2>
+                                            </div>
+                                            <div class="col-auto">
+                                                <span class="h2 text-muted">
+                                                    <i class="fas fa-times-circle text-danger"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ações Rápidas -->
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="quick-actions">
+                                    <h5><i class="feather icon-zap"></i> Ações Rápidas</h5>
+                                    <div class="mt-3">
+                                        <button type="button" class="btn btn-primary action-button" id="btn-validate-all">
+                                            <i class="feather icon-check-circle"></i> Validar Todas
+                                        </button>
+                                        <button type="button" class="btn btn-info action-button" id="btn-export-all">
+                                            <i class="feather icon-download"></i> Exportar Configurações
+                                        </button>
+                                        <button type="button" class="btn btn-warning action-button" id="btn-import-config">
+                                            <i class="feather icon-upload"></i> Importar Configurações
+                                        </button>
+                                        <button type="button" class="btn btn-secondary action-button" id="btn-reset-all">
+                                            <i class="feather icon-refresh-cw"></i> Resetar Padrões
+                                        </button>
+                                        <button type="button" class="btn btn-success action-button" id="btn-backup-config">
+                                            <i class="feather icon-save"></i> Fazer Backup
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Seções de Configuração -->
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="config-card card h-100" onclick="navigateToConfig('api')">
+                                    <div class="card-body text-center position-relative">
+                                        <div class="config-status" id="api-status"></div>
+                                        <div class="config-icon text-primary">
+                                            <i class="feather icon-link"></i>
+                                        </div>
+                                        <h5>Configurações da API</h5>
+                                        <div class="config-summary">
+                                            URLs, timeouts, retries e parâmetros de conexão com a API externa
+                                        </div>
+                                        <div class="mt-3">
+                                            <span class="badge badge-primary" id="api-config-count">0</span> configurações
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <div class="config-card card h-100" onclick="navigateToConfig('operadoras')">
+                                    <div class="card-body text-center position-relative">
+                                        <div class="config-status" id="operators-status"></div>
+                                        <div class="config-icon text-info">
+                                            <i class="feather icon-users"></i>
+                                        </div>
+                                        <h5>Configurações por Operadora</h5>
+                                        <div class="config-summary">
+                                            Parâmetros específicos para cada operadora (timeouts, prioridades)
+                                        </div>
+                                        <div class="mt-3">
+                                            <span class="badge badge-info" id="operators-config-count">0</span> operadoras configuradas
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <div class="config-card card h-100" onclick="navigateToConfig('sistema')">
+                                    <div class="card-body text-center position-relative">
+                                        <div class="config-status" id="system-status"></div>
+                                        <div class="config-icon text-success">
+                                            <i class="feather icon-settings"></i>
+                                        </div>
+                                        <h5>Configurações do Sistema</h5>
+                                        <div class="config-summary">
+                                            Configurações gerais do sistema, banco de dados, workers e diretórios
+                                        </div>
+                                        <div class="mt-3">
+                                            <span class="badge badge-success" id="system-config-count">0</span> configurações
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <div class="config-card card h-100" onclick="navigateToConfig('notificacoes')">
+                                    <div class="card-body text-center position-relative">
+                                        <div class="config-status" id="notifications-status"></div>
+                                        <div class="config-icon text-warning">
+                                            <i class="feather icon-bell"></i>
+                                        </div>
+                                        <h5>Configurações de Notificações</h5>
+                                        <div class="config-summary">
+                                            Configurações de email, webhook e parâmetros de notificação
+                                        </div>
+                                        <div class="mt-3">
+                                            <span class="badge badge-warning" id="notifications-config-count">0</span> configurações
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Últimas Alterações -->
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="feather icon-clock"></i> Últimas Alterações</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Seção</th>
+                                                        <th>Alteração</th>
+                                                        <th>Usuário</th>
+                                                        <th>Data/Hora</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="recent-changes">
+                                                    <!-- Dados carregados via JavaScript -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Importação -->
+<div class="modal fade" id="importModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Importar Configurações</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Arquivo de Configuração (JSON)</label>
+                    <input type="file" class="form-control-file" id="config-file" accept=".json">
+                    <small class="form-text text-muted">Selecione um arquivo JSON com as configurações</small>
+                </div>
+                <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="backup-before-import" checked>
+                        <label class="custom-control-label" for="backup-before-import">
+                            Fazer backup antes da importação
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btn-confirm-import">
+                    <i class="feather icon-upload"></i> Importar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação -->
+<div class="modal fade" id="confirmModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Ação</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="confirm-message">
+                <!-- Mensagem de confirmação -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btn-confirm-action">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+$(document).ready(function() {
+    // Carregar dados iniciais
+    loadConfigStats();
+    loadRecentChanges();
+
+    // Event listeners para ações rápidas
+    $('#btn-validate-all').on('click', function() {
+        validateAllConfigs();
+    });
+
+    $('#btn-export-all').on('click', function() {
+        exportAllConfigs();
+    });
+
+    $('#btn-import-config').on('click', function() {
+        $('#importModal').modal('show');
+    });
+
+    $('#btn-reset-all').on('click', function() {
+        showConfirmModal('Tem certeza que deseja resetar todas as configurações para os valores padrão?', function() {
+            resetAllConfigs();
+        });
+    });
+
+    $('#btn-backup-config').on('click', function() {
+        createBackup();
+    });
+
+    // Importação de configurações
+    $('#btn-confirm-import').on('click', function() {
+        const file = $('#config-file')[0].files[0];
+        if (!file) {
+            showAlert('Selecione um arquivo para importar', 'warning');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const config = JSON.parse(e.target.result);
+                importConfigs(config);
+            } catch (error) {
+                showAlert('Erro ao ler arquivo: ' + error.message, 'danger');
+            }
+        };
+        reader.readAsText(file);
+    });
+
+    function loadConfigStats() {
+        $.ajax({
+            url: '/api/v2/avancadas/configuracoes/estatisticas',
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    updateStats(response.estatisticas);
+                    updateStatusIndicators(response.status);
+                }
+            },
+            error: function(xhr) {
+                console.log('Erro ao carregar estatísticas de configurações');
+            }
+        });
+    }
+
+    function updateStats(stats) {
+        $('#total-configs').text(stats.total || 0);
+        $('#valid-configs').text(stats.validas || 0);
+        $('#warning-configs').text(stats.aviso || 0);
+        $('#error-configs').text(stats.erros || 0);
+
+        $('#api-config-count').text(stats.api_count || 0);
+        $('#operators-config-count').text(stats.operators_count || 0);
+        $('#system-config-count').text(stats.system_count || 0);
+        $('#notifications-config-count').text(stats.notifications_count || 0);
+    }
+
+    function updateStatusIndicators(status) {
+        // API
+        const apiStatus = $('#api-status');
+        apiStatus.removeClass('valid warning error unknown');
+        apiStatus.addClass(status.api || 'unknown');
+
+        // Operadoras
+        const operatorsStatus = $('#operators-status');
+        operatorsStatus.removeClass('valid warning error unknown');
+        operatorsStatus.addClass(status.operators || 'unknown');
+
+        // Sistema
+        const systemStatus = $('#system-status');
+        systemStatus.removeClass('valid warning error unknown');
+        systemStatus.addClass(status.system || 'unknown');
+
+        // Notificações
+        const notificationsStatus = $('#notifications-status');
+        notificationsStatus.removeClass('valid warning error unknown');
+        notificationsStatus.addClass(status.notifications || 'unknown');
+    }
+
+    function loadRecentChanges() {
+        $.ajax({
+            url: '/api/v2/avancadas/configuracoes/alteracoes',
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    renderRecentChanges(response.alteracoes);
+                }
+            },
+            error: function(xhr) {
+                console.log('Erro ao carregar alterações recentes');
+            }
+        });
+    }
+
+    function renderRecentChanges(changes) {
+        const tbody = $('#recent-changes');
+        tbody.empty();
+
+        if (changes.length === 0) {
+            tbody.append(`
+                <tr>
+                    <td colspan="5" class="text-center text-muted">
+                        <i class="feather icon-inbox"></i> Nenhuma alteração recente encontrada
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+
+        changes.forEach(function(change) {
+            const row = `
+                <tr>
+                    <td>
+                        <span class="badge badge-${getSectionBadge(change.secao)}">${getSectionName(change.secao)}</span>
+                    </td>
+                    <td>${change.alteracao}</td>
+                    <td>${change.usuario || 'Sistema'}</td>
+                    <td>${new Date(change.data_hora).toLocaleString('pt-BR')}</td>
+                    <td>
+                        <span class="badge badge-${change.status === 'success' ? 'success' : 'danger'}">
+                            ${change.status === 'success' ? 'Sucesso' : 'Erro'}
+                        </span>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+
+    function getSectionBadge(secao) {
+        const badges = {
+            'api': 'primary',
+            'operators': 'info',
+            'system': 'success',
+            'notifications': 'warning'
+        };
+        return badges[secao] || 'secondary';
+    }
+
+    function getSectionName(secao) {
+        const names = {
+            'api': 'API',
+            'operators': 'Operadoras',
+            'system': 'Sistema',
+            'notifications': 'Notificações'
+        };
+        return names[secao] || 'Desconhecido';
+    }
+
+    function validateAllConfigs() {
+        $('#btn-validate-all .loading-spinner').addClass('show');
+
+        $.ajax({
+            url: '/api/v2/avancadas/configuracoes/validar',
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    showAlert('Validação concluída! ' + response.message, 'success');
+                    loadConfigStats(); // Atualizar estatísticas
+                } else {
+                    showAlert('Erro na validação: ' + response.message, 'danger');
+                }
+            },
+            error: function(xhr) {
+                showAlert('Erro ao validar configurações', 'danger');
+            },
+            complete: function() {
+                $('#btn-validate-all .loading-spinner').removeClass('show');
+            }
+        });
+    }
+
+    function exportAllConfigs() {
+        $('#btn-export-all .loading-spinner').addClass('show');
+
+        $.ajax({
+            url: '/api/v2/avancadas/configuracoes/exportar',
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Criar link de download
+                    const blob = new Blob([JSON.stringify(response.config, null, 2)], { type: 'application/json' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `configuracoes_${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+
+                    showAlert('Configurações exportadas com sucesso!', 'success');
+                } else {
+                    showAlert('Erro ao exportar configurações: ' + response.message, 'danger');
+                }
+            },
+            error: function(xhr) {
+                showAlert('Erro ao exportar configurações', 'danger');
+            },
+            complete: function() {
+                $('#btn-export-all .loading-spinner').removeClass('show');
+            }
+        });
+    }
+
+    function importConfigs(config) {
+        $('#btn-confirm-import .loading-spinner').addClass('show');
+
+        $.ajax({
+            url: '/api/v2/avancadas/configuracoes/importar',
+            method: 'POST',
+            data: JSON.stringify(config),
+            contentType: 'application/json',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    showAlert('Configurações importadas com sucesso!', 'success');
+                    $('#importModal').modal('hide');
+                    loadConfigStats(); // Atualizar estatísticas
+                    loadRecentChanges(); // Atualizar alterações
+                } else {
+                    showAlert('Erro ao importar configurações: ' + response.message, 'danger');
+                }
+            },
+            error: function(xhr) {
+                showAlert('Erro ao importar configurações', 'danger');
+            },
+            complete: function() {
+                $('#btn-confirm-import .loading-spinner').removeClass('show');
+            }
+        });
+    }
+
+    function resetAllConfigs() {
+        $('#btn-reset-all .loading-spinner').addClass('show');
+
+        $.ajax({
+            url: '/api/v2/avancadas/configuracoes/resetar',
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    showAlert('Configurações resetadas para valores padrão!', 'success');
+                    loadConfigStats(); // Atualizar estatísticas
+                    loadRecentChanges(); // Atualizar alterações
+                } else {
+                    showAlert('Erro ao resetar configurações: ' + response.message, 'danger');
+                }
+            },
+            error: function(xhr) {
+                showAlert('Erro ao resetar configurações', 'danger');
+            },
+            complete: function() {
+                $('#btn-reset-all .loading-spinner').removeClass('show');
+            }
+        });
+    }
+
+    function createBackup() {
+        $('#btn-backup-config .loading-spinner').addClass('show');
+
+        $.ajax({
+            url: '/api/v2/avancadas/configuracoes/backup',
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    showAlert('Backup criado com sucesso! Arquivo: ' + response.backup_file, 'success');
+                } else {
+                    showAlert('Erro ao criar backup: ' + response.message, 'danger');
+                }
+            },
+            error: function(xhr) {
+                showAlert('Erro ao criar backup', 'danger');
+            },
+            complete: function() {
+                $('#btn-backup-config .loading-spinner').removeClass('show');
+            }
+        });
+    }
+
+    function showConfirmModal(message, callback) {
+        $('#confirm-message').text(message);
+        $('#btn-confirm-action').off('click').on('click', function() {
+            $('#confirmModal').modal('hide');
+            callback();
+        });
+        $('#confirmModal').modal('show');
+    }
+
+    function showAlert(message, type) {
+        const alertHtml = `
+            <div class="alert alert-${type} alert-custom alert-dismissible fade show" role="alert">
+                <i class="feather icon-${type === 'success' ? 'check-circle' : type === 'danger' ? 'x-circle' : type === 'warning' ? 'alert-triangle' : 'info'}"></i>
+                ${message}
+                <button type="button" class="close" data-dismiss="alert">
+                    <span>&times;</span>
+                </button>
+            </div>
+        `;
+
+        $('#alerts-container').html(alertHtml);
+
+        // Auto-dismiss após 5 segundos
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 5000);
+    }
+});
+
+// Função global para navegação
+function navigateToConfig(section) {
+    const routes = {
+        'api': '/configuracoes/api',
+        'operadoras': '/configuracoes/operadoras',
+        'sistema': '/configuracoes/sistema',
+        'notificacoes': '/notificacoes/config'
+    };
+
+    if (routes[section]) {
+        window.location.href = routes[section];
+    }
+}
+</script>
+{% endblock javascripts %}

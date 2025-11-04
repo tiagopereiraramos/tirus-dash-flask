@@ -1,0 +1,354 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} {{ titulo }} {% endblock %}
+
+{% block content %}
+
+<!-- [ Main Content ] start -->
+<div class="pcoded-main-container">
+    <div class="pcoded-content">
+        <!-- [ breadcrumb ] start -->
+        <div class="page-header">
+            <div class="page-block">
+                <div class="row align-items-center">
+                    <div class="col-md-12">
+                        <div class="page-header-title">
+                            <h5 class="m-b-10">{{ titulo }}</h5>
+                        </div>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/"><i class="feather icon-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('agendamentos.index') }}">Agendamentos</a></li>
+                            <li class="breadcrumb-item"><a href="javascript:">{{ titulo }}</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- [ breadcrumb ] end -->
+
+        <!-- [ Main Content ] start -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>{{ titulo }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" id="agendamento-form">
+                            {{ form.csrf_token }}
+
+                            <div class="row">
+                                <!-- Informações Básicas -->
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">Informações Básicas</h6>
+
+                                    <div class="form-group mb-3">
+                                        {{ form.nome_agendamento.label(class="form-label") }}
+                                        {{ form.nome_agendamento(class="form-control") }}
+                                        {% if form.nome_agendamento.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.nome_agendamento.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        {{ form.descricao.label(class="form-label") }}
+                                        {{ form.descricao(class="form-control") }}
+                                        {% if form.descricao.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.descricao.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        {{ form.tipo_agendamento.label(class="form-label") }}
+                                        {{ form.tipo_agendamento(class="form-select") }}
+                                        {% if form.tipo_agendamento.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.tipo_agendamento.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        {{ form.operadora.label(class="form-label") }}
+                                        {{ form.operadora(class="form-select") }}
+                                        {% if form.operadora.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.operadora.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                        <small class="form-text text-muted">
+                                            Deixe em branco para agendamentos gerais do sistema
+                                        </small>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        {{ form.status_ativo.label(class="form-label") }}
+                                        <div class="form-check">
+                                            {{ form.status_ativo(class="form-check-input") }}
+                                            <label class="form-check-label" for="{{ form.status_ativo.id }}">
+                                                Agendamento ativo
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Configuração Cron Visual -->
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">Configuração de Agendamento</h6>
+
+                                    <div class="form-group mb-3">
+                                        {{ form.frequencia.label(class="form-label") }}
+                                        {{ form.frequencia(class="form-select", id="frequencia") }}
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        {{ form.hora.label(class="form-label") }}
+                                        {{ form.hora(class="form-select", id="hora") }}
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        {{ form.minuto.label(class="form-label") }}
+                                        {{ form.minuto(class="form-select", id="minuto") }}
+                                    </div>
+                                    <div class="form-group mb-3" id="div-dia_semana" style="display:none;">
+                                        {{ form.dia_semana.label(class="form-label") }}
+                                        {{ form.dia_semana(class="form-select", id="dia_semana") }}
+                                    </div>
+                                    <div class="form-group mb-3" id="div-dia_mes" style="display:none;">
+                                        {{ form.dia_mes.label(class="form-label") }}
+                                        {{ form.dia_mes(class="form-select", id="dia_mes") }}
+                                    </div>
+                                    {{ form.cron_expressao(type="hidden", id="cron_expressao") }}
+
+                                    <!-- Campo de debug temporário -->
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Debug - Expressão Cron</label>
+                                        <input type="text" id="debug_cron" class="form-control" readonly>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Resumo do Agendamento</label>
+                                        <div id="cronPreview" class="alert alert-info mb-0">
+                                            Escolha a frequência, hora e demais opções para ver o resumo.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botões de Ação -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{{ url_for('agendamentos.index') }}" class="btn btn-secondary">
+                                            <i class="feather icon-arrow-left"></i> Voltar
+                                        </a>
+                                        <div>
+                                            <button type="submit" class="btn btn-primary" id="btn-salvar">
+                                                <i class="feather icon-save"></i> Salvar Agendamento
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- [ Main Content ] end -->
+
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+console.log('Script de agendamento carregado');
+
+function updateCronFields() {
+    console.log('updateCronFields chamado');
+    const freq = document.getElementById('frequencia');
+    const divDiaSemana = document.getElementById('div-dia_semana');
+    const divDiaMes = document.getElementById('div-dia_mes');
+
+    if (freq && divDiaSemana && divDiaMes) {
+        divDiaSemana.style.display = (freq.value === 'semanal') ? '' : 'none';
+        divDiaMes.style.display = (freq.value === 'mensal') ? '' : 'none';
+        console.log('Campos de cron atualizados');
+    } else {
+        console.error('Elementos não encontrados:', {freq, divDiaSemana, divDiaMes});
+    }
+}
+
+function getPreviewText(frequencia, hora, minuto, dia_semana, dia_mes) {
+    const horaStr = hora.padStart(2, '0') + ':' + minuto.padStart(2, '0');
+    if (frequencia === 'diario') {
+        return `Executar todos os dias às <b>${horaStr}</b>`;
+    } else if (frequencia === 'semanal') {
+        const dias = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+        return `Executar toda <b>${dias[parseInt(dia_semana)]}</b> às <b>${horaStr}</b>`;
+    } else if (frequencia === 'mensal') {
+        return `Executar todo dia <b>${dia_mes}</b> às <b>${horaStr}</b>`;
+    }
+    return '';
+}
+
+function updateCronPreview() {
+    console.log('updateCronPreview chamado');
+
+    const freq = document.getElementById('frequencia');
+    const hora = document.getElementById('hora');
+    const minuto = document.getElementById('minuto');
+    const dia_semana = document.getElementById('dia_semana');
+    const dia_mes = document.getElementById('dia_mes');
+    const cronExpressao = document.getElementById('cron_expressao');
+    const debugCron = document.getElementById('debug_cron');
+    const cronPreview = document.getElementById('cronPreview');
+
+    console.log('Elementos encontrados:', {
+        freq: !!freq, hora: !!hora, minuto: !!minuto,
+        dia_semana: !!dia_semana, dia_mes: !!dia_mes,
+        cronExpressao: !!cronExpressao, debugCron: !!debugCron, cronPreview: !!cronPreview
+    });
+
+    if (!freq || !hora || !minuto) {
+        console.error('Elementos obrigatórios não encontrados');
+        return;
+    }
+
+    let cron = '';
+    if (freq.value === 'diario') {
+        cron = `${minuto.value} ${hora.value} * * *`;
+    } else if (freq.value === 'semanal' && dia_semana) {
+        cron = `${minuto.value} ${hora.value} * * ${dia_semana.value}`;
+    } else if (freq.value === 'mensal' && dia_mes) {
+        cron = `${minuto.value} ${hora.value} ${dia_mes.value} * *`;
+    }
+
+    console.log('Cron gerado:', cron);
+
+    if (cronExpressao) cronExpressao.value = cron;
+    if (debugCron) debugCron.value = cron;
+    if (cronPreview) {
+        cronPreview.innerHTML = getPreviewText(freq.value, hora.value, minuto.value,
+                                              dia_semana ? dia_semana.value : '',
+                                              dia_mes ? dia_mes.value : '');
+    }
+}
+
+// Aguardar o DOM estar pronto
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM carregado - inicializando formulário de agendamento');
+
+    // Aguardar um pouco para garantir que todos os scripts carregaram
+    setTimeout(function() {
+        console.log('Inicializando campos de cron');
+        updateCronFields();
+        updateCronPreview();
+
+        // Adicionar event listeners
+        const freq = document.getElementById('frequencia');
+        const hora = document.getElementById('hora');
+        const minuto = document.getElementById('minuto');
+        const dia_semana = document.getElementById('dia_semana');
+        const dia_mes = document.getElementById('dia_mes');
+
+        if (freq) freq.addEventListener('change', function() {
+            console.log('Frequência alterada');
+            updateCronFields();
+            updateCronPreview();
+        });
+
+        if (hora) hora.addEventListener('change', function() {
+            console.log('Hora alterada');
+            updateCronPreview();
+        });
+
+        if (minuto) minuto.addEventListener('change', function() {
+            console.log('Minuto alterado');
+            updateCronPreview();
+        });
+
+        if (dia_semana) dia_semana.addEventListener('change', function() {
+            console.log('Dia da semana alterado');
+            updateCronPreview();
+        });
+
+        if (dia_mes) dia_mes.addEventListener('change', function() {
+            console.log('Dia do mês alterado');
+            updateCronPreview();
+        });
+
+        // Log do formulário antes do envio
+        const form = document.getElementById('agendamento-form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                console.log('=== FORMULÁRIO SENDO ENVIADO ===');
+                console.log('Cron expression:', document.getElementById('cron_expressao').value);
+                console.log('Frequência:', document.getElementById('frequencia').value);
+                console.log('Hora:', document.getElementById('hora').value);
+                console.log('Minuto:', document.getElementById('minuto').value);
+                console.log('Nome:', document.getElementById('nome_agendamento').value);
+                console.log('Tipo:', document.getElementById('tipo_agendamento').value);
+                console.log('Status:', document.getElementById('status_ativo').checked);
+
+                // Verificar se todos os campos obrigatórios estão preenchidos
+                const nome = document.getElementById('nome_agendamento').value;
+                const tipo = document.getElementById('tipo_agendamento').value;
+                const cron = document.getElementById('cron_expressao').value;
+
+                if (!nome || !tipo || !cron) {
+                    console.error('Campos obrigatórios não preenchidos!');
+                    e.preventDefault();
+                    alert('Por favor, preencha todos os campos obrigatórios.');
+                    return false;
+                }
+
+                console.log('Formulário válido, enviando...');
+            });
+        }
+
+        // Event listener específico para o botão
+        const btnSalvar = document.getElementById('btn-salvar');
+        if (btnSalvar) {
+            console.log('Botão salvar encontrado:', btnSalvar);
+            btnSalvar.addEventListener('click', function(e) {
+                console.log('=== BOTÃO SALVAR CLICADO ===');
+                console.log('Tipo do evento:', e.type);
+                console.log('PreventDefault chamado:', e.defaultPrevented);
+
+                // Atualizar cron antes de submeter
+                updateCronPreview();
+
+                // Verificar se o formulário está válido
+                const form = document.getElementById('agendamento-form');
+                if (form) {
+                    console.log('Formulário encontrado, verificando validação...');
+                    if (form.checkValidity()) {
+                        console.log('Formulário válido, enviando...');
+                    } else {
+                        console.log('Formulário inválido');
+                        form.reportValidity();
+                    }
+                }
+            });
+        } else {
+            console.error('Botão salvar NÃO encontrado!');
+        }
+
+        console.log('Formulário de agendamento inicializado com sucesso');
+    }, 500);
+});
+</script>
+{% endblock javascripts %}

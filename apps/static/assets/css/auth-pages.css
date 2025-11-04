@@ -1,0 +1,235 @@
+/* CSS específico para páginas de autenticação (login/register) */
+/* Este arquivo é isolado e não afeta o resto do sistema */
+
+/* Reset específico para auth pages */
+.auth-page {
+    font-family: "Open Sans", sans-serif;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+    /* Novo background: imagem + gradiente */
+    background:
+        linear-gradient(135deg, rgba(245, 247, 250, 0.92) 0%, rgba(195, 207, 226, 0.92) 100%),
+        url('../images/2.jpg') center center/cover no-repeat;
+}
+
+/* Remove as formas decorativas antigas */
+.auth-page::before,
+.auth-page::after {
+    display: none;
+}
+
+/* Navbar específico para auth */
+.auth-page .navbar {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+}
+
+.auth-page .navbar-brand {
+    color: #1e3c72 !important;
+    font-weight: 600 !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0.5rem 1rem !important;
+}
+
+.auth-page .navbar-brand img {
+    height: 37px;
+    width: auto;
+    margin-right: 0;
+}
+
+.auth-page .nav-link {
+    color: #1e3c72 !important;
+    font-weight: 500;
+}
+
+.auth-page .nav-link:hover {
+    color: #2a5298 !important;
+}
+
+.auth-page .nav-link i {
+    color: #1e3c72 !important;
+    opacity: 0.8;
+}
+
+/* Container principal */
+.auth-page .main-content {
+    margin-top: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.auth-page .page-header {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+/* Card de login/registro */
+.auth-page .auth-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e0e0e0;
+    width: 100%;
+    max-width: 400px;
+    position: relative;
+    z-index: 2;
+}
+
+/* Header do card */
+.auth-page .auth-card-header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 12px 12px 0 0;
+    text-align: center;
+}
+
+.auth-page .auth-card-header h4 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+}
+
+/* Corpo do card */
+.auth-page .auth-card-body {
+    padding: 2rem;
+}
+
+/* Campos de input */
+.auth-page .auth-input-group {
+    margin-bottom: 1.5rem;
+}
+
+.auth-page .auth-input-group .form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: #333333;
+    font-size: 1rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.auth-page .auth-input-group .form-control:focus {
+    border-color: #1e3c72;
+    box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.25);
+    outline: 0;
+}
+
+.auth-page .auth-input-group .form-control::placeholder {
+    color: #999999;
+}
+
+/* Checkbox */
+.auth-page .auth-checkbox {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.auth-page .auth-checkbox input[type="checkbox"] {
+    margin-right: 0.5rem;
+    width: 16px;
+    height: 16px;
+    accent-color: #1e3c72;
+}
+
+.auth-page .auth-checkbox label {
+    color: #333333;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* Botão de submit */
+.auth-page .auth-submit-btn {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    margin-bottom: 1.5rem;
+}
+
+.auth-page .auth-submit-btn:hover {
+    background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.3);
+}
+
+.auth-page .auth-submit-btn:focus {
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.25);
+}
+
+/* Link de registro/login */
+.auth-page .auth-link {
+    text-align: center;
+    color: #666666;
+    font-size: 0.9rem;
+}
+
+.auth-page .auth-link a {
+    color: #1e3c72;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-page .auth-link a:hover {
+    color: #2a5298;
+    text-decoration: underline;
+}
+
+/* Mensagens de erro */
+.auth-page .auth-error {
+    color: #dc3545;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+/* Responsividade */
+@media (max-width: 576px) {
+    .auth-page .page-header {
+        padding: 1rem;
+    }
+
+    .auth-page .auth-card {
+        margin: 0 1rem;
+    }
+
+    .auth-page .auth-card-body {
+        padding: 1.5rem;
+    }
+}
+
+/* Animações */
+.auth-page .auth-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

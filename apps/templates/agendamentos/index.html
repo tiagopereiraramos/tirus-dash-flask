@@ -1,0 +1,412 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Agendamentos {% endblock %}
+
+{% block stylesheets %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+{% endblock stylesheets %}
+
+{% block content %}
+
+<!-- [ Main Content ] start -->
+<div class="pcoded-main-container">
+    <div class="pcoded-content">
+        <!-- [ breadcrumb ] start -->
+        <div class="page-header">
+            <div class="page-block">
+                <div class="row align-items-center">
+                    <div class="col-md-12">
+                        <div class="page-header-title">
+                            <h5 class="m-b-10">Gerenciamento de Agendamentos</h5>
+                        </div>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/"><i class="feather icon-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="javascript:">Sistema RPA</a></li>
+                            <li class="breadcrumb-item"><a href="javascript:">Agendamentos</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- [ breadcrumb ] end -->
+
+        <!-- [ Main Content ] start -->
+        <div class="row">
+            <!-- Estatísticas -->
+            <div class="col-md-6 col-xl-3">
+                <div class="card bg-c-blue text-white">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h6 class="text-white m-b-10">Total de Agendamentos</h6>
+                                <h3 class="text-white f-w-300">{{ total_agendamentos }}</h3>
+                            </div>
+                            <div class="col-auto">
+                                <i class="feather icon-clock f-30"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="card bg-c-green text-white">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h6 class="text-white m-b-10">Agendamentos Ativos</h6>
+                                <h3 class="text-white f-w-300">{{ agendamentos_ativos }}</h3>
+                            </div>
+                            <div class="col-auto">
+                                <i class="feather icon-check-circle f-30"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="card bg-c-yellow text-white">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h6 class="text-white m-b-10">Downloads</h6>
+                                <h3 class="text-white f-w-300">{{ agendamentos_por_tipo.get('EXECUTAR_DOWNLOADS', 0) }}</h3>
+                            </div>
+                            <div class="col-auto">
+                                <i class="feather icon-download f-30"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="card bg-c-red text-white">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h6 class="text-white m-b-10">Processos Mensais</h6>
+                                <h3 class="text-white f-w-300">{{ agendamentos_por_tipo.get('CRIAR_PROCESSOS_MENSAIS', 0) }}</h3>
+                            </div>
+                            <div class="col-auto">
+                                <i class="feather icon-calendar f-30"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros e Ações -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Filtros e Ações</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="GET" class="row align-items-end">
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Nome</label>
+                                    <input type="text"
+                                           class="form-control"
+                                           name="nome"
+                                           value="{{ request.args.get('nome', '') }}"
+                                           placeholder="Filtrar por nome...">
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Tipo</label>
+                                    <select name="tipo" class="form-control">
+                                        <option value="">Todos</option>
+                                        <option value="CRIAR_PROCESSOS_MENSAIS" {% if request.args.get('tipo') == 'CRIAR_PROCESSOS_MENSAIS' %}selected{% endif %}>Criar Processos Mensais</option>
+                                        <option value="EXECUTAR_DOWNLOADS" {% if request.args.get('tipo') == 'EXECUTAR_DOWNLOADS' %}selected{% endif %}>Executar Downloads</option>
+                                        <option value="ENVIAR_RELATORIOS" {% if request.args.get('tipo') == 'ENVIAR_RELATORIOS' %}selected{% endif %}>Enviar Relatórios</option>
+                                        <option value="LIMPEZA_LOGS" {% if request.args.get('tipo') == 'LIMPEZA_LOGS' %}selected{% endif %}>Limpeza de Logs</option>
+                                        <option value="BACKUP_DADOS" {% if request.args.get('tipo') == 'BACKUP_DADOS' %}selected{% endif %}>Backup de Dados</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Operadora</label>
+                                    <select name="operadora" class="form-control">
+                                        <option value="">Todas</option>
+                                        {% for operadora in operadoras %}
+                                            <option value="{{ operadora.id }}" {% if request.args.get('operadora') == operadora.id|string %}selected{% endif %}>
+                                                {{ operadora.nome }} ({{ operadora.codigo }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Status</label>
+                                    <select name="status" class="form-control">
+                                        <option value="">Todos</option>
+                                        <option value="ativo" {% if request.args.get('status') == 'ativo' %}selected{% endif %}>Ativo</option>
+                                        <option value="inativo" {% if request.args.get('status') == 'inativo' %}selected{% endif %}>Inativo</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="feather icon-search"></i> Filtrar
+                                    </button>
+                                    <a href="{{ url_for('agendamentos.index') }}" class="btn btn-secondary ml-2">
+                                        <i class="feather icon-x"></i> Limpar
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Agendamentos -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5>Lista de Agendamentos</h5>
+                        <a href="{{ url_for('agendamentos.novo') }}" class="btn btn-primary">
+                            <i class="feather icon-plus"></i> Novo Agendamento
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        {% if agendamentos and agendamentos.items %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Tipo</th>
+                                        <th>Operadora</th>
+                                        <th>Cron</th>
+                                        <th>Status</th>
+                                        <th>Última Execução</th>
+                                        <th>Próxima Execução</th>
+                                        <th width="150">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for agendamento in agendamentos.items %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ agendamento.nome_agendamento }}</strong>
+                                            {% if agendamento.descricao %}
+                                                <br><small class="text-muted">{{ agendamento.descricao[:50] }}{% if agendamento.descricao|length > 50 %}...{% endif %}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if agendamento.tipo_agendamento == 'CRIAR_PROCESSOS_MENSAIS' %}
+                                                <span class="badge badge-info">
+                                                    <i class="feather icon-calendar"></i> Processos Mensais
+                                                </span>
+                                            {% elif agendamento.tipo_agendamento == 'EXECUTAR_DOWNLOADS' %}
+                                                <span class="badge badge-success">
+                                                    <i class="feather icon-download"></i> Downloads
+                                                </span>
+                                            {% elif agendamento.tipo_agendamento == 'ENVIAR_RELATORIOS' %}
+                                                <span class="badge badge-warning">
+                                                    <i class="feather icon-file-text"></i> Relatórios
+                                                </span>
+                                            {% elif agendamento.tipo_agendamento == 'LIMPEZA_LOGS' %}
+                                                <span class="badge badge-secondary">
+                                                    <i class="feather icon-trash-2"></i> Limpeza
+                                                </span>
+                                            {% elif agendamento.tipo_agendamento == 'BACKUP_DADOS' %}
+                                                <span class="badge badge-primary">
+                                                    <i class="feather icon-database"></i> Backup
+                                                </span>
+                                            {% else %}
+                                                <span class="badge badge-light">{{ agendamento.tipo_agendamento }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if agendamento.operadora %}
+                                                <span class="badge badge-primary">
+                                                    <i class="feather icon-wifi"></i> {{ agendamento.operadora.nome }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">
+                                                    <i class="feather icon-globe"></i> Geral
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <code>{{ agendamento.cron_expressao }}</code>
+                                        </td>
+                                        <td>
+                                            {% if agendamento.status_ativo %}
+                                                <span class="badge badge-success">
+                                                    <i class="feather icon-check"></i> Ativo
+                                                </span>
+                                            {% else %}
+                                                <span class="badge badge-danger">
+                                                    <i class="feather icon-x"></i> Inativo
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if agendamento.ultima_execucao %}
+                                                <small>{{ agendamento.ultima_execucao.strftime('%d/%m/%Y %H:%M') }}</small>
+                                            {% else %}
+                                                <small class="text-muted">Nunca executado</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if agendamento.proxima_execucao %}
+                                                <small>{{ agendamento.proxima_execucao.strftime('%d/%m/%Y %H:%M') }}</small>
+                                            {% else %}
+                                                <small class="text-muted">Não agendado</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('agendamentos.detalhes', id=agendamento.id) }}"
+                                                   class="btn btn-sm btn-info"
+                                                   title="Detalhes">
+                                                    <i class="feather icon-eye"></i>
+                                                </a>
+                                                <a href="{{ url_for('agendamentos.editar', id=agendamento.id) }}"
+                                                   class="btn btn-sm btn-warning"
+                                                   title="Editar">
+                                                    <i class="feather icon-edit"></i>
+                                                </a>
+                                                {% if agendamento.status_ativo %}
+                                                    <form method="POST" action="{{ url_for('agendamentos.desativar', id=agendamento.id) }}"
+                                                          style="display: inline;"
+                                                          onsubmit="return confirm('Tem certeza que deseja desativar este agendamento?')">
+                                                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                                        <button type="submit" class="btn btn-sm btn-secondary" title="Desativar">
+                                                            <i class="feather icon-pause"></i>
+                                                        </button>
+                                                    </form>
+                                                {% else %}
+                                                    <form method="POST" action="{{ url_for('agendamentos.ativar', id=agendamento.id) }}"
+                                                          style="display: inline;">
+                                                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                                        <button type="submit" class="btn btn-sm btn-success" title="Ativar">
+                                                            <i class="feather icon-play"></i>
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
+                                                <form method="POST" action="{{ url_for('agendamentos.excluir', id=agendamento.id) }}"
+                                                      style="display: inline;"
+                                                      onsubmit="return confirm('Tem certeza que deseja excluir este agendamento?')">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                                    <button type="submit" class="btn btn-sm btn-danger" title="Excluir">
+                                                        <i class="feather icon-trash-2"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Paginação -->
+                        {% if agendamentos.pages > 1 %}
+                        <nav aria-label="Paginação">
+                            <ul class="pagination justify-content-center">
+                                {% if agendamentos.has_prev %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('agendamentos.index', page=agendamentos.prev_num, **request.args) }}">
+                                            <i class="feather icon-chevron-left"></i> Anterior
+                                        </a>
+                                    </li>
+                                {% endif %}
+
+                                {% for page_num in agendamentos.iter_pages() %}
+                                    {% if page_num %}
+                                        {% if page_num != agendamentos.page %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('agendamentos.index', page=page_num, **request.args) }}">{{ page_num }}</a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ page_num }}</span>
+                                            </li>
+                                        {% endif %}
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if agendamentos.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('agendamentos.index', page=agendamentos.next_num, **request.args) }}">
+                                            Próximo <i class="feather icon-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="feather icon-clock" style="font-size: 4rem; color: #ccc;"></i>
+                            <h5 class="mt-3 text-muted">Nenhum agendamento encontrado</h5>
+                            <p class="text-muted">Crie seu primeiro agendamento para automatizar tarefas do sistema.</p>
+                            <a href="{{ url_for('agendamentos.novo') }}" class="btn btn-primary">
+                                <i class="feather icon-plus"></i> Criar Primeiro Agendamento
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- [ Main Content ] end -->
+
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+// Configurar CSRF token para todas as requisições AJAX
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", $('meta[name=csrf-token]').attr('content'));
+        }
+    }
+});
+
+// Função para atualizar status em tempo real (opcional)
+function atualizarStatusAgendamento(id) {
+    $.get(`/agendamentos/api/status/${id}`)
+        .done(function(data) {
+            if (data.success) {
+                // Atualizar elementos da página se necessário
+                console.log('Status atualizado:', data.agendamento);
+            }
+        })
+        .fail(function(xhr, status, error) {
+            console.error('Erro ao atualizar status:', error);
+        });
+}
+
+// Atualizar status a cada 30 segundos (opcional)
+setInterval(function() {
+    // Implementar lógica para atualizar status dos agendamentos ativos
+}, 30000);
+</script>
+{% endblock javascripts %}

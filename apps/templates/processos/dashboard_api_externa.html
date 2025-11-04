@@ -1,0 +1,439 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Dashboard API Externa {% endblock title %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="{{ url_for('home.index') }}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('processos.index') }}">Processos</a></li>
+                        <li class="breadcrumb-item active">Dashboard API Externa</li>
+                    </ol>
+                </div>
+                <h4 class="page-title">
+                    <i class="feather icon-monitor"></i> Dashboard API Externa
+                </h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status da Conexão -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="feather icon-wifi"></i> Status da Conexão
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="connection-status" class="alert alert-info">
+                        <i class="feather icon-loader"></i> Verificando conexão...
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 id="health-status">-</h4>
+                                <p class="text-muted">Status da API</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 id="jobs-pending">-</h4>
+                                <p class="text-muted">Jobs Pendentes</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 id="jobs-active">-</h4>
+                                <p class="text-muted">Jobs Ativos</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 id="auth-status">-</h4>
+                                <p class="text-muted">Autenticação</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Jobs Ativos -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title">
+                        <i class="feather icon-list"></i> Jobs Ativos
+                    </h5>
+                    <button class="btn btn-primary btn-sm" onclick="refreshJobs()">
+                        <i class="feather icon-refresh-cw"></i> Atualizar
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="jobs-loading" class="text-center py-4">
+                        <i class="feather icon-loader fa-spin"></i> Carregando jobs...
+                    </div>
+                    <div id="jobs-content" style="display: none;">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="jobs-table">
+                                <thead>
+                                    <tr>
+                                        <th>Job ID</th>
+                                        <th>Operadora</th>
+                                        <th>Status</th>
+                                        <th>Progresso</th>
+                                        <th>Criado em</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="jobs-tbody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="jobs-empty" class="text-center py-4" style="display: none;">
+                        <i class="feather icon-inbox"></i>
+                        <p class="text-muted">Nenhum job ativo encontrado</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs em Tempo Real -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title">
+                        <i class="feather icon-activity"></i> Logs em Tempo Real
+                    </h5>
+                    <div>
+                        <button class="btn btn-success btn-sm" onclick="startLogStream()">
+                            <i class="feather icon-play"></i> Iniciar
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="stopLogStream()">
+                            <i class="feather icon-stop"></i> Parar
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="clearLogs()">
+                            <i class="feather icon-trash-2"></i> Limpar
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="logs-container" style="height: 300px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px;">
+                        <div class="text-muted">Logs aparecerão aqui...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalhes do Job -->
+<div class="modal fade" id="jobDetailsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="feather icon-info"></i> Detalhes do Job
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="job-details-content">
+                    <div class="text-center">
+                        <i class="feather icon-loader fa-spin"></i> Carregando...
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+let logStreamInterval = null;
+let currentJobId = null;
+
+// Funções de conexão
+async function checkConnection() {
+    try {
+        const response = await fetch('/api/v2/externos/health');
+        const data = await response.json();
+
+        if (data.success) {
+            updateConnectionStatus('success', 'Conectado');
+            updateHealthStatus(data.status);
+        } else {
+            updateConnectionStatus('danger', 'Erro na conexão');
+        }
+    } catch (error) {
+        updateConnectionStatus('danger', 'Erro na conexão');
+        console.error('Erro ao verificar conexão:', error);
+    }
+}
+
+function updateConnectionStatus(type, message) {
+    const statusDiv = document.getElementById('connection-status');
+    statusDiv.className = `alert alert-${type}`;
+    statusDiv.innerHTML = `<i class="feather icon-${type === 'success' ? 'check-circle' : 'alert-circle'}"></i> ${message}`;
+}
+
+function updateHealthStatus(status) {
+    document.getElementById('health-status').textContent = status.status || 'OK';
+    document.getElementById('jobs-pending').textContent = status.jobs_pending || 0;
+    document.getElementById('jobs-active').textContent = status.jobs_active || 0;
+    document.getElementById('auth-status').textContent = status.authenticated ? 'Autenticado' : 'Não autenticado';
+}
+
+// Funções de jobs
+async function loadJobs() {
+    const loadingDiv = document.getElementById('jobs-loading');
+    const contentDiv = document.getElementById('jobs-content');
+    const emptyDiv = document.getElementById('jobs-empty');
+
+    loadingDiv.style.display = 'block';
+    contentDiv.style.display = 'none';
+    emptyDiv.style.display = 'none';
+
+    try {
+        const response = await fetch('/api/v2/externos/jobs');
+        const data = await response.json();
+
+        loadingDiv.style.display = 'none';
+
+        if (data.success && data.jobs && data.jobs.length > 0) {
+            contentDiv.style.display = 'block';
+            renderJobs(data.jobs);
+        } else {
+            emptyDiv.style.display = 'block';
+        }
+    } catch (error) {
+        loadingDiv.style.display = 'none';
+        emptyDiv.style.display = 'block';
+        console.error('Erro ao carregar jobs:', error);
+    }
+}
+
+function renderJobs(jobs) {
+    const tbody = document.getElementById('jobs-tbody');
+    tbody.innerHTML = '';
+
+    jobs.forEach(job => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><code>${job.job_id}</code></td>
+            <td><span class="badge badge-info">${job.operadora}</span></td>
+            <td>${getStatusBadge(job.status)}</td>
+            <td>
+                <div class="progress" style="height: 20px;">
+                    <div class="progress-bar" role="progressbar" style="width: ${job.progress || 0}%">
+                        ${job.progress || 0}%
+                    </div>
+                </div>
+            </td>
+            <td>${formatDate(job.created_at)}</td>
+            <td>
+                <button class="btn btn-sm btn-info" onclick="viewJobDetails('${job.job_id}')">
+                    <i class="feather icon-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-primary" onclick="monitorJob('${job.job_id}')">
+                    <i class="feather icon-monitor"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function getStatusBadge(status) {
+    const badges = {
+        'PENDING': 'badge-warning',
+        'RUNNING': 'badge-info',
+        'COMPLETED': 'badge-success',
+        'FAILED': 'badge-danger'
+    };
+
+    return `<span class="badge ${badges[status] || 'badge-secondary'}">${status}</span>`;
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleString('pt-BR');
+}
+
+async function viewJobDetails(jobId) {
+    currentJobId = jobId;
+    const modal = $('#jobDetailsModal');
+    const content = document.getElementById('job-details-content');
+
+    content.innerHTML = '<div class="text-center"><i class="feather icon-loader fa-spin"></i> Carregando...</div>';
+    modal.modal('show');
+
+    try {
+        const response = await fetch(`/api/v2/externos/status/${jobId}`);
+        const data = await response.json();
+
+        if (data.success) {
+            renderJobDetails(data.status);
+        } else {
+            content.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+        }
+    } catch (error) {
+        content.innerHTML = '<div class="alert alert-danger">Erro ao carregar detalhes</div>';
+        console.error('Erro ao carregar detalhes:', error);
+    }
+}
+
+function renderJobDetails(job) {
+    const content = document.getElementById('job-details-content');
+
+    content.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Informações Básicas</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Job ID:</strong></td><td><code>${job.job_id}</code></td></tr>
+                    <tr><td><strong>Operadora:</strong></td><td>${job.operadora}</td></tr>
+                    <tr><td><strong>Status:</strong></td><td>${getStatusBadge(job.status)}</td></tr>
+                    <tr><td><strong>Progresso:</strong></td><td>${job.progress || 0}%</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>Timestamps</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Criado:</strong></td><td>${formatDate(job.created_at)}</td></tr>
+                    <tr><td><strong>Iniciado:</strong></td><td>${formatDate(job.started_at)}</td></tr>
+                    <tr><td><strong>Concluído:</strong></td><td>${formatDate(job.completed_at)}</td></tr>
+                </table>
+            </div>
+        </div>
+
+        ${job.logs && job.logs.length > 0 ? `
+        <div class="row mt-3">
+            <div class="col-12">
+                <h6>Logs</h6>
+                <div style="max-height: 200px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px;">
+                    ${job.logs.map(log => `<div>[${formatDate(log.timestamp)}] ${log.message}</div>`).join('')}
+                </div>
+            </div>
+        </div>
+        ` : ''}
+
+        ${job.result ? `
+        <div class="row mt-3">
+            <div class="col-12">
+                <h6>Resultado</h6>
+                <pre style="max-height: 200px; overflow-y: auto;">${JSON.stringify(job.result, null, 2)}</pre>
+            </div>
+        </div>
+        ` : ''}
+    `;
+}
+
+function monitorJob(jobId) {
+    addLog(`Iniciando monitoramento do job ${jobId}...`);
+
+    // Simular monitoramento (em produção, seria um WebSocket ou polling)
+    const interval = setInterval(async () => {
+        try {
+            const response = await fetch(`/api/v2/externos/status/${jobId}`);
+            const data = await response.json();
+
+            if (data.success) {
+                const job = data.status;
+                addLog(`Job ${jobId}: ${job.status} - ${job.progress || 0}%`);
+
+                if (job.status === 'COMPLETED' || job.status === 'FAILED') {
+                    clearInterval(interval);
+                    addLog(`Job ${jobId} finalizado com status: ${job.status}`);
+                }
+            }
+        } catch (error) {
+            addLog(`Erro ao monitorar job ${jobId}: ${error.message}`);
+        }
+    }, 5000);
+}
+
+// Funções de logs
+function addLog(message) {
+    const container = document.getElementById('logs-container');
+    const timestamp = new Date().toLocaleTimeString('pt-BR');
+    const logEntry = document.createElement('div');
+    logEntry.innerHTML = `[${timestamp}] ${message}`;
+    container.appendChild(logEntry);
+    container.scrollTop = container.scrollHeight;
+}
+
+function startLogStream() {
+    if (logStreamInterval) {
+        clearInterval(logStreamInterval);
+    }
+
+    addLog('Stream de logs iniciado...');
+
+    logStreamInterval = setInterval(async () => {
+        try {
+            const response = await fetch('/api/v2/externos/health');
+            const data = await response.json();
+
+            if (data.success) {
+                const status = data.status;
+                if (status.jobs_active > 0 || status.jobs_pending > 0) {
+                    addLog(`Status: ${status.jobs_active} ativos, ${status.jobs_pending} pendentes`);
+                }
+            }
+        } catch (error) {
+            addLog(`Erro no stream: ${error.message}`);
+        }
+    }, 10000);
+}
+
+function stopLogStream() {
+    if (logStreamInterval) {
+        clearInterval(logStreamInterval);
+        logStreamInterval = null;
+        addLog('Stream de logs parado');
+    }
+}
+
+function clearLogs() {
+    const container = document.getElementById('logs-container');
+    container.innerHTML = '<div class="text-muted">Logs limpos...</div>';
+}
+
+function refreshJobs() {
+    loadJobs();
+    addLog('Jobs atualizados');
+}
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    checkConnection();
+    loadJobs();
+
+    // Atualizar a cada 30 segundos
+    setInterval(() => {
+        checkConnection();
+        loadJobs();
+    }, 30000);
+});
+</script>
+{% endblock javascripts %}

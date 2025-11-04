@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # Aplicação principal
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: brm-rpa-dashboard
+    restart: unless-stopped
+    ports:
+      - "5050:5050"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=apps
+      - ASSETS_ROOT=/static/assets
+      - DATABASE_URL=sqlite:///app.db
+    volumes:
+      - app_data:/app/instance
+      - ./logs:/app/logs
+    networks:
+      - brm-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5050/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx como proxy reverso
+  nginx:
+    image: nginx:alpine
+    container_name: brm-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - app
+    networks:
+      - brm-network
+
+  # Redis para cache (opcional)
+  redis:
+    image: redis:7-alpine
+    container_name: brm-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - brm-network
+    command: redis-server --appendonly yes
+
+volumes:
+  app_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  brm-network:
+    driver: bridge

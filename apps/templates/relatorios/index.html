@@ -1,0 +1,836 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Relatórios{% endblock %}
+
+{% block stylesheets %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<style>
+.report-card {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.report-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.report-card.selected {
+    border-color: #007bff;
+    background-color: #f8f9ff;
+}
+
+.report-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.report-description {
+    color: #6c757d;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.parameter-section {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.parameter-group {
+    margin-bottom: 1rem;
+}
+
+.parameter-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.help-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.preview-section {
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.preview-placeholder {
+    text-align: center;
+    color: #6c757d;
+    padding: 3rem 1rem;
+}
+
+.preview-placeholder i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.alert-custom {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.loading-spinner {
+    display: none;
+}
+
+.loading-spinner.show {
+    display: inline-block;
+}
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="pcoded-main-container">
+    <div class="pcoded-wrapper">
+        <div class="pcoded-content">
+            <div class="pcoded-inner-content">
+                <!-- [ breadcrumb ] start -->
+                <div class="page-header">
+                    <div class="page-block">
+                        <div class="row align-items-center">
+                            <div class="col-md-12">
+                                <div class="page-header-title">
+                                    <h5 class="m-b-10">Relatórios</h5>
+                                </div>
+                                <ul class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{{ url_for('home.index') }}"><i class="feather icon-home"></i></a></li>
+                                    <li class="breadcrumb-item active">Relatórios</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- [ breadcrumb ] end -->
+
+                <div class="main-body">
+                    <div class="page-wrapper">
+                        <!-- Alertas -->
+                        <div id="alerts-container"></div>
+
+                        <!-- Seleção de Tipo de Relatório -->
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="feather icon-file-text"></i> Selecionar Tipo de Relatório</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-3 mb-3">
+                                                <div class="report-card text-center p-3" data-report-type="performance">
+                                                    <div class="report-icon text-primary">
+                                                        <i class="feather icon-trending-up"></i>
+                                                    </div>
+                                                    <h6>Performance</h6>
+                                                    <div class="report-description">
+                                                        Métricas de performance, tempo de execução e eficiência dos jobs
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <div class="report-card text-center p-3" data-report-type="operators">
+                                                    <div class="report-icon text-info">
+                                                        <i class="feather icon-users"></i>
+                                                    </div>
+                                                    <h6>Por Operadoras</h6>
+                                                    <div class="report-description">
+                                                        Comparação de métricas entre diferentes operadoras
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <div class="report-card text-center p-3" data-report-type="errors">
+                                                    <div class="report-icon text-danger">
+                                                        <i class="feather icon-alert-triangle"></i>
+                                                    </div>
+                                                    <h6>Análise de Erros</h6>
+                                                    <div class="report-description">
+                                                        Análise de falhas, tipos de erro e tendências
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <div class="report-card text-center p-3" data-report-type="comprehensive">
+                                                    <div class="report-icon text-success">
+                                                        <i class="feather icon-bar-chart-2"></i>
+                                                    </div>
+                                                    <h6>Relatório Completo</h6>
+                                                    <div class="report-description">
+                                                        Visão geral completa com todas as métricas
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Parâmetros do Relatório -->
+                        <div class="row" id="parameters-section" style="display: none;">
+                            <div class="col-sm-12">
+                                <div class="parameter-section">
+                                    <h5><i class="feather icon-settings"></i> Parâmetros do Relatório</h5>
+
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="parameter-group">
+                                                <label class="parameter-label">Período</label>
+                                                <select class="form-control" id="period-select">
+                                                    <option value="7d">Últimos 7 dias</option>
+                                                    <option value="30d" selected>Últimos 30 dias</option>
+                                                    <option value="90d">Últimos 90 dias</option>
+                                                    <option value="1y">Último ano</option>
+                                                    <option value="custom">Período personalizado</option>
+                                                </select>
+                                                <div class="help-text">Selecione o período para análise</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="parameter-group">
+                                                <label class="parameter-label">Operadora</label>
+                                                <select class="form-control" id="operator-select">
+                                                    <option value="">Todas as operadoras</option>
+                                                    <option value="OI">OI</option>
+                                                    <option value="VIVO">VIVO</option>
+                                                    <option value="EMBRATEL">EMBRATEL</option>
+                                                    <option value="DIGITALNET">DIGITALNET</option>
+                                                    <option value="SAT">SAT</option>
+                                                </select>
+                                                <div class="help-text">Filtrar por operadora específica</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="parameter-group">
+                                                <label class="parameter-label">Formato de Exportação</label>
+                                                <select class="form-control" id="export-format">
+                                                    <option value="json">JSON</option>
+                                                    <option value="csv" selected>CSV</option>
+                                                </select>
+                                                <div class="help-text">Formato para download do relatório</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Período Personalizado -->
+                                    <div class="row" id="custom-period" style="display: none;">
+                                        <div class="col-md-6">
+                                            <div class="parameter-group">
+                                                <label class="parameter-label">Data Inicial</label>
+                                                <input type="date" class="form-control" id="start-date">
+                                                <div class="help-text">Data de início do período</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="parameter-group">
+                                                <label class="parameter-label">Data Final</label>
+                                                <input type="date" class="form-control" id="end-date">
+                                                <div class="help-text">Data de fim do período</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Botões de Ação -->
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <div class="d-flex justify-content-between">
+                                                <button type="button" class="btn btn-secondary" id="btn-back">
+                                                    <i class="feather icon-arrow-left"></i> Voltar
+                                                </button>
+                                                <div>
+                                                    <button type="button" class="btn btn-info mr-2" id="btn-preview">
+                                                        <i class="feather icon-eye"></i> Visualizar
+                                                        <span class="loading-spinner ml-1">
+                                                            <i class="feather icon-loader spin"></i>
+                                                        </span>
+                                                    </button>
+                                                    <button type="button" class="btn btn-success" id="btn-generate">
+                                                        <i class="feather icon-download"></i> Gerar Relatório
+                                                        <span class="loading-spinner ml-1">
+                                                            <i class="feather icon-loader spin"></i>
+                                                        </span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview do Relatório -->
+                        <div class="row" id="preview-section" style="display: none;">
+                            <div class="col-sm-12">
+                                <div class="preview-section">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5><i class="feather icon-eye"></i> Preview do Relatório</h5>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary mr-2" id="btn-refresh-preview">
+                                                <i class="feather icon-refresh-cw"></i> Atualizar
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-success" id="btn-export-preview">
+                                                <i class="feather icon-download"></i> Exportar
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div id="preview-content">
+                                        <div class="preview-placeholder">
+                                            <i class="feather icon-bar-chart-2"></i>
+                                            <h6>Selecione um tipo de relatório e clique em "Visualizar"</h6>
+                                            <p class="text-muted">O preview será exibido aqui</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Relatórios Recentes -->
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="feather icon-clock"></i> Relatórios Recentes</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Tipo</th>
+                                                        <th>Período</th>
+                                                        <th>Operadora</th>
+                                                        <th>Gerado em</th>
+                                                        <th>Status</th>
+                                                        <th>Ações</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="recent-reports">
+                                                    <!-- Dados carregados via JavaScript -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação -->
+<div class="modal fade" id="confirmModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Geração</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="confirm-message">
+                <!-- Mensagem de confirmação -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="btn-confirm-generate">Gerar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+$(document).ready(function() {
+    let selectedReportType = null;
+    let currentPreviewData = null;
+
+    // Carregar relatórios recentes
+    loadRecentReports();
+
+    // Event listeners para seleção de relatórios
+    $('.report-card').on('click', function() {
+        $('.report-card').removeClass('selected');
+        $(this).addClass('selected');
+        selectedReportType = $(this).data('report-type');
+        $('#parameters-section').show();
+        $('#preview-section').hide();
+    });
+
+    // Período personalizado
+    $('#period-select').on('change', function() {
+        if ($(this).val() === 'custom') {
+            $('#custom-period').show();
+        } else {
+            $('#custom-period').hide();
+        }
+    });
+
+    // Botão voltar
+    $('#btn-back').on('click', function() {
+        $('.report-card').removeClass('selected');
+        selectedReportType = null;
+        $('#parameters-section').hide();
+        $('#preview-section').hide();
+    });
+
+    // Botão visualizar
+    $('#btn-preview').on('click', function() {
+        if (!selectedReportType) {
+            showAlert('Selecione um tipo de relatório primeiro', 'warning');
+            return;
+        }
+        generatePreview();
+    });
+
+    // Botão gerar relatório
+    $('#btn-generate').on('click', function() {
+        if (!selectedReportType) {
+            showAlert('Selecione um tipo de relatório primeiro', 'warning');
+            return;
+        }
+        showConfirmModal();
+    });
+
+    // Botão atualizar preview
+    $('#btn-refresh-preview').on('click', function() {
+        generatePreview();
+    });
+
+    // Botão exportar preview
+    $('#btn-export-preview').on('click', function() {
+        if (currentPreviewData) {
+            exportReport();
+        }
+    });
+
+    function loadRecentReports() {
+        $.ajax({
+            url: '/api/v2/avancadas/relatorios/recentes',
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    renderRecentReports(response.relatorios);
+                }
+            },
+            error: function(xhr) {
+                console.log('Erro ao carregar relatórios recentes');
+            }
+        });
+    }
+
+    function renderRecentReports(reports) {
+        const tbody = $('#recent-reports');
+        tbody.empty();
+
+        if (reports.length === 0) {
+            tbody.append(`
+                <tr>
+                    <td colspan="6" class="text-center text-muted">
+                        <i class="feather icon-inbox"></i> Nenhum relatório recente encontrado
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+
+        reports.forEach(function(report) {
+            const row = `
+                <tr>
+                    <td>
+                        <span class="badge badge-${getReportTypeBadge(report.tipo)}">${getReportTypeName(report.tipo)}</span>
+                    </td>
+                    <td>${report.periodo}</td>
+                    <td>${report.operadora || 'Todas'}</td>
+                    <td>${new Date(report.gerado_em).toLocaleString('pt-BR')}</td>
+                    <td>
+                        <span class="badge badge-${report.status === 'completed' ? 'success' : 'warning'}">
+                            ${report.status === 'completed' ? 'Concluído' : 'Processando'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="downloadReport('${report.id}')">
+                            <i class="feather icon-download"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteReport('${report.id}')">
+                            <i class="feather icon-trash-2"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+
+    function getReportTypeBadge(tipo) {
+        const badges = {
+            'performance': 'primary',
+            'operators': 'info',
+            'errors': 'danger',
+            'comprehensive': 'success'
+        };
+        return badges[tipo] || 'secondary';
+    }
+
+    function getReportTypeName(tipo) {
+        const names = {
+            'performance': 'Performance',
+            'operators': 'Operadoras',
+            'errors': 'Erros',
+            'comprehensive': 'Completo'
+        };
+        return names[tipo] || 'Desconhecido';
+    }
+
+    function generatePreview() {
+        const params = getReportParameters();
+
+        $('#btn-preview .loading-spinner').addClass('show');
+        $('#preview-content').html(`
+            <div class="text-center">
+                <i class="feather icon-loader spin" style="font-size: 2rem;"></i>
+                <p class="mt-2">Gerando preview...</p>
+            </div>
+        `);
+
+        $.ajax({
+            url: `/api/v2/avancadas/relatorios/${selectedReportType}/preview`,
+            method: 'POST',
+            data: JSON.stringify(params),
+            contentType: 'application/json',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    currentPreviewData = response.data;
+                    renderPreview(response.data);
+                    $('#preview-section').show();
+                } else {
+                    showAlert('Erro ao gerar preview: ' + response.message, 'danger');
+                }
+            },
+            error: function(xhr) {
+                showAlert('Erro ao gerar preview', 'danger');
+            },
+            complete: function() {
+                $('#btn-preview .loading-spinner').removeClass('show');
+            }
+        });
+    }
+
+    function renderPreview(data) {
+        const previewContent = $('#preview-content');
+
+        if (!data || Object.keys(data).length === 0) {
+            previewContent.html(`
+                <div class="preview-placeholder">
+                    <i class="feather icon-alert-circle"></i>
+                    <h6>Nenhum dado encontrado</h6>
+                    <p class="text-muted">Não há dados para o período e filtros selecionados</p>
+                </div>
+            `);
+            return;
+        }
+
+        // Renderizar preview baseado no tipo de relatório
+        let html = '';
+
+        switch (selectedReportType) {
+            case 'performance':
+                html = renderPerformancePreview(data);
+                break;
+            case 'operators':
+                html = renderOperatorsPreview(data);
+                break;
+            case 'errors':
+                html = renderErrorsPreview(data);
+                break;
+            case 'comprehensive':
+                html = renderComprehensivePreview(data);
+                break;
+            default:
+                html = renderGenericPreview(data);
+        }
+
+        previewContent.html(html);
+    }
+
+    function renderPerformancePreview(data) {
+        return `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Métricas Gerais</h6>
+                    <table class="table table-sm">
+                        <tr><td>Total de Jobs:</td><td><strong>${data.total_jobs || 0}</strong></td></tr>
+                        <tr><td>Taxa de Sucesso:</td><td><strong>${data.success_rate || 0}%</strong></td></tr>
+                        <tr><td>Tempo Médio:</td><td><strong>${data.avg_time || 0}s</strong></td></tr>
+                        <tr><td>Jobs com Falha:</td><td><strong>${data.failed_jobs || 0}</strong></td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6>Performance por Dia</h6>
+                    <div class="text-muted">
+                        <small>Gráfico seria exibido aqui</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderOperatorsPreview(data) {
+        if (!data.operators || data.operators.length === 0) {
+            return '<p class="text-muted">Nenhum dado de operadora encontrado</p>';
+        }
+
+        let html = '<h6>Comparação por Operadora</h6><div class="table-responsive"><table class="table table-sm">';
+        html += '<thead><tr><th>Operadora</th><th>Jobs</th><th>Sucesso</th><th>Tempo Médio</th></tr></thead><tbody>';
+
+        data.operators.forEach(function(op) {
+            html += `
+                <tr>
+                    <td><span class="badge badge-info">${op.operadora}</span></td>
+                    <td>${op.total_jobs}</td>
+                    <td>${op.success_rate}%</td>
+                    <td>${op.avg_time}s</td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table></div>';
+        return html;
+    }
+
+    function renderErrorsPreview(data) {
+        if (!data.errors || data.errors.length === 0) {
+            return '<p class="text-muted">Nenhum erro encontrado no período</p>';
+        }
+
+        let html = '<h6>Análise de Erros</h6><div class="table-responsive"><table class="table table-sm">';
+        html += '<thead><tr><th>Tipo de Erro</th><th>Frequência</th><th>Última Ocorrência</th></tr></thead><tbody>';
+
+        data.errors.forEach(function(error) {
+            html += `
+                <tr>
+                    <td><span class="badge badge-danger">${error.tipo}</span></td>
+                    <td>${error.frequencia}</td>
+                    <td>${new Date(error.ultima_ocorrencia).toLocaleDateString('pt-BR')}</td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table></div>';
+        return html;
+    }
+
+    function renderComprehensivePreview(data) {
+        return `
+            <div class="row">
+                <div class="col-md-12">
+                    <h6>Resumo Executivo</h6>
+                    <div class="alert alert-info">
+                        <strong>Período:</strong> ${data.periodo || 'N/A'}<br>
+                        <strong>Total de Jobs:</strong> ${data.total_jobs || 0}<br>
+                        <strong>Taxa de Sucesso Geral:</strong> ${data.overall_success_rate || 0}%<br>
+                        <strong>Operadora com Melhor Performance:</strong> ${data.best_operator || 'N/A'}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Métricas de Performance</h6>
+                    <div class="text-muted">
+                        <small>Gráficos detalhados seriam exibidos aqui</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6>Análise de Tendências</h6>
+                    <div class="text-muted">
+                        <small>Análise temporal seria exibida aqui</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderGenericPreview(data) {
+        return `
+            <div class="alert alert-info">
+                <h6>Dados do Relatório</h6>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            </div>
+        `;
+    }
+
+    function getReportParameters() {
+        const params = {
+            periodo: $('#period-select').val(),
+            operadora: $('#operator-select').val(),
+            formato: $('#export-format').val()
+        };
+
+        if (params.periodo === 'custom') {
+            params.data_inicial = $('#start-date').val();
+            params.data_final = $('#end-date').val();
+        }
+
+        return params;
+    }
+
+    function showConfirmModal() {
+        const params = getReportParameters();
+        const message = `
+            <p><strong>Tipo:</strong> ${getReportTypeName(selectedReportType)}</p>
+            <p><strong>Período:</strong> ${params.periodo === 'custom' ? `${params.data_inicial} a ${params.data_final}` : params.periodo}</p>
+            <p><strong>Operadora:</strong> ${params.operadora || 'Todas'}</p>
+            <p><strong>Formato:</strong> ${params.formato.toUpperCase()}</p>
+            <p class="text-muted">O relatório será gerado e disponibilizado para download.</p>
+        `;
+
+        $('#confirm-message').html(message);
+        $('#confirmModal').modal('show');
+    }
+
+    function exportReport() {
+        const params = getReportParameters();
+
+        $('#btn-export-preview .loading-spinner').addClass('show');
+
+        $.ajax({
+            url: `/api/v2/avancadas/relatorios/${selectedReportType}/export`,
+            method: 'POST',
+            data: JSON.stringify(params),
+            contentType: 'application/json',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Criar link de download
+                    const blob = new Blob([response.data], { type: 'text/plain' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `relatorio_${selectedReportType}_${new Date().toISOString().split('T')[0]}.${params.formato}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+
+                    showAlert('Relatório exportado com sucesso!', 'success');
+                } else {
+                    showAlert('Erro ao exportar relatório: ' + response.message, 'danger');
+                }
+            },
+            error: function(xhr) {
+                showAlert('Erro ao exportar relatório', 'danger');
+            },
+            complete: function() {
+                $('#btn-export-preview .loading-spinner').removeClass('show');
+            }
+        });
+    }
+
+    function showAlert(message, type) {
+        const alertHtml = `
+            <div class="alert alert-${type} alert-custom alert-dismissible fade show" role="alert">
+                <i class="feather icon-${type === 'success' ? 'check-circle' : type === 'danger' ? 'x-circle' : type === 'warning' ? 'alert-triangle' : 'info'}"></i>
+                ${message}
+                <button type="button" class="close" data-dismiss="alert">
+                    <span>&times;</span>
+                </button>
+            </div>
+        `;
+
+        $('#alerts-container').html(alertHtml);
+
+        // Auto-dismiss após 5 segundos
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 5000);
+    }
+
+    // Confirmar geração
+    $('#btn-confirm-generate').on('click', function() {
+        $('#confirmModal').modal('hide');
+
+        const params = getReportParameters();
+
+        $('#btn-generate .loading-spinner').addClass('show');
+
+        $.ajax({
+            url: `/api/v2/avancadas/relatorios/${selectedReportType}/gerar`,
+            method: 'POST',
+            data: JSON.stringify(params),
+            contentType: 'application/json',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    showAlert('Relatório gerado com sucesso! ID: ' + response.report_id, 'success');
+                    loadRecentReports(); // Atualizar lista
+                } else {
+                    showAlert('Erro ao gerar relatório: ' + response.message, 'danger');
+                }
+            },
+            error: function(xhr) {
+                showAlert('Erro ao gerar relatório', 'danger');
+            },
+            complete: function() {
+                $('#btn-generate .loading-spinner').removeClass('show');
+            }
+        });
+    });
+});
+
+// Funções globais
+function downloadReport(reportId) {
+    window.open(`/api/v2/avancadas/relatorios/${reportId}/download`, '_blank');
+}
+
+function deleteReport(reportId) {
+    if (confirm('Tem certeza que deseja excluir este relatório?')) {
+        $.ajax({
+            url: `/api/v2/avancadas/relatorios/${reportId}`,
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('Erro ao excluir relatório: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                alert('Erro ao excluir relatório');
+            }
+        });
+    }
+}
+</script>
+{% endblock javascripts %}

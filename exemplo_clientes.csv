@@ -1,0 +1,4 @@
+HASH,RAZÃO SOCIAL,NOME SAT,CNPJ,OPERADORA,FILTRO,SERVIÇO,DADOS SAT,UNIDADE / FILTRO SAT,CATEGORIAS / FILTRO SAT,SITE PARA EMISSÃO,LOGIN,SENHA,CPF,OBS,STATUS,PATCHDOWNLOAD,ATUALIZA/CRIA
+exemplo001,EMPRESA EXEMPLO LTDA,EMPRESA EXEMPLO LTDA,12.345.678/0001-00,EMBRATEL,00012345678-0001,Internet,Fixo,Campo Grande-MS,,https://webebt01.embratel.com.br/embratelonline/index.asp,usuario@exemplo.com,senha123,,Observações exemplo,1,,SIM
+exemplo002,SEGUNDA EMPRESA S/A,SEGUNDA EMPRESA S/A,98.765.432/0001-11,VIVO,00098765432-0002,Link Dedicado,Link Dedicado,São Paulo-SP,,https://portal.vivo.com.br,login@vivo.com,senha456,,Segunda empresa,1,,SIM
+exemplo003,TERCEIRA EMPRESA LTDA,TERCEIRA EMPRESA LTDA,11.222.333/0001-44,OI,00011222333-0003,Cloud,Cloud,Rio de Janeiro-RJ,,https://portal.oi.com.br,usuario@oi.com,senha789,,Terceira empresa,1,,SIM

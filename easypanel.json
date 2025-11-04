@@ -1,0 +1,34 @@
+{
+    "name": "brm-rpa-dashboard",
+    "description": "BRM Solutions - Sistema RPA Dashboard",
+    "repository": "https://github.com/seu-usuario/tirus-dash-flask",
+    "dockerfile": "Dockerfile.easypanel",
+    "ports": [
+        {
+            "port": 5050,
+            "protocol": "http"
+        }
+    ],
+    "environment": {
+        "FLASK_ENV": "production",
+        "FLASK_APP": "apps",
+        "ASSETS_ROOT": "/static/assets",
+        "PYTHONUNBUFFERED": "1"
+    },
+    "volumes": [
+        {
+            "source": "/app/instance",
+            "target": "/app/instance"
+        }
+    ],
+    "healthcheck": {
+        "path": "/health",
+        "interval": 30,
+        "timeout": 10,
+        "retries": 3
+    },
+    "resources": {
+        "memory": "512M",
+        "cpu": "0.5"
+    }
+}

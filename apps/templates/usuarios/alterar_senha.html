@@ -1,0 +1,122 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Alterar Senha{% endblock %}
+
+{% block content %}
+
+<!-- [ Main Content ] start -->
+<div class="pcoded-main-container">
+    <div class="pcoded-wrapper">
+        <div class="pcoded-content">
+            <div class="pcoded-inner-content">
+                <div class="main-body">
+                    <div class="page-wrapper">
+
+                        <!-- [ breadcrumb ] start -->
+                        <div class="page-header">
+                            <div class="page-block">
+                                <div class="row align-items-center">
+                                    <div class="col-md-12">
+                                        <div class="page-header-title">
+                                            <h5 class="m-b-10">Alterar Senha</h5>
+                                        </div>
+                                        <ul class="breadcrumb">
+                                            <li class="breadcrumb-item"><a href="/"><i class="feather icon-home"></i></a></li>
+                                            <li class="breadcrumb-item"><a href="{{ url_for('usuarios.perfil') }}">Perfil</a></li>
+                                            <li class="breadcrumb-item"><a href="javascript:">Alterar Senha</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- [ breadcrumb ] end -->
+
+                        <!-- [ Main Content ] start -->
+                        <div class="row justify-content-center">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="feather icon-lock"></i> Alterar Senha</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form method="POST">
+                                            {{ form.hidden_tag() }}
+
+                                            <!-- Senha Atual -->
+                                            <div class="mb-3">
+                                                {{ form.senha_atual.label(class="form-label") }}
+                                                {{ form.senha_atual(class="form-control" + (" is-invalid" if form.senha_atual.errors else "")) }}
+                                                {% if form.senha_atual.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.senha_atual.errors %}
+                                                            {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+
+                                            <!-- Nova Senha -->
+                                            <div class="mb-3">
+                                                {{ form.nova_senha.label(class="form-label") }}
+                                                {{ form.nova_senha(class="form-control" + (" is-invalid" if form.nova_senha.errors else "")) }}
+                                                {% if form.nova_senha.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.nova_senha.errors %}
+                                                            {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                                <small class="text-muted">Mínimo 6 caracteres</small>
+                                            </div>
+
+                                            <!-- Confirmar Nova Senha -->
+                                            <div class="mb-3">
+                                                {{ form.confirmar_senha.label(class="form-label") }}
+                                                {{ form.confirmar_senha(class="form-control" + (" is-invalid" if form.confirmar_senha.errors else "")) }}
+                                                {% if form.confirmar_senha.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.confirmar_senha.errors %}
+                                                            {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+
+                                            <!-- Botões -->
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <a href="{{ url_for('usuarios.perfil') }}" class="btn btn-light">
+                                                    <i class="feather icon-arrow-left"></i> Voltar
+                                                </a>
+                                                {{ form.submit(class="btn btn-primary") }}
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <!-- Card de Dicas de Segurança -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="feather icon-shield"></i> Dicas de Segurança</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-unstyled">
+                                            <li><i class="feather icon-check text-success"></i> Use pelo menos 6 caracteres</li>
+                                            <li><i class="feather icon-check text-success"></i> Combine letras, números e símbolos</li>
+                                            <li><i class="feather icon-check text-success"></i> Evite senhas óbvias como "123456"</li>
+                                            <li><i class="feather icon-check text-success"></i> Não compartilhe sua senha</li>
+                                            <li><i class="feather icon-check text-success"></i> Altere regularmente</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- [ Main Content ] end -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- [ Main Content ] end -->
+
+{% endblock content %}

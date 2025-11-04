@@ -1,0 +1,6 @@
+class Operadora(db.Model):
+    # ...existing code...
+    @staticmethod
+    def listar_ativas():
+        return db.session.query(Operadora).filter(Operadora.status_ativo == True).all()
+    # ...existing code...

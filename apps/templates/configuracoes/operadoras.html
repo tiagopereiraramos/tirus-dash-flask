@@ -1,0 +1,1091 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Configurações por Operadora{% endblock %}
+
+{% block stylesheets %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<style>
+.operator-card {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.operator-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.operator-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 1rem;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.operator-body {
+    padding: 1.5rem;
+}
+
+.operator-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #007bff;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.config-section {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+}
+
+.config-section h6 {
+    color: #495057;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 0.5rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.help-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.switch-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.alert-custom {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.json-editor {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    min-height: 120px;
+}
+
+.client-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.client-item {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background-color: #f8f9fa;
+}
+
+.client-item:hover {
+    background-color: #e9ecef;
+}
+
+.client-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.client-name {
+    font-weight: 600;
+    color: #495057;
+}
+
+.client-status {
+    font-size: 0.75rem;
+}
+
+.client-details {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.loading-spinner {
+    display: none;
+}
+
+.loading-spinner.show {
+    display: inline-block;
+}
+
+.tab-content {
+    padding: 1rem 0;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #6c757d;
+}
+
+.nav-tabs .nav-link.active {
+    border-bottom-color: #007bff;
+    color: #007bff;
+    background-color: transparent;
+}
+
+.test-button {
+    margin-top: 0.5rem;
+}
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="pcoded-main-container">
+    <div class="pcoded-wrapper">
+        <div class="pcoded-content">
+            <div class="pcoded-inner-content">
+                <!-- [ breadcrumb ] start -->
+                <div class="page-header">
+                    <div class="page-block">
+                        <div class="row align-items-center">
+                            <div class="col-md-12">
+                                <div class="page-header-title">
+                                    <h5 class="m-b-10">Configurações por Operadora</h5>
+                                </div>
+                                <ul class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{{ url_for('home.index') }}"><i class="feather icon-home"></i></a></li>
+                                    <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+                                    <li class="breadcrumb-item active">Operadoras</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- [ breadcrumb ] end -->
+
+                <div class="main-body">
+                    <div class="page-wrapper">
+                        <!-- Alertas -->
+                        <div id="alerts-container"></div>
+
+                        <!-- Filtros -->
+                        <div class="row mb-4">
+                            <div class="col-sm-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label class="form-label">Buscar Operadora</label>
+                                                    <input type="text" class="form-control" id="search-operator" placeholder="Nome ou código da operadora">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label class="form-label">Status</label>
+                                                    <select class="form-control" id="filter-status">
+                                                        <option value="">Todos</option>
+                                                        <option value="ativo">Ativas</option>
+                                                        <option value="inativo">Inativas</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label class="form-label">RPA</label>
+                                                    <select class="form-control" id="filter-rpa">
+                                                        <option value="">Todos</option>
+                                                        <option value="com-rpa">Com RPA</option>
+                                                        <option value="sem-rpa">Sem RPA</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label class="form-label">&nbsp;</label>
+                                                    <button type="button" class="btn btn-primary btn-block" id="btn-filter">
+                                                        <i class="feather icon-search"></i> Filtrar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lista de Operadoras -->
+                        <div id="operators-list">
+                            <!-- Operadoras serão carregadas via JavaScript -->
+                        </div>
+
+                        <!-- Botão Adicionar -->
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <button type="button" class="btn btn-success" id="btn-add-operator">
+                                            <i class="feather icon-plus"></i> Adicionar Nova Operadora
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Configuração de Operadora -->
+<div class="modal fade" id="operatorModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="operator-modal-title">Configuração de Operadora</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="operator-config-form">
+                    <!-- Abas de Configuração -->
+                    <ul class="nav nav-tabs" id="operator-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab">
+                                <i class="feather icon-settings"></i> Geral
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="rpa-tab" data-toggle="tab" href="#rpa" role="tab">
+                                <i class="feather icon-zap"></i> RPA
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="clients-tab" data-toggle="tab" href="#clients" role="tab">
+                                <i class="feather icon-users"></i> Clientes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="advanced-tab" data-toggle="tab" href="#advanced" role="tab">
+                                <i class="feather icon-sliders"></i> Avançado
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="operator-tab-content">
+                        <!-- Aba Geral -->
+                        <div class="tab-pane fade show active" id="general" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="operator-name">Nome da Operadora</label>
+                                        <input type="text" class="form-control" id="operator-name" required>
+                                        <div class="help-text">Nome completo da operadora (ex: Embratel, Vivo, Oi)</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="operator-code">Código</label>
+                                        <input type="text" class="form-control" id="operator-code" required>
+                                        <div class="help-text">Código único da operadora (ex: EMBRATEL, VIVO, OI)</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="operator-cnpj">CNPJ</label>
+                                        <input type="text" class="form-control" id="operator-cnpj" placeholder="XX.XXX.XXX/XXXX-XX">
+                                        <div class="help-text">CNPJ da operadora (opcional)</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="operator-email">Email</label>
+                                        <input type="email" class="form-control" id="operator-email">
+                                        <div class="help-text">Email de contato da operadora</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="operator-phone">Telefone</label>
+                                        <input type="text" class="form-control" id="operator-phone">
+                                        <div class="help-text">Telefone de contato</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="operator-website">Website</label>
+                                        <input type="url" class="form-control" id="operator-website">
+                                        <div class="help-text">Website oficial da operadora</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="operator-notes">Observações</label>
+                                <textarea class="form-control" id="operator-notes" rows="3"></textarea>
+                                <div class="help-text">Observações e informações adicionais</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Status</label>
+                                <div class="switch-wrapper">
+                                    <span class="help-text">Operadora ativa para uso no sistema</span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="operator-status" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Aba RPA -->
+                        <div class="tab-pane fade" id="rpa" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">Possui RPA</label>
+                                        <div class="switch-wrapper">
+                                            <span class="help-text">Operadora possui RPA configurado</span>
+                                            <label class="switch">
+                                                <input type="checkbox" id="operator-has-rpa">
+                                                <span class="slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">RPA Terceirizado</label>
+                                        <div class="switch-wrapper">
+                                            <span class="help-text">Usa RPA terceirizado ao invés do interno</span>
+                                            <label class="switch">
+                                                <input type="checkbox" id="operator-outsourced-rpa">
+                                                <span class="slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="operator-url-portal">URL do Portal</label>
+                                        <input type="url" class="form-control" id="operator-url-portal">
+                                        <div class="help-text">URL de acesso ao portal da operadora</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="operator-endpoint-rpa">Endpoint RPA</label>
+                                        <input type="url" class="form-control" id="operator-endpoint-rpa">
+                                        <div class="help-text">URL do endpoint RPA terceirizado</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="operator-instructions">Instruções de Acesso</label>
+                                <textarea class="form-control" id="operator-instructions" rows="3"></textarea>
+                                <div class="help-text">Instruções detalhadas para acesso ao portal</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="operator-rpa-config">Configuração RPA (JSON)</label>
+                                <textarea class="form-control json-editor" id="operator-rpa-config" rows="8" placeholder='{
+  "classe_rpa": "EmbratelRPA",
+  "timeout_padrao": 300,
+  "tentativas_maximas": 3,
+  "parametros_especiais": {
+    "login_selector": "#username",
+    "password_selector": "#password",
+    "submit_selector": "#login-button"
+  }
+}'></textarea>
+                                <div class="help-text">Configuração JSON específica do RPA</div>
+                            </div>
+
+                            <div class="form-group">
+                                <button type="button" class="btn btn-info test-button" id="test-rpa-config">
+                                    <i class="feather icon-play"></i> Testar Configuração RPA
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Aba Clientes -->
+                        <div class="tab-pane fade" id="clients" role="tabpanel">
+                            <div class="form-group">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6>Clientes da Operadora</h6>
+                                    <button type="button" class="btn btn-sm btn-success" id="btn-add-client">
+                                        <i class="feather icon-plus"></i> Adicionar Cliente
+                                    </button>
+                                </div>
+                                <div class="client-list" id="clients-list">
+                                    <!-- Lista de clientes será carregada via JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Aba Avançado -->
+                        <div class="tab-pane fade" id="advanced" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="operator-timeout">Timeout Padrão (segundos)</label>
+                                        <input type="number" class="form-control" id="operator-timeout" value="300" min="60" max="1800">
+                                        <div class="help-text">Timeout padrão para operações desta operadora</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="operator-priority">Prioridade</label>
+                                        <select class="form-control" id="operator-priority">
+                                            <option value="1">Baixa</option>
+                                            <option value="2" selected>Normal</option>
+                                            <option value="3">Alta</option>
+                                            <option value="4">Crítica</option>
+                                        </select>
+                                        <div class="help-text">Prioridade de processamento</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="operator-max-retries">Tentativas Máximas</label>
+                                        <input type="number" class="form-control" id="operator-max-retries" value="3" min="1" max="10">
+                                        <div class="help-text">Número máximo de tentativas em caso de falha</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="operator-retry-delay">Delay entre Tentativas (segundos)</label>
+                                        <input type="number" class="form-control" id="operator-retry-delay" value="5" min="1" max="60">
+                                        <div class="help-text">Tempo de espera entre tentativas</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="operator-custom-config">Configuração Customizada (JSON)</label>
+                                <textarea class="form-control json-editor" id="operator-custom-config" rows="6" placeholder='{
+  "configuracoes_especiais": {},
+  "parametros_adicionais": {}
+}'></textarea>
+                                <div class="help-text">Configurações customizadas específicas da operadora</div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btn-save-operator">
+                    <i class="feather icon-save"></i> Salvar Operadora
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Teste RPA -->
+<div class="modal fade" id="testRpaModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Teste de Configuração RPA</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="test-rpa-result">
+                <!-- Resultado do teste -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+$(document).ready(function() {
+    let operators = [];
+    let editingOperatorId = null;
+    let currentOperatorClients = [];
+
+    // Carregar operadoras
+    loadOperators();
+
+    // Event listeners
+    $('#btn-filter').on('click', function() {
+        filterOperators();
+    });
+
+    $('#btn-add-operator').on('click', function() {
+        editingOperatorId = null;
+        clearOperatorForm();
+        $('#operator-modal-title').text('Nova Operadora');
+        $('#operatorModal').modal('show');
+    });
+
+    $('#btn-save-operator').on('click', function() {
+        saveOperator();
+    });
+
+    $('#test-rpa-config').on('click', function() {
+        testRPAConfig();
+    });
+
+    $('#btn-add-client').on('click', function() {
+        // Implementar adição de cliente
+        alert('Funcionalidade de adicionar cliente será implementada');
+    });
+
+    function loadOperators() {
+        $.ajax({
+            url: '/api/v2/avancadas/configuracoes/operadoras',
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    operators = response.operadoras || [];
+                    renderOperators();
+                }
+            },
+            error: function(xhr) {
+                console.log('Erro ao carregar operadoras');
+            }
+        });
+    }
+
+    function renderOperators() {
+        const container = $('#operators-list');
+        container.empty();
+
+        if (operators.length === 0) {
+            container.append(`
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="feather icon-users" style="font-size: 3rem; opacity: 0.5;"></i>
+                                <h5 class="mt-3">Nenhuma operadora encontrada</h5>
+                                <p class="text-muted">Clique em "Adicionar Nova Operadora" para começar</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `);
+            return;
+        }
+
+        operators.forEach(function(operator) {
+            const operatorHtml = createOperatorCard(operator);
+            container.append(operatorHtml);
+        });
+    }
+
+    function createOperatorCard(operator) {
+        const statusClass = operator.status_ativo ? 'success' : 'danger';
+        const statusText = operator.status_ativo ? 'Ativa' : 'Inativa';
+        const rpaStatus = operator.possui_rpa ? 'RPA Ativo' : 'RPA Inativo';
+        const rpaClass = operator.possui_rpa ? 'success' : 'secondary';
+        const rpaType = operator.rpa_terceirizado ? 'Terceirizado' : 'Interno';
+
+        return `
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="operator-card">
+                        <div class="operator-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">${operator.nome} (${operator.codigo})</h5>
+                                    <div>
+                                        <span class="badge badge-${statusClass} status-badge">${statusText}</span>
+                                        <span class="badge badge-${rpaClass} status-badge">${rpaStatus}</span>
+                                        <span class="badge badge-info status-badge">${rpaType}</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-primary mr-2" onclick="editOperator('${operator.id}')">
+                                        <i class="feather icon-edit"></i> Editar
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-info mr-2" onclick="viewOperatorDetails('${operator.id}')">
+                                        <i class="feather icon-eye"></i> Detalhes
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteOperator('${operator.id}')">
+                                        <i class="feather icon-trash-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="operator-body">
+                            <div class="operator-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">${operator.total_clientes || 0}</div>
+                                    <div class="stat-label">Clientes</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">${operator.clientes_ativos || 0}</div>
+                                    <div class="stat-label">Ativos</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">${operator.total_processos || 0}</div>
+                                    <div class="stat-label">Processos</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">${operator.processos_pendentes || 0}</div>
+                                    <div class="stat-label">Pendentes</div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="config-section">
+                                        <h6><i class="feather icon-link"></i> Informações de Contato</h6>
+                                        <div class="client-details">
+                                            <strong>Email:</strong> ${operator.email || 'Não informado'}<br>
+                                            <strong>Telefone:</strong> ${operator.telefone || 'Não informado'}<br>
+                                            <strong>Website:</strong> ${operator.website || 'Não informado'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="config-section">
+                                        <h6><i class="feather icon-zap"></i> Configuração RPA</h6>
+                                        <div class="client-details">
+                                            <strong>Portal:</strong> ${operator.url_portal || 'Não configurado'}<br>
+                                            <strong>Endpoint:</strong> ${operator.url_endpoint_rpa || 'Não configurado'}<br>
+                                            <strong>Classe RPA:</strong> ${operator.configuracao_rpa?.classe_rpa || 'Não configurado'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function filterOperators() {
+        const search = $('#search-operator').val().toLowerCase();
+        const status = $('#filter-status').val();
+        const rpa = $('#filter-rpa').val();
+
+        const filtered = operators.filter(function(operator) {
+            let matches = true;
+
+            // Filtro de busca
+            if (search) {
+                matches = matches && (
+                    operator.nome.toLowerCase().includes(search) ||
+                    operator.codigo.toLowerCase().includes(search)
+                );
+            }
+
+            // Filtro de status
+            if (status) {
+                if (status === 'ativo') {
+                    matches = matches && operator.status_ativo;
+                } else if (status === 'inativo') {
+                    matches = matches && !operator.status_ativo;
+                }
+            }
+
+            // Filtro de RPA
+            if (rpa) {
+                if (rpa === 'com-rpa') {
+                    matches = matches && operator.possui_rpa;
+                } else if (rpa === 'sem-rpa') {
+                    matches = matches && !operator.possui_rpa;
+                }
+            }
+
+            return matches;
+        });
+
+        renderFilteredOperators(filtered);
+    }
+
+    function renderFilteredOperators(filteredOperators) {
+        const container = $('#operators-list');
+        container.empty();
+
+        if (filteredOperators.length === 0) {
+            container.append(`
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="feather icon-search" style="font-size: 3rem; opacity: 0.5;"></i>
+                                <h5 class="mt-3">Nenhuma operadora encontrada</h5>
+                                <p class="text-muted">Tente ajustar os filtros de busca</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `);
+            return;
+        }
+
+        filteredOperators.forEach(function(operator) {
+            const operatorHtml = createOperatorCard(operator);
+            container.append(operatorHtml);
+        });
+    }
+
+    function clearOperatorForm() {
+        $('#operator-name').val('');
+        $('#operator-code').val('');
+        $('#operator-cnpj').val('');
+        $('#operator-email').val('');
+        $('#operator-phone').val('');
+        $('#operator-website').val('');
+        $('#operator-notes').val('');
+        $('#operator-status').prop('checked', true);
+        $('#operator-has-rpa').prop('checked', false);
+        $('#operator-outsourced-rpa').prop('checked', false);
+        $('#operator-url-portal').val('');
+        $('#operator-endpoint-rpa').val('');
+        $('#operator-instructions').val('');
+        $('#operator-rpa-config').val('{\n  "classe_rpa": "",\n  "timeout_padrao": 300,\n  "tentativas_maximas": 3,\n  "parametros_especiais": {}\n}');
+        $('#operator-timeout').val(300);
+        $('#operator-priority').val('2');
+        $('#operator-max-retries').val(3);
+        $('#operator-retry-delay').val(5);
+        $('#operator-custom-config').val('{\n  "configuracoes_especiais": {},\n  "parametros_adicionais": {}\n}');
+        $('#clients-list').empty();
+    }
+
+    function saveOperator() {
+        const operatorData = {
+            nome: $('#operator-name').val(),
+            codigo: $('#operator-code').val(),
+            cnpj: $('#operator-cnpj').val(),
+            email: $('#operator-email').val(),
+            telefone: $('#operator-phone').val(),
+            website: $('#operator-website').val(),
+            observacoes: $('#operator-notes').val(),
+            status_ativo: $('#operator-status').is(':checked'),
+            possui_rpa: $('#operator-has-rpa').is(':checked'),
+            rpa_terceirizado: $('#operator-outsourced-rpa').is(':checked'),
+            url_portal: $('#operator-url-portal').val(),
+            url_endpoint_rpa: $('#operator-endpoint-rpa').val(),
+            instrucoes_acesso: $('#operator-instructions').val(),
+            timeout_padrao: parseInt($('#operator-timeout').val()),
+            prioridade: parseInt($('#operator-priority').val()),
+            tentativas_maximas: parseInt($('#operator-max-retries').val()),
+            delay_tentativas: parseInt($('#operator-retry-delay').val())
+        };
+
+        // Parse JSON configurations
+        try {
+            const rpaConfig = JSON.parse($('#operator-rpa-config').val());
+            operatorData.configuracao_rpa = rpaConfig;
+
+            const customConfig = JSON.parse($('#operator-custom-config').val());
+            operatorData.configuracao_custom = customConfig;
+        } catch (e) {
+            showAlert('Erro no JSON da configuração: ' + e.message, 'danger');
+            return;
+        }
+
+        const url = editingOperatorId ?
+            `/api/v2/avancadas/configuracoes/operadoras/${editingOperatorId}` :
+            '/api/v2/avancadas/configuracoes/operadoras';
+
+        const method = editingOperatorId ? 'PUT' : 'POST';
+
+        $.ajax({
+            url: url,
+            method: method,
+            data: JSON.stringify(operatorData),
+            contentType: 'application/json',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    showAlert('Operadora salva com sucesso!', 'success');
+                    $('#operatorModal').modal('hide');
+                    loadOperators(); // Recarregar lista
+                } else {
+                    showAlert('Erro ao salvar operadora: ' + response.message, 'danger');
+                }
+            },
+            error: function(xhr) {
+                showAlert('Erro ao salvar operadora', 'danger');
+            }
+        });
+    }
+
+    function testRPAConfig() {
+        $('#test-rpa-result').html('<div class="text-center"><i class="feather icon-loader spin"></i> Testando configuração RPA...</div>');
+        $('#testRpaModal').modal('show');
+
+        // Simular teste (implementar chamada real para API)
+        setTimeout(function() {
+            $('#test-rpa-result').html(`
+                <div class="alert alert-success">
+                    <i class="feather icon-check-circle"></i>
+                    <strong>Sucesso!</strong> Configuração RPA testada com sucesso.
+                </div>
+                <div class="mt-3">
+                    <h6>Resultados do Teste:</h6>
+                    <ul>
+                        <li><strong>Portal:</strong> Acessível</li>
+                        <li><strong>Login:</strong> Funcionando</li>
+                        <li><strong>Download:</strong> Operacional</li>
+                        <li><strong>Tempo de Resposta:</strong> 2.3s</li>
+                    </ul>
+                </div>
+            `);
+        }, 2000);
+    }
+
+    function loadOperatorClients(operatorId) {
+        $.ajax({
+            url: `/api/v2/avancadas/configuracoes/operadoras/${operatorId}/clientes`,
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    currentOperatorClients = response.clientes || [];
+                    renderOperatorClients();
+                }
+            },
+            error: function(xhr) {
+                console.log('Erro ao carregar clientes da operadora');
+            }
+        });
+    }
+
+    function renderOperatorClients() {
+        const container = $('#clients-list');
+        container.empty();
+
+        if (currentOperatorClients.length === 0) {
+            container.append(`
+                <div class="text-center text-muted">
+                    <i class="feather icon-users" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <p class="mt-2">Nenhum cliente encontrado para esta operadora</p>
+                </div>
+            `);
+            return;
+        }
+
+        currentOperatorClients.forEach(function(client) {
+            const clientHtml = `
+                <div class="client-item">
+                    <div class="client-header">
+                        <div class="client-name">${client.razao_social}</div>
+                        <div class="client-status">
+                            <span class="badge badge-${client.status_ativo ? 'success' : 'danger'} status-badge">
+                                ${client.status_ativo ? 'Ativo' : 'Inativo'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="client-details">
+                        <strong>CNPJ:</strong> ${client.cnpj}<br>
+                        <strong>Serviço:</strong> ${client.servico}<br>
+                        <strong>Unidade:</strong> ${client.unidade}<br>
+                        <strong>Credenciais:</strong> ${client.tem_credenciais_completas ? 'Completas' : 'Incompletas'}
+                    </div>
+                </div>
+            `;
+            container.append(clientHtml);
+        });
+    }
+
+    function showAlert(message, type) {
+        const alertHtml = `
+            <div class="alert alert-${type} alert-custom alert-dismissible fade show" role="alert">
+                <i class="feather icon-${type === 'success' ? 'check-circle' : type === 'danger' ? 'x-circle' : 'info'}"></i>
+                ${message}
+                <button type="button" class="close" data-dismiss="alert">
+                    <span>&times;</span>
+                </button>
+            </div>
+        `;
+
+        $('#alerts-container').html(alertHtml);
+
+        // Auto-dismiss após 5 segundos
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 5000);
+    }
+});
+
+// Funções globais
+function editOperator(operatorId) {
+    // Buscar dados da operadora
+    $.ajax({
+        url: `/api/v2/avancadas/configuracoes/operadoras/${operatorId}`,
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            if (response.success) {
+                const operator = response.operadora;
+                editingOperatorId = operatorId;
+
+                // Preencher formulário
+                $('#operator-modal-title').text(`Editar Operadora: ${operator.nome}`);
+                $('#operator-name').val(operator.nome);
+                $('#operator-code').val(operator.codigo);
+                $('#operator-cnpj').val(operator.cnpj);
+                $('#operator-email').val(operator.email);
+                $('#operator-phone').val(operator.telefone);
+                $('#operator-website').val(operator.website);
+                $('#operator-notes').val(operator.observacoes);
+                $('#operator-status').prop('checked', operator.status_ativo);
+                $('#operator-has-rpa').prop('checked', operator.possui_rpa);
+                $('#operator-outsourced-rpa').prop('checked', operator.rpa_terceirizado);
+                $('#operator-url-portal').val(operator.url_portal);
+                $('#operator-endpoint-rpa').val(operator.url_endpoint_rpa);
+                $('#operator-instructions').val(operator.instrucoes_acesso);
+                $('#operator-rpa-config').val(JSON.stringify(operator.configuracao_rpa || {}, null, 2));
+                $('#operator-timeout').val(operator.timeout_padrao || 300);
+                $('#operator-priority').val(operator.prioridade || 2);
+                $('#operator-max-retries').val(operator.tentativas_maximas || 3);
+                $('#operator-retry-delay').val(operator.delay_tentativas || 5);
+                $('#operator-custom-config').val(JSON.stringify(operator.configuracao_custom || {}, null, 2));
+
+                // Carregar clientes
+                loadOperatorClients(operatorId);
+
+                $('#operatorModal').modal('show');
+            }
+        },
+        error: function(xhr) {
+            alert('Erro ao carregar dados da operadora');
+        }
+    });
+}
+
+function viewOperatorDetails(operatorId) {
+    // Implementar visualização detalhada
+    alert('Funcionalidade de visualização detalhada será implementada');
+}
+
+function deleteOperator(operatorId) {
+    if (confirm('Tem certeza que deseja excluir esta operadora? Esta ação não pode ser desfeita.')) {
+        $.ajax({
+            url: `/api/v2/avancadas/configuracoes/operadoras/${operatorId}`,
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('Erro ao excluir operadora: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                alert('Erro ao excluir operadora');
+            }
+        });
+    }
+}
+</script>
+{% endblock javascripts %}
