@@ -1,10 +1,12 @@
 import logging
 import traceback
+import queue
+import json
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
 
-from flask import render_template, redirect, url_for, flash, request, jsonify, current_app
+from flask import render_template, redirect, url_for, flash, request, jsonify, current_app, Response, stream_with_context
 from sqlalchemy import and_, or_, desc
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError
@@ -18,6 +20,8 @@ from apps.authentication.util import verify_user_jwt
 from apps.api_externa.services import APIExternaService
 
 logger = logging.getLogger(__name__)
+
+sse_queues = []
 
 @dataclass
 class ProcessoFiltros:
@@ -779,3 +783,182 @@ def health_api_externa():
             'api_externa_online': False,
             'message': str(e)
         }), 500
+
+
+@bp.route('/aprovar/<id>', methods=['POST'])
+@verify_user_jwt
+def aprovar(id, usuario_atual):
+    """
+    Aprova um processo e move para AGUARDANDO_ENVIO_SAT
+    """
+    try:
+        processo = Processo.query.get_or_404(id)
+        
+        if not processo.pode_ser_aprovado:
+            return jsonify({
+                'success': False,
+                'message': 'Processo não pode ser aprovado no status atual'
+            }), 400
+        
+        observacoes = request.form.get('observacoes', request.json.get('observacoes', '') if request.is_json else '')
+        
+        processo.aprovar(usuario_atual.id, observacoes)
+        db.session.commit()
+        
+        logger.info(f"Processo {id} aprovado por usuário {usuario_atual.id}")
+        
+        enviar_evento_sse({
+            'type': 'status_changed',
+            'processo_id': str(id),
+            'status_antigo': StatusProcesso.AGUARDANDO_APROVACAO.value,
+            'status_novo': StatusProcesso.AGUARDANDO_ENVIO_SAT.value
+        })
+        
+        return jsonify({
+            'success': True,
+            'message': 'Processo aprovado com sucesso',
+            'status_novo': processo.status_processo
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao aprovar processo {id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao aprovar processo: {str(e)}'
+        }), 500
+
+
+@bp.route('/rejeitar/<id>', methods=['POST'])
+@verify_user_jwt
+def rejeitar(id, usuario_atual):
+    """
+    Rejeita um processo e volta para AGUARDANDO_DOWNLOAD
+    """
+    try:
+        processo = Processo.query.get_or_404(id)
+        
+        if not processo.pode_ser_aprovado:
+            return jsonify({
+                'success': False,
+                'message': 'Processo não pode ser rejeitado no status atual'
+            }), 400
+        
+        observacoes = request.form.get('observacoes', request.json.get('observacoes', '') if request.is_json else '')
+        
+        if not observacoes:
+            return jsonify({
+                'success': False,
+                'message': 'Motivo da rejeição é obrigatório'
+            }), 400
+        
+        processo.rejeitar(observacoes)
+        db.session.commit()
+        
+        logger.info(f"Processo {id} rejeitado por usuário {usuario_atual.id}: {observacoes}")
+        
+        enviar_evento_sse({
+            'type': 'status_changed',
+            'processo_id': str(id),
+            'status_antigo': StatusProcesso.AGUARDANDO_APROVACAO.value,
+            'status_novo': StatusProcesso.AGUARDANDO_DOWNLOAD.value
+        })
+        
+        return jsonify({
+            'success': True,
+            'message': 'Processo rejeitado. Voltou para aguardando download.',
+            'status_novo': processo.status_processo
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao rejeitar processo {id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao rejeitar processo: {str(e)}'
+        }), 500
+
+
+@bp.route('/fatura-dados/<id>', methods=['GET'])
+@verify_user_jwt
+def fatura_dados(id):
+    """
+    Retorna os dados da fatura para visualização
+    """
+    try:
+        processo = Processo.query.get_or_404(id)
+        
+        if not processo.tem_fatura_para_visualizar:
+            return jsonify({
+                'success': False,
+                'message': 'Fatura não disponível para visualização'
+            }), 404
+        
+        return jsonify({
+            'success': True,
+            'url_fatura': processo.url_fatura,
+            'caminho_s3': processo.caminho_s3_fatura,
+            'valor': float(processo.valor_fatura) if processo.valor_fatura else None,
+            'data_vencimento': processo.data_vencimento.strftime('%d/%m/%Y') if processo.data_vencimento else None
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao buscar dados da fatura: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao buscar fatura: {str(e)}'
+        }), 500
+
+
+@bp.route('/sse/status', methods=['GET'])
+def sse_status():
+    """
+    Server-Sent Events (SSE) para monitoramento em tempo real de processos e jobs
+    
+    Eventos enviados:
+    - job_started: Quando um job RPA é iniciado
+    - job_progress: Progresso do job (0-100%)
+    - job_completed: Job concluído com sucesso
+    - job_failed: Job falhou
+    - status_changed: Status do processo mudou
+    """
+    def event_stream():
+        messages = queue.Queue()
+        sse_queues.append(messages)
+        
+        try:
+            while True:
+                try:
+                    msg = messages.get(timeout=30)
+                    
+                    event_type = msg.get('type', 'message')
+                    data = json.dumps(msg)
+                    
+                    yield f"event: {event_type}\ndata: {data}\n\n"
+                    
+                except queue.Empty:
+                    yield f": keepalive\n\n"
+                    
+        finally:
+            sse_queues.remove(messages)
+    
+    return Response(
+        stream_with_context(event_stream()),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no',
+            'Connection': 'keep-alive'
+        }
+    )
+
+
+def enviar_evento_sse(evento: Dict[str, Any]):
+    """
+    Envia evento para todos os clientes conectados via SSE
+    """
+    for q in sse_queues:
+        try:
+            q.put_nowait(evento)
+        except queue.Full:
+            pass
