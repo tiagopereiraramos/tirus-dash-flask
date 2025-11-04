@@ -15,6 +15,7 @@ from apps import db
 from apps.models import Processo, Cliente, Operadora, Execucao, Usuario
 from apps.models.processo import StatusProcesso
 from apps.authentication.util import verify_user_jwt
+from apps.api_externa.services import APIExternaService
 
 logger = logging.getLogger(__name__)
 
@@ -634,3 +635,147 @@ def test_db():
     except Exception as e:
         logger.error("Erro no teste de banco: %s", str(e))
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@bp.route('/executar-download/<id>', methods=['POST'])
+@verify_user_jwt
+def executar_download(id):
+    """
+    Executa o download da fatura via API Externa (Operadora)
+    
+    Cria um job assíncrono na API externa para download de faturas.
+    O job_id retornado pode ser usado para consultar o status.
+    """
+    try:
+        processo = Processo.query.get_or_404(id)
+        
+        if processo.status_processo != StatusProcesso.AGUARDANDO_DOWNLOAD.value:
+            return jsonify({
+                'success': False, 
+                'message': 'Processo não está aguardando download'
+            }), 400
+        
+        logger.info(f"Iniciando execução de download para processo {id}")
+        
+        api_service = APIExternaService()
+        job_response = api_service.executar_operadora(processo)
+        
+        logger.info(f"Job criado com sucesso: {job_response.job_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Download iniciado com sucesso',
+            'job_id': job_response.job_id,
+            'status': job_response.status
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao executar download: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'message': f'Erro ao executar download: {str(e)}'
+        }), 500
+
+
+@bp.route('/executar-upload-sat/<id>', methods=['POST'])
+@verify_user_jwt
+def executar_upload_sat(id):
+    """
+    Executa o upload para SAT via API Externa
+    
+    Diferente de /enviar-sat (que apenas marca como enviado),
+    esta rota realmente executa o RPA de upload via API Externa.
+    """
+    try:
+        processo = Processo.query.get_or_404(id)
+        
+        if processo.status_processo != StatusProcesso.AGUARDANDO_ENVIO_SAT.value:
+            return jsonify({
+                'success': False,
+                'message': 'Processo não está aguardando envio para SAT'
+            }), 400
+        
+        logger.info(f"Iniciando execução de upload SAT para processo {id}")
+        
+        api_service = APIExternaService()
+        job_response = api_service.executar_sat(processo)
+        
+        logger.info(f"Job SAT criado com sucesso: {job_response.job_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Upload para SAT iniciado com sucesso',
+            'job_id': job_response.job_id,
+            'status': job_response.status
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao executar upload SAT: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao executar upload SAT: {str(e)}'
+        }), 500
+
+
+@bp.route('/consultar-status-job/<job_id>', methods=['GET'])
+@verify_user_jwt
+def consultar_status_job(job_id):
+    """
+    Consulta o status de um job na API Externa
+    
+    Retorna informações atualizadas sobre a execução do job,
+    incluindo status, progresso e mensagens.
+    """
+    try:
+        logger.info(f"Consultando status do job {job_id}")
+        
+        api_service = APIExternaService()
+        job_status = api_service.consultar_status(job_id)
+        
+        return jsonify({
+            'success': True,
+            'job_id': job_status.job_id,
+            'status': job_status.status,
+            'message': job_status.message,
+            'progress': job_status.progress,
+            'created_at': job_status.created_at,
+            'updated_at': job_status.updated_at,
+            'error': job_status.error
+        })
+        
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 404
+    except Exception as e:
+        logger.error(f"Erro ao consultar status do job: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao consultar status: {str(e)}'
+        }), 500
+
+
+@bp.route('/health-api-externa', methods=['GET'])
+@verify_user_jwt  
+def health_api_externa():
+    """
+    Verifica se a API Externa está funcionando
+    """
+    try:
+        api_service = APIExternaService()
+        is_healthy = api_service.health_check()
+        
+        return jsonify({
+            'success': True,
+            'api_externa_online': is_healthy,
+            'url': api_service.base_url
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao verificar saúde da API Externa: {str(e)}")
+        return jsonify({
+            'success': False,
+            'api_externa_online': False,
+            'message': str(e)
+        }), 500
