@@ -516,56 +516,6 @@ def editar(id):
         flash('Erro ao carregar processo. Tente novamente.', 'danger')
         return redirect(url_for('processos_bp.index'))
 
-@bp.route('/aprovar/<id>', methods=['POST'])
-@verify_user_jwt
-def aprovar(id):
-    """Aprovar um processo"""
-    try:
-        from flask import session
-        processo = Processo.query.get_or_404(id)
-        
-        if not processo.pode_ser_aprovado:
-            return jsonify({'success': False, 'message': 'Processo não pode ser aprovado no status atual'}), 400
-        
-        observacoes = request.form.get('observacoes', '').strip() or None
-        usuario_id = session.get('user_id')  # Assumindo que o user_id está na sessão
-        
-        processo.aprovar(usuario_id, observacoes)
-        db.session.commit()
-        
-        logger.info("Processo aprovado: %s por usuário %s", str(processo.id), str(usuario_id))
-        return jsonify({'success': True, 'message': 'Processo aprovado com sucesso'})
-        
-    except Exception as e:
-        db.session.rollback()
-        logger.error("Erro ao aprovar processo: %s", str(e))
-        return jsonify({'success': False, 'message': 'Erro ao aprovar processo'}), 500
-
-@bp.route('/rejeitar/<id>', methods=['POST'])
-@verify_user_jwt
-def rejeitar(id):
-    """Rejeitar um processo"""
-    try:
-        processo = Processo.query.get_or_404(id)
-        
-        if not processo.esta_pendente_aprovacao:
-            return jsonify({'success': False, 'message': 'Processo não está pendente de aprovação'}), 400
-        
-        observacoes = request.form.get('observacoes', '').strip()
-        if not observacoes:
-            return jsonify({'success': False, 'message': 'Motivo da rejeição é obrigatório'}), 400
-        
-        processo.rejeitar(observacoes)
-        db.session.commit()
-        
-        logger.info("Processo rejeitado: %s", str(processo.id))
-        return jsonify({'success': True, 'message': 'Processo rejeitado'})
-        
-    except Exception as e:
-        db.session.rollback()
-        logger.error("Erro ao rejeitar processo: %s", str(e))
-        return jsonify({'success': False, 'message': 'Erro ao rejeitar processo'}), 500
-
 @bp.route('/enviar-sat/<id>', methods=['POST'])
 @verify_user_jwt
 def enviar_sat(id):
@@ -586,29 +536,6 @@ def enviar_sat(id):
         db.session.rollback()
         logger.error("Erro ao enviar processo para SAT: %s", str(e))
         return jsonify({'success': False, 'message': 'Erro ao enviar processo para SAT'}), 500
-
-@bp.route('/fatura-dados/<id>', methods=['GET'])
-@verify_user_jwt
-def fatura_dados(id):
-    """Retorna dados da fatura em JSON para visualização"""
-    try:
-        processo = Processo.query.get_or_404(id)
-        
-        if not processo.url_fatura:
-            return jsonify({'success': False, 'message': 'Fatura não disponível'}), 404
-        
-        return jsonify({
-            'success': True,
-            'url_fatura': processo.url_fatura,
-            'valor_fatura': float(processo.valor_fatura) if processo.valor_fatura else None,
-            'data_vencimento': processo.data_vencimento.strftime('%d/%m/%Y') if processo.data_vencimento else None,
-            'cliente': processo.cliente.razao_social,
-            'mes_ano': processo.mes_ano
-        })
-        
-    except Exception as e:
-        logger.error("Erro ao obter dados da fatura: %s", str(e))
-        return jsonify({'success': False, 'message': 'Erro ao obter dados da fatura'}), 500
 
 @bp.route('/test-db')
 @verify_user_jwt
@@ -787,11 +714,13 @@ def health_api_externa():
 
 @bp.route('/aprovar/<id>', methods=['POST'])
 @verify_user_jwt
-def aprovar(id, usuario_atual):
+def aprovar(id):
     """
     Aprova um processo e move para AGUARDANDO_ENVIO_SAT
     """
     try:
+        from flask_login import current_user
+        
         processo = Processo.query.get_or_404(id)
         
         if not processo.pode_ser_aprovado:
@@ -802,10 +731,10 @@ def aprovar(id, usuario_atual):
         
         observacoes = request.form.get('observacoes', request.json.get('observacoes', '') if request.is_json else '')
         
-        processo.aprovar(usuario_atual.id, observacoes)
+        processo.aprovar(current_user.id, observacoes)
         db.session.commit()
         
-        logger.info(f"Processo {id} aprovado por usuário {usuario_atual.id}")
+        logger.info(f"Processo {id} aprovado por usuário {current_user.id}")
         
         enviar_evento_sse({
             'type': 'status_changed',
@@ -831,11 +760,13 @@ def aprovar(id, usuario_atual):
 
 @bp.route('/rejeitar/<id>', methods=['POST'])
 @verify_user_jwt
-def rejeitar(id, usuario_atual):
+def rejeitar(id):
     """
     Rejeita um processo e volta para AGUARDANDO_DOWNLOAD
     """
     try:
+        from flask_login import current_user
+        
         processo = Processo.query.get_or_404(id)
         
         if not processo.pode_ser_aprovado:
@@ -855,7 +786,7 @@ def rejeitar(id, usuario_atual):
         processo.rejeitar(observacoes)
         db.session.commit()
         
-        logger.info(f"Processo {id} rejeitado por usuário {usuario_atual.id}: {observacoes}")
+        logger.info(f"Processo {id} rejeitado por usuário {current_user.id}: {observacoes}")
         
         enviar_evento_sse({
             'type': 'status_changed',

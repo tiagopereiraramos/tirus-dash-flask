@@ -120,6 +120,33 @@ class Processo(BaseModel):
         comment="Data e hora do envio para SAT"
     )
 
+    # Sistema de Retry Automático
+    tentativas_download = Column(
+        DECIMAL(10, 0),
+        default=0,
+        nullable=False,
+        comment="Número de tentativas de download já realizadas"
+    )
+
+    ultima_tentativa_download = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="Data e hora da última tentativa de download"
+    )
+
+    tentativas_upload_sat = Column(
+        DECIMAL(10, 0),
+        default=0,
+        nullable=False,
+        comment="Número de tentativas de upload SAT já realizadas"
+    )
+
+    ultima_tentativa_upload_sat = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="Data e hora da última tentativa de upload SAT"
+    )
+
     # Flags de controle
     upload_manual = Column(
         Boolean,
