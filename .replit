@@ -1,4 +1,4 @@
-modules = ["web", "python-3.12", "nodejs-20", "bash"]
+modules = ["web", "python-3.12", "nodejs-20", "bash", "postgresql-16"]
 run = "python undefined"
 
 [nix]
@@ -43,10 +43,6 @@ outputType = "webview"
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 33839
-externalPort = 3000
 
 [agent]
 expertMode = true
