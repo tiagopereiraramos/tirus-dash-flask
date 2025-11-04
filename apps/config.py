@@ -29,6 +29,10 @@ class Config(object):
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # API Externa Configuration
+    API_EXTERNA_URL = os.getenv('API_EXTERNA_URL', 'http://191.252.218.230:8000')
+    API_EXTERNA_TOKEN = os.getenv('API_EXTERNA_TOKEN', None)
+
     DB_ENGINE   = os.getenv('DB_ENGINE'   , None)
     DB_USERNAME = os.getenv('DB_USERNAME' , None)
     DB_PASS     = os.getenv('DB_PASS'     , None)

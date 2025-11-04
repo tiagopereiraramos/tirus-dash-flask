@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class APIExternaAuth:
     """Gerencia autenticação com a API externa"""
 
-    def __init__(self, base_url: str = None, token: str = None):
+    def __init__(self, base_url: Optional[str] = None, token: Optional[str] = None):
         """
         Inicializa o gerenciador de autenticação
 
@@ -44,12 +44,14 @@ class APIExternaAuth:
             self._token = config_token
             self._token_expires_at = datetime.now() + timedelta(hours=12)
 
-        # Token atualizado para a nova API externa
+        # Token da API externa (deve ser configurado via variável de ambiente)
         if not config_token:
-            # Usar o novo token fornecido
-            self._token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImVtYWlsIjoiYWRtaW5AYnJtc29sdXRpb25zLmNvbS5iciIsInJvbGUiOiJhZG1pbiIsImNyZWF0ZWRfYXQiOiIyMDI1LTA5LTA5VDE1OjEyOjAxLjAxNjQxMCIsImV4cCI6MTc2MDAyMjcyMX0.fF9z68JYx-EhVcP7F9Vk-Yz8G5O4c5dddG8dNy69CRQ"
-            self._token_expires_at = datetime.now() + timedelta(hours=12)
-            logger.info("Token da API externa atualizado com sucesso")
+            logger.warning(
+                "⚠️  Token da API externa não configurado! "
+                "Configure a variável de ambiente API_EXTERNA_TOKEN"
+            )
+            self._token = None
+            self._token_expires_at = None
 
     @property
     def token(self) -> Optional[str]:

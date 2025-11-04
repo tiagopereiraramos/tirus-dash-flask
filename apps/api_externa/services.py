@@ -1,5 +1,7 @@
 """
-Serviços para APIs Externas
+Serviços para integração com API Externa em Produção
+URL: http://191.252.218.230:8000
+Documentação: DOCUMENTACAO_INTEGRACAO_FRONTEND.md
 """
 
 import requests
@@ -13,215 +15,116 @@ from apps import db
 from apps.models import Processo, Cliente, Operadora, Execucao
 from apps.models.execucao import TipoExecucao, StatusExecucao
 from .models import (
-    PayloadRPAExterno, RespostaRPAExterno,
-    PayloadSATExterno, RespostaSATExterno,
-    PayloadRPAProducao, PayloadSATProducao, RespostaProducao,
-    TipoOperacaoExterna, StatusOperacaoExterna,
-    DadosCliente, DadosOperadora, DadosProcesso, DadosExecucao, Metadata
+    AutomacaoPayload,
+    AutomacaoPayloadSat,
+    JobResponse,
+    JobStatus
 )
+from .auth import get_auth
 
 logger = logging.getLogger(__name__)
 
 
 class APIExternaService:
-    """Serviço para comunicação com APIs externas"""
+    """
+    Serviço para comunicação com API Externa em Produção
+    
+    Esta classe gerencia toda a integração com a API RPA externa,
+    incluindo criação de payloads, envio de requisições e monitoramento de jobs.
+    """
 
-    def __init__(self):
-        self.timeout = 300  # 5 minutos
-        self.tentativas_maximas = 3
+    def __init__(self, base_url: str = "http://191.252.218.230:8000"):
+        """
+        Inicializa o serviço de API externa
+        
+        Args:
+            base_url: URL base da API externa em produção
+        """
+        self.base_url = base_url.rstrip('/')
+        self.timeout = 30  # Timeout para criação de jobs (não para execução)
+        self.auth = get_auth()
+        
+        logger.info(f"APIExternaService inicializado: {self.base_url}")
 
-    def criar_payload_rpa(self, processo: Processo) -> PayloadRPAExterno:
-        """Cria payload para envio ao RPA externo usando novos modelos"""
+    def criar_payload_operadora(self, processo: Processo) -> AutomacaoPayload:
+        """
+        Cria payload para execução de RPA em operadora (OI, VIVO, EMBRATEL, DIGITALNET)
+        
+        Args:
+            processo: Processo do banco de dados
+            
+        Returns:
+            AutomacaoPayload com dados formatados para a API
+            
+        Raises:
+            ValueError: Se dados obrigatórios estiverem faltando
+        """
         try:
             cliente = processo.cliente
             operadora = processo.cliente.operadora
 
-            # Criar dados do cliente
-            dados_cliente = DadosCliente(
-                id=str(cliente.id),
-                razao_social=cliente.razao_social,
-                nome_sat=cliente.nome_sat or cliente.razao_social,
-                cnpj=cliente.cnpj,
-                email=cliente.email,
-                telefone=cliente.telefone,
-                login_portal=cliente.login_portal,
-                senha_portal=cliente.senha_portal,
-                cpf=cliente.cpf,
-                endereco={
-                    "logradouro": cliente.logradouro,
-                    "numero": cliente.numero,
-                    "complemento": cliente.complemento,
-                    "bairro": cliente.bairro,
-                    "cidade": cliente.cidade,
-                    "estado": cliente.estado,
-                    "cep": cliente.cep
-                } if cliente.logradouro else None
-            )
-
-            # Criar dados da operadora
-            dados_operadora = DadosOperadora(
-                id=str(operadora.id),
-                codigo=operadora.codigo,
-                nome=operadora.nome,
-                url_portal=operadora.portal_url or f"https://portal.{operadora.nome.lower()}.com.br",
-                usuario_portal=operadora.usuario_portal,
-                senha_portal=operadora.senha_portal,
-                tipo_autenticacao=operadora.tipo_autenticacao,
-                timeout_segundos=operadora.timeout_segundos or 300,
-                tentativas_maximas=operadora.tentativas_maximas or 3,
-                intervalo_tentativas=operadora.intervalo_tentativas or 60
-            )
-
-            # Criar dados do processo
-            dados_processo = DadosProcesso(
-                id=str(processo.id),
-                mes_ano=processo.mes_ano,
-                status_atual=processo.status_processo,
-                url_fatura=processo.url_fatura,
-                data_vencimento=processo.data_vencimento.isoformat(
-                ) if processo.data_vencimento else None,
-                valor_fatura=float(
-                    processo.valor_fatura) if processo.valor_fatura else None,
-                observacoes=processo.observacoes
-            )
-
-            # Criar dados da execução
-            dados_execucao = DadosExecucao(
-                numero_tentativa=1,
-                ip_origem="192.168.1.100",  # TODO: Obter IP real
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-            )
-
-            # Criar metadata
-            metadata = Metadata(
-                modo_teste=False
-            )
-
-            # Criar payload completo
-            payload = PayloadRPAExterno(
-                processo_id=str(processo.id),
-                operacao=TipoOperacaoExterna.DOWNLOAD_FATURA.value,
-                cliente=dados_cliente,
-                operadora=dados_operadora,
-                processo=dados_processo,
-                execucao=dados_execucao,
-                metadata=metadata
-            )
-
-            # Validar payload
-            erros = payload.validar()
-            if erros:
-                raise ValueError(f"Payload inválido: {', '.join(erros)}")
-
-            logger.info(
-                f"Payload RPA criado com sucesso para processo {processo.id}")
-            return payload
-
-        except Exception as e:
-            logger.error(f"Erro ao criar payload RPA: {str(e)}")
-            raise
-
-    def criar_payload_sat(self, processo: Processo) -> PayloadSATExterno:
-        """Cria payload para upload no SAT usando novos modelos"""
-        try:
-            cliente = processo.cliente
-
-            # Criar metadata
-            metadata = Metadata(
-                modo_teste=False
-            )
-
-            payload = PayloadSATExterno(
-                processo_id=str(processo.id),
-                cliente_nome_sat=cliente.nome_sat or cliente.razao_social,
-                dados_sat=f"{cliente.nome_sat or cliente.razao_social}|INTERNET|DEDICADA",
-                arquivo_fatura={
-                    "nome_arquivo": f"fatura_{processo.mes_ano.replace('/', '_')}.pdf",
-                    "url_arquivo": processo.url_fatura,
-                    "tamanho_bytes": 1024 * 512,  # 512KB simulado
-                    "tipo_mime": "application/pdf"
-                },
-                metadados={
-                    "mes_ano": processo.mes_ano,
-                    "valor_fatura": float(processo.valor_fatura) if processo.valor_fatura else 0.0,
-                    "data_vencimento": processo.data_vencimento.isoformat() if processo.data_vencimento else None,
-                    "timestamp_upload": datetime.now().isoformat()
-                },
-                metadata=metadata
-            )
-
-            # Validar payload
-            erros = payload.validar()
-            if erros:
-                raise ValueError(f"Payload SAT inválido: {', '.join(erros)}")
-
-            logger.info(
-                f"Payload SAT criado com sucesso para processo {processo.id}")
-            return payload
-
-        except Exception as e:
-            logger.error(f"Erro ao criar payload SAT: {str(e)}")
-            raise
-
-    def criar_payload_rpa_producao(self, processo: Processo) -> PayloadRPAProducao:
-        """Cria payload simplificado para API em produção - Operadoras"""
-        try:
-            cliente = processo.cliente
-            operadora = processo.cliente.operadora
-
-            # Lógica inteligente para login baseada na operadora
+            # Determinar login com base na operadora
             if cliente.login_portal:
                 login = cliente.login_portal
             elif operadora.codigo == 'OI':
-                # Para Oi, usar o filtro como login
-                login = cliente.filtro or f"{cliente.cnpj}"
+                # Para OI, usar filtro como login
+                login = cliente.filtro or cliente.cnpj
             else:
-                # Para outras operadoras, usar CNPJ como fallback
-                login = f"{cliente.cnpj}"
+                # Para outras, usar CNPJ
+                login = cliente.cnpj
 
-            # Usar valores padrão se dados estiverem faltando
+            # Valores com fallback
             senha = cliente.senha_portal or "senha123"
             filtro = cliente.filtro or "fatura_mensal"
             cnpj = cliente.cnpj or "00000000000000"
 
-            # Mapear dados para formato simplificado
-            payload = PayloadRPAProducao(
+            # Criar payload
+            payload = AutomacaoPayload(
                 login=login,
                 senha=senha,
                 filtro=filtro,
-                cnpj=cnpj
+                cnpj=cnpj,
+                processo_id=str(processo.id)  # IMPORTANTE: Adicionar processo_id para rastreamento
             )
 
-            # Validar payload
-            erros = payload.validar()
+            # Validar
+            erros = payload.validate()
             if erros:
                 raise ValueError(f"Payload inválido: {', '.join(erros)}")
 
-            logger.info(
-                f"Payload RPA produção criado com sucesso para processo {processo.id}")
+            logger.info(f"Payload operadora criado para processo {processo.id}")
             return payload
 
         except Exception as e:
-            logger.error(f"Erro ao criar payload RPA produção: {str(e)}")
+            logger.error(f"Erro ao criar payload operadora: {str(e)}")
             raise
 
-    def criar_payload_sat_producao(self, processo: Processo) -> PayloadSATProducao:
-        """Cria payload simplificado para API em produção - SAT"""
+    def criar_payload_sat(self, processo: Processo) -> AutomacaoPayloadSat:
+        """
+        Cria payload para upload no SAT
+        
+        Args:
+            processo: Processo do banco de dados
+            
+        Returns:
+            AutomacaoPayloadSat com dados formatados para a API
+            
+        Raises:
+            ValueError: Se dados obrigatórios estiverem faltando
+        """
         try:
             cliente = processo.cliente
             operadora = processo.cliente.operadora
 
-            # Lógica inteligente para login baseada na operadora
+            # Determinar login
             if cliente.login_portal:
                 login = cliente.login_portal
             elif operadora.codigo == 'OI':
-                # Para Oi, usar o filtro como login
-                login = cliente.filtro or f"{cliente.cnpj}"
+                login = cliente.filtro or cliente.cnpj
             else:
-                # Para outras operadoras, usar CNPJ como fallback
-                login = f"{cliente.cnpj}"
+                login = cliente.cnpj
 
-            # Usar valores padrão se dados estiverem faltando
+            # Valores com fallback
             senha = cliente.senha_portal or "senha123"
             filtro = cliente.filtro or "fatura_mensal"
             cnpj = cliente.cnpj or "00000000000000"
@@ -229,18 +132,18 @@ class APIExternaService:
             # Gerar nome do arquivo
             nome_arquivo = f"fatura_{processo.mes_ano.replace('/', '_')}.pdf"
 
-            # Formatar data de vencimento
-            data_vencimento = processo.data_vencimento.strftime(
-                "%Y-%m-%d") if processo.data_vencimento else "2025-08-15"
+            # IMPORTANTE: Formato de data DD/MM/YYYY conforme documentação
+            if processo.data_vencimento:
+                data_vencimento = processo.data_vencimento.strftime("%d/%m/%Y")
+            else:
+                data_vencimento = "15/08/2025"
 
-            payload = PayloadSATProducao(
-                login=login,
-                senha=senha,
-                filtro=filtro,
+            # Criar payload
+            payload = AutomacaoPayloadSat(
                 cnpj=cnpj,
                 razao=cliente.razao_social or "EMPRESA LTDA",
                 operadora=operadora.codigo if operadora else "UNK",
-                nome_filtro=cliente.filtro or "fatura_mensal",
+                nome_filtro=filtro,
                 unidade=cliente.unidade or "MATRIZ",
                 servico=cliente.servico or "INTERNET_DEDICADA",
                 dados_sat=cliente.dados_sat or f"{cliente.nome_sat or cliente.razao_social}|INTERNET|DEDICADA",
@@ -248,192 +151,32 @@ class APIExternaService:
                 data_vencimento=data_vencimento
             )
 
-            # Validar payload
-            erros = payload.validar()
+            # Validar
+            erros = payload.validate()
             if erros:
-                raise ValueError(
-                    f"Payload SAT produção inválido: {', '.join(erros)}")
+                raise ValueError(f"Payload SAT inválido: {', '.join(erros)}")
 
-            logger.info(
-                f"Payload SAT produção criado com sucesso para processo {processo.id}")
+            logger.info(f"Payload SAT criado para processo {processo.id}")
             return payload
 
         except Exception as e:
-            logger.error(f"Erro ao criar payload SAT produção: {str(e)}")
+            logger.error(f"Erro ao criar payload SAT: {str(e)}")
             raise
 
-    def enviar_para_rpa_externo(self, processo: Processo, url_endpoint: Optional[str] = None) -> RespostaRPAExterno:
-        """Envia processo para RPA externo"""
-        execucao = None
-        payload = None
+    def executar_operadora(self, processo: Processo) -> JobResponse:
+        """
+        Executa RPA para operadora (cria job assíncrono)
         
-        try:
-            # Usar endpoint da operadora se não fornecido manualmente
-            if not url_endpoint:
-                operadora = processo.cliente.operadora
-                if operadora and operadora.rpa_terceirizado and operadora.url_endpoint_rpa:
-                    url_endpoint = operadora.url_endpoint_rpa
-                else:
-                    raise ValueError(
-                        "Operadora não possui endpoint RPA terceirizado configurado")
-
-            logger.info(
-                f"Enviando processo {processo.id} para RPA externo: {url_endpoint}")
-
-            # Criar execução para rastreamento
-            execucao = Execucao(
-                processo_id=processo.id,
-                tipo_execucao=TipoExecucao.DOWNLOAD_FATURA.value,
-                status_execucao=StatusExecucao.EXECUTANDO.value,
-                classe_rpa_utilizada="RPA_EXTERNO",
-                parametros_entrada={"url_endpoint": url_endpoint},
-                data_inicio=datetime.now()
-            )
-
-            db.session.add(execucao)
-            db.session.commit()
-
-            # Criar payload
-            payload = self.criar_payload_rpa(processo)
-            payload_dict = payload.to_dict()
-
-            # Configurar headers
-            headers = {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'User-Agent': 'TIRUS-DASH-FLASK/2.0',
-                'X-Request-ID': payload.metadata.request_id
-            }
-
-            # Fazer requisição para RPA externo
-            logger.debug(f"Enviando requisição para: {url_endpoint}")
-            response = requests.post(
-                url_endpoint,
-                json=payload_dict,
-                headers=headers,
-                timeout=self.timeout
-            )
-
-            # Processar resposta
-            if response.status_code == 200:
-                resultado = response.json()
-
-                # Criar resposta padronizada
-                resposta = RespostaRPAExterno.from_dict(resultado)
-
-                # Atualizar execução com sucesso
-                execucao.finalizar_com_sucesso(
-                    resultado=resultado,
-                    mensagem=f"Execução RPA externo concluída com sucesso. Status: {resposta.status}"
-                )
-
-                # Atualizar processo se necessário
-                if resposta.success and resposta.resultado:
-                    processo.marcar_download_completo()
-                    if resposta.resultado.get('url_arquivo'):
-                        processo.url_fatura = resposta.resultado.get(
-                            'url_arquivo')
-                    if resposta.resultado.get('dados_extraidos', {}).get('valor_fatura'):
-                        processo.valor_fatura = resposta.resultado['dados_extraidos']['valor_fatura']
-
-                db.session.commit()
-
-                logger.info(
-                    f"Processo {processo.id} enviado com sucesso para RPA externo")
-                return resposta
-
-            else:
-                # Tratar erro HTTP
-                erro_msg = f"Erro HTTP {response.status_code}: {response.text}"
-                execucao.finalizar_com_erro(
-                    Exception(erro_msg),
-                    {"status_code": response.status_code,
-                        "response_text": response.text}
-                )
-                db.session.commit()
-
-                logger.error(
-                    f"Erro HTTP ao enviar processo {processo.id}: {erro_msg}")
-                return RespostaRPAExterno(
-                    success=False,
-                    processo_id=str(processo.id),
-                    erro=erro_msg,
-                    request_id=payload.metadata.request_id
-                )
-
-        except requests.exceptions.Timeout:
-            erro_msg = "Timeout na requisição para RPA externo"
-            if execucao:
-                execucao.marcar_timeout()
-                db.session.commit()
-
-            logger.error(
-                f"Timeout ao enviar processo {processo.id} para RPA externo")
-            return RespostaRPAExterno(
-                success=False,
-                processo_id=str(processo.id),
-                erro=erro_msg,
-                request_id=payload.metadata.request_id if payload else None
-            )
-
-        except requests.exceptions.RequestException as e:
-            erro_msg = f"Erro de conexão: {str(e)}"
-            if execucao:
-                execucao.finalizar_com_erro(Exception(erro_msg))
-                db.session.commit()
-
-            logger.error(
-                f"Erro de conexão ao enviar processo {processo.id}: {str(e)}")
-            return RespostaRPAExterno(
-                success=False,
-                processo_id=str(processo.id),
-                erro=erro_msg,
-                request_id=payload.metadata.request_id if payload else None
-            )
-
-        except Exception as e:
-            erro_msg = f"Erro inesperado: {str(e)}"
-            if execucao:
-                execucao.finalizar_com_erro(Exception(erro_msg))
-                db.session.commit()
-
-            logger.error(
-                f"Erro inesperado ao enviar processo {processo.id}: {str(e)}")
-            return RespostaRPAExterno(
-                success=False,
-                processo_id=str(processo.id),
-                erro=erro_msg,
-                request_id=payload.metadata.request_id if payload else None
-            )
-
-    def enviar_para_sat_externo(self, processo: Processo, url_endpoint: Optional[str] = None) -> RespostaSATExterno:
-        """Envia processo para SAT externo"""
-        try:
-            # TODO: Implementar lógica similar ao RPA externo
-            # Por enquanto, retorna resposta simulada
-            logger.info(f"Enviando processo {processo.id} para SAT externo")
-
-            payload = self.criar_payload_sat(processo)
-
-            return RespostaSATExterno(
-                success=True,
-                processo_id=str(processo.id),
-                protocolo_sat=f"SAT-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:8].upper()}",
-                mensagem="Upload para SAT realizado com sucesso",
-                request_id=payload.metadata.request_id
-            )
-
-        except Exception as e:
-            logger.error(
-                f"Erro ao enviar processo {processo.id} para SAT externo: {str(e)}")
-            return RespostaSATExterno(
-                success=False,
-                processo_id=str(processo.id),
-                erro=str(e)
-            )
-
-    def enviar_para_rpa_producao(self, processo: Processo, url_base: str = "http://191.252.218.230:8000") -> RespostaProducao:
-        """Envia processo para RPA em produção"""
+        Args:
+            processo: Processo do banco de dados
+            
+        Returns:
+            JobResponse com informações do job criado
+            
+        Raises:
+            ValueError: Se operadora for inválida
+            requests.RequestException: Se houver erro na comunicação
+        """
         execucao = None
         
         try:
@@ -441,41 +184,39 @@ class APIExternaService:
             if not operadora:
                 raise ValueError("Processo não possui operadora associada")
 
-            logger.info(
-                f"Enviando processo {processo.id} para RPA produção: {operadora.codigo}")
+            # IMPORTANTE: Endpoint com operadora em UPPERCASE conforme documentação
+            endpoint = f"/executar/{operadora.codigo.upper()}"
+            
+            logger.info(f"Executando operadora {operadora.codigo} para processo {processo.id}")
 
             # Criar execução para rastreamento
             execucao = Execucao(
                 processo_id=processo.id,
                 tipo_execucao=TipoExecucao.DOWNLOAD_FATURA.value,
                 status_execucao=StatusExecucao.EXECUTANDO.value,
-                classe_rpa_utilizada="RPA_PRODUCAO",
-                parametros_entrada={"url_base": url_base,
-                                    "operadora": operadora.codigo},
+                classe_rpa_utilizada="API_EXTERNA_PRODUCAO",
+                parametros_entrada={
+                    "operadora": operadora.codigo,
+                    "endpoint": endpoint
+                },
                 data_inicio=datetime.now()
             )
-
             db.session.add(execucao)
             db.session.commit()
 
-            # Criar payload simplificado
-            payload = self.criar_payload_rpa_producao(processo)
+            # Criar payload
+            payload = self.criar_payload_operadora(processo)
             payload_dict = payload.to_dict()
 
-            # Construir URL do endpoint
-            endpoint_url = f"{url_base}/executar/{operadora.codigo.lower()}"
+            # IMPORTANTE: Headers com autenticação JWT
+            headers = self.auth.get_headers()
 
-            # Configurar headers
-            headers = {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'User-Agent': 'TIRUS-DASH-FLASK/2.0'
-            }
-
-            # Fazer requisição para RPA em produção
-            logger.debug(f"Enviando requisição para: {endpoint_url}")
+            # Fazer requisição
+            url = f"{self.base_url}{endpoint}"
+            logger.debug(f"POST {url}")
+            
             response = requests.post(
-                endpoint_url,
+                url,
                 json=payload_dict,
                 headers=headers,
                 timeout=self.timeout
@@ -483,124 +224,77 @@ class APIExternaService:
 
             # Processar resposta
             if response.status_code == 200:
-                resultado = response.json()
-                resposta = RespostaProducao.from_dict(resultado)
+                data = response.json()
+                job_response = JobResponse.from_dict(data)
 
-                # Atualizar execução com sucesso
-                execucao.finalizar_com_sucesso(
-                    resultado=resultado,
-                    mensagem=f"Execução RPA produção concluída. Status: {resposta.success}"
-                )
-
-                # Atualizar processo se necessário
-                if resposta.success and resposta.data:
-                    processo.marcar_download_completo()
-                    # TODO: Extrair dados específicos da resposta se disponíveis
-
+                # Atualizar execução com job_id
+                execucao.parametros_entrada['job_id'] = job_response.job_id
                 db.session.commit()
 
-                logger.info(
-                    f"Processo {processo.id} enviado com sucesso para RPA produção")
-                return resposta
+                logger.info(f"Job criado: {job_response.job_id} para processo {processo.id}")
+                return job_response
 
             else:
-                # Tratar erro HTTP
                 erro_msg = f"Erro HTTP {response.status_code}: {response.text}"
-                execucao.finalizar_com_erro(
-                    Exception(erro_msg),
-                    {"status_code": response.status_code,
-                        "response_text": response.text}
-                )
-                db.session.commit()
-
-                logger.error(
-                    f"Erro HTTP ao enviar processo {processo.id}: {erro_msg}")
-                return RespostaProducao(
-                    success=False,
-                    error=erro_msg,
-                    message=f"Erro na API de produção: {erro_msg}"
-                )
-
-        except requests.exceptions.Timeout:
-            erro_msg = "Timeout na requisição para RPA produção"
-            if execucao:
-                execucao.marcar_timeout()
-                db.session.commit()
-
-            logger.error(
-                f"Timeout ao enviar processo {processo.id} para RPA produção")
-            return RespostaProducao(
-                success=False,
-                error=erro_msg,
-                message="Timeout na execução"
-            )
-
-        except requests.exceptions.RequestException as e:
-            erro_msg = f"Erro de conexão: {str(e)}"
-            if execucao:
-                execucao.finalizar_com_erro(Exception(erro_msg))
-                db.session.commit()
-
-            logger.error(
-                f"Erro de conexão ao enviar processo {processo.id}: {str(e)}")
-            return RespostaProducao(
-                success=False,
-                error=erro_msg,
-                message=f"Erro de conexão: {str(e)}"
-            )
+                if execucao:
+                    execucao.finalizar_com_erro(Exception(erro_msg))
+                    db.session.commit()
+                
+                logger.error(erro_msg)
+                raise requests.RequestException(erro_msg)
 
         except Exception as e:
-            erro_msg = f"Erro inesperado: {str(e)}"
+            logger.error(f"Erro ao executar operadora: {str(e)}")
             if execucao:
-                execucao.finalizar_com_erro(Exception(erro_msg))
+                execucao.finalizar_com_erro(Exception(str(e)))
                 db.session.commit()
+            raise
 
-            logger.error(
-                f"Erro inesperado ao enviar processo {processo.id}: {str(e)}")
-            return RespostaProducao(
-                success=False,
-                error=erro_msg,
-                message=f"Erro interno: {str(e)}"
-            )
-
-    def enviar_para_sat_producao(self, processo: Processo, url_base: str = "http://191.252.218.230:8000") -> RespostaProducao:
-        """Envia processo para SAT em produção"""
+    def executar_sat(self, processo: Processo) -> JobResponse:
+        """
+        Executa upload no SAT (cria job assíncrono)
+        
+        Args:
+            processo: Processo do banco de dados
+            
+        Returns:
+            JobResponse com informações do job criado
+            
+        Raises:
+            requests.RequestException: Se houver erro na comunicação
+        """
         execucao = None
         
         try:
-            logger.info(f"Enviando processo {processo.id} para SAT produção")
+            endpoint = "/executar/sat"
+            
+            logger.info(f"Executando SAT para processo {processo.id}")
 
             # Criar execução para rastreamento
             execucao = Execucao(
                 processo_id=processo.id,
                 tipo_execucao=TipoExecucao.UPLOAD_SAT.value,
                 status_execucao=StatusExecucao.EXECUTANDO.value,
-                classe_rpa_utilizada="SAT_PRODUCAO",
-                parametros_entrada={"url_base": url_base},
+                classe_rpa_utilizada="API_EXTERNA_SAT_PRODUCAO",
+                parametros_entrada={"endpoint": endpoint},
                 data_inicio=datetime.now()
             )
-
             db.session.add(execucao)
             db.session.commit()
 
-            # Criar payload simplificado
-            payload = self.criar_payload_sat_producao(processo)
+            # Criar payload
+            payload = self.criar_payload_sat(processo)
             payload_dict = payload.to_dict()
 
-            # Construir URL do endpoint
-            endpoint_url = f"{url_base}/executar/sat"
+            # IMPORTANTE: Headers com autenticação JWT
+            headers = self.auth.get_headers()
 
-            # Configurar headers
-            headers = {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'User-Agent': 'TIRUS-DASH-FLASK/2.0'
-            }
-
-            # Fazer requisição para SAT em produção
-            logger.debug(f"Enviando requisição para: {endpoint_url}")
+            # Fazer requisição
+            url = f"{self.base_url}{endpoint}"
+            logger.debug(f"POST {url}")
+            
             response = requests.post(
-                endpoint_url,
+                url,
                 json=payload_dict,
                 headers=headers,
                 timeout=self.timeout
@@ -608,82 +302,74 @@ class APIExternaService:
 
             # Processar resposta
             if response.status_code == 200:
-                resultado = response.json()
-                resposta = RespostaProducao.from_dict(resultado)
+                data = response.json()
+                job_response = JobResponse.from_dict(data)
 
-                # Atualizar execução com sucesso
-                execucao.finalizar_com_sucesso(
-                    resultado=resultado,
-                    mensagem=f"Execução SAT produção concluída. Status: {resposta.success}"
-                )
-
-                # Atualizar processo se necessário
-                if resposta.success:
-                    processo.marcar_upload_sat_completo()
-                    # TODO: Extrair protocolo SAT da resposta se disponível
-
+                # Atualizar execução com job_id
+                execucao.parametros_entrada['job_id'] = job_response.job_id
                 db.session.commit()
 
-                logger.info(
-                    f"Processo {processo.id} enviado com sucesso para SAT produção")
-                return resposta
+                logger.info(f"Job SAT criado: {job_response.job_id} para processo {processo.id}")
+                return job_response
 
             else:
-                # Tratar erro HTTP
                 erro_msg = f"Erro HTTP {response.status_code}: {response.text}"
-                execucao.finalizar_com_erro(
-                    Exception(erro_msg),
-                    {"status_code": response.status_code,
-                        "response_text": response.text}
-                )
-                db.session.commit()
-
-                logger.error(
-                    f"Erro HTTP ao enviar processo {processo.id}: {erro_msg}")
-                return RespostaProducao(
-                    success=False,
-                    error=erro_msg,
-                    message=f"Erro na API de produção: {erro_msg}"
-                )
-
-        except requests.exceptions.Timeout:
-            erro_msg = "Timeout na requisição para SAT produção"
-            if execucao:
-                execucao.marcar_timeout()
-                db.session.commit()
-
-            logger.error(
-                f"Timeout ao enviar processo {processo.id} para SAT produção")
-            return RespostaProducao(
-                success=False,
-                error=erro_msg,
-                message="Timeout na execução"
-            )
-
-        except requests.exceptions.RequestException as e:
-            erro_msg = f"Erro de conexão: {str(e)}"
-            if execucao:
-                execucao.finalizar_com_erro(Exception(erro_msg))
-                db.session.commit()
-
-            logger.error(
-                f"Erro de conexão ao enviar processo {processo.id}: {str(e)}")
-            return RespostaProducao(
-                success=False,
-                error=erro_msg,
-                message=f"Erro de conexão: {str(e)}"
-            )
+                if execucao:
+                    execucao.finalizar_com_erro(Exception(erro_msg))
+                    db.session.commit()
+                
+                logger.error(erro_msg)
+                raise requests.RequestException(erro_msg)
 
         except Exception as e:
-            erro_msg = f"Erro inesperado: {str(e)}"
+            logger.error(f"Erro ao executar SAT: {str(e)}")
             if execucao:
-                execucao.finalizar_com_erro(Exception(erro_msg))
+                execucao.finalizar_com_erro(Exception(str(e)))
                 db.session.commit()
+            raise
 
-            logger.error(
-                f"Erro inesperado ao enviar processo {processo.id}: {str(e)}")
-            return RespostaProducao(
-                success=False,
-                error=erro_msg,
-                message=f"Erro interno: {str(e)}"
-            )
+    def consultar_status(self, job_id: str) -> JobStatus:
+        """
+        Consulta o status de um job
+        
+        Args:
+            job_id: ID do job a consultar
+            
+        Returns:
+            JobStatus com informações atualizadas do job
+            
+        Raises:
+            requests.RequestException: Se houver erro na comunicação
+        """
+        try:
+            endpoint = f"/status/{job_id}"
+            headers = self.auth.get_headers()
+            url = f"{self.base_url}{endpoint}"
+            
+            response = requests.get(url, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                return JobStatus.from_api_response(data)
+            elif response.status_code == 404:
+                raise ValueError(f"Job {job_id} não encontrado")
+            else:
+                raise requests.RequestException(f"Erro HTTP {response.status_code}: {response.text}")
+                
+        except Exception as e:
+            logger.error(f"Erro ao consultar status do job {job_id}: {str(e)}")
+            raise
+
+    def health_check(self) -> bool:
+        """
+        Verifica se a API externa está funcionando
+        
+        Returns:
+            True se API está saudável, False caso contrário
+        """
+        try:
+            response = requests.get(f"{self.base_url}/health", timeout=5)
+            return response.status_code == 200
+        except Exception as e:
+            logger.error(f"Health check falhou: {str(e)}")
+            return False
