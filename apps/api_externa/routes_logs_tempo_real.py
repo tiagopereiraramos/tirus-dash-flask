@@ -287,6 +287,77 @@ def atualizar_status_job(job_id: str):
         }), 500
 
 
+@api_logs_tempo_real_bp.route('/status-job/<job_id>')
+@login_required
+def consultar_status_job(job_id: str):
+    """
+    Consulta o status de um job específico na API externa
+    
+    Args:
+        job_id: ID do job para consultar
+        
+    Returns:
+        JSON: Status do job
+    """
+    from flask import jsonify
+    
+    try:
+        # Obter configurações
+        api_url = current_app.config.get('API_EXTERNA_URL', 'http://191.252.218.230:8000')
+        
+        # Obter token JWT diretamente
+        from apps.authentication.models import Users
+        token = None
+        admin_user = Users.query.filter_by(is_admin=True).first()
+        if admin_user and admin_user.api_externa_token:
+            token = admin_user.api_externa_token
+        else:
+            token = current_app.config.get('API_EXTERNA_TOKEN')
+        
+        if not token:
+            return jsonify({
+                'success': False,
+                'message': 'Token JWT não configurado no sistema'
+            }), 401
+        
+        # Consultar status na API externa
+        url = f"{api_url}/jobs/{job_id}"
+        headers = {
+            'Authorization': f'Bearer {token}',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        # Retornar dados do job
+        job_data = response.json()
+        
+        return jsonify({
+            'success': True,
+            'job': job_data
+        }), 200
+        
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 404:
+            return jsonify({
+                'success': False,
+                'message': f'Job {job_id} não encontrado na API externa'
+            }), 404
+        else:
+            logger.error(f"Erro HTTP ao consultar job {job_id}: {e}")
+            return jsonify({
+                'success': False,
+                'message': f'Erro ao consultar API externa: {e.response.status_code}'
+            }), 500
+    except Exception as e:
+        logger.error(f"Erro ao consultar status do job {job_id}: {e}")
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao consultar status: {str(e)}'
+        }), 500
+
+
 @api_logs_tempo_real_bp.route('/teste-conexao')
 @login_required
 def teste_conexao():

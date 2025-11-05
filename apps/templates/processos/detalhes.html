@@ -364,6 +364,10 @@
                                                                 <button class="btn btn-xs btn-primary" onclick="iniciarLogsTempoReal('{{ execucao.job_id }}')">
                                                                     <i class="feather icon-eye"></i> Ver Logs
                                                                 </button>
+                                                                {% elif execucao.status_execucao in ['FALHOU', 'CONCLUIDO'] %}
+                                                                <button class="btn btn-xs btn-outline-primary" onclick="reexecutarProcesso('{{ processo.id }}', '{{ execucao.tipo_execucao }}')">
+                                                                    <i class="feather icon-refresh-cw"></i> Executar Novamente
+                                                                </button>
                                                                 {% endif %}
                                                             </td>
                                                         </tr>
@@ -985,6 +989,55 @@ function atualizarStatusConexao(texto, tipo) {
     else if (tipo === 'warning') icone = 'alert-circle';
     
     statusBadge.innerHTML = '<i class="feather icon-' + icone + '"></i> ' + texto;
+}
+
+// ============= RE-EXECUÇÃO DE PROCESSOS =============
+
+function reexecutarProcesso(processoId, tipoExecucao) {
+    if (!confirm('Deseja realmente executar este processo novamente?')) {
+        return;
+    }
+    
+    console.log('Reexecutando processo:', processoId, 'Tipo:', tipoExecucao);
+    
+    // Determinar endpoint com base no tipo de execução
+    let endpoint = '';
+    let descricao = '';
+    
+    if (tipoExecucao === 'DOWNLOAD_FATURA') {
+        endpoint = '/processos/executar-download/' + processoId;
+        descricao = 'download da fatura';
+    } else if (tipoExecucao === 'UPLOAD_SAT') {
+        endpoint = '/processos/executar-upload-sat/' + processoId;
+        descricao = 'upload para SAT';
+    } else {
+        alert('Tipo de execução desconhecido: ' + tipoExecucao);
+        return;
+    }
+    
+    // Fazer requisição
+    fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            alert('✅ Processo de ' + descricao + ' iniciado com sucesso!\n\n' + (data.message || ''));
+            // Recarregar página para mostrar nova execução
+            location.reload();
+        } else {
+            alert('❌ Erro ao iniciar ' + descricao + ':\n\n' + data.message);
+        }
+    })
+    .catch(function(error) {
+        console.error('Erro na requisição:', error);
+        alert('❌ Erro ao comunicar com o servidor.');
+    });
 }
 
 // ============= ATUALIZAÇÃO DE STATUS DE EXECUÇÃO =============
