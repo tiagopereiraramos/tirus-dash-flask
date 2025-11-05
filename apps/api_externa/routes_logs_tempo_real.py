@@ -74,10 +74,13 @@ def stream_logs_filtrados(job_id: str, api_url: str, token: str) -> Generator[st
                         data = json.loads(json_data)
 
                         # Filtrar logs por job_id
+                        log_job_id = data.get('job_id')
+                        
+                        # Só processar logs do job atual (ou UNKNOWN/vazio)
                         if (data.get('type') == 'log' and
-                            (data.get('job_id') == job_id or
-                             data.get('job_id') == 'UNKNOWN' or
-                             not data.get('job_id'))):
+                            (log_job_id == job_id or
+                             log_job_id == 'UNKNOWN' or
+                             not log_job_id)):
 
                             # Formatar para SSE
                             formatted_data = {
@@ -95,17 +98,24 @@ def stream_logs_filtrados(job_id: str, api_url: str, token: str) -> Generator[st
                             message = data.get('message', '').lower()
                             level = data.get('level', 'INFO')
                             
-                            if level == 'WARN' and 'concluído' in message and 'deve ser atualizado' in message:
-                                # Job terminou - extrair status
-                                if 'completed' in message.lower():
-                                    formatted_data['job_status'] = 'COMPLETED'
-                                    formatted_data['type'] = 'job_completed'
-                                elif 'failed' in message.lower() or 'erro' in message:
-                                    formatted_data['job_status'] = 'FAILED'
-                                    formatted_data['type'] = 'job_failed'
+                            # CRÍTICO: Verificar se a mensagem de conclusão é do job ATUAL
+                            if level == 'WARN' and 'concluído' in message:
+                                # Extrair job_id da mensagem de conclusão
+                                # Formato: "Job <job_id> concluído..."
+                                if f'job {job_id}' in message.lower():
+                                    # Job ATUAL terminou - extrair status
+                                    if 'completed' in message.lower():
+                                        formatted_data['job_status'] = 'COMPLETED'
+                                        formatted_data['type'] = 'job_completed'
+                                    elif 'failed' in message.lower() or 'erro' in message:
+                                        formatted_data['job_status'] = 'FAILED'
+                                        formatted_data['type'] = 'job_failed'
+                                    else:
+                                        formatted_data['job_status'] = 'COMPLETED'
+                                        formatted_data['type'] = 'job_completed'
+                                # Se não é do job atual, ignorar (não enviar)
                                 else:
-                                    formatted_data['job_status'] = 'COMPLETED'
-                                    formatted_data['type'] = 'job_completed'
+                                    continue
 
                             # Enviar dados formatados
                             yield f"data: {json.dumps(formatted_data)}\n\n"
