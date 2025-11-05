@@ -279,6 +279,7 @@ def importar():
             clientes_processados = 0
             clientes_criados = 0
             clientes_atualizados = 0
+            nomes_normalizados = []
             erros = []
 
             # Mapeia operadoras por nome para busca rápida (normalizado)
@@ -307,6 +308,12 @@ def importar():
                     if not operadora:
                         erros.append(f"Linha {row_num}: Operadora '{operadora_csv}' não encontrada. Operadoras disponíveis: {', '.join(set([o.nome for o in Operadora.query.all()]))}")
                         continue
+                    
+                    # Registra se o nome foi normalizado
+                    if operadora_csv != operadora.nome.upper():
+                        mensagem_normalizacao = f"Linha {row_num}: '{operadora_csv}' → '{operadora.nome}'"
+                        if mensagem_normalizacao not in nomes_normalizados:
+                            nomes_normalizados.append(mensagem_normalizacao)
 
                     # Limpa dados
                     cnpj = ''.join(filter(str.isdigit, row.get('CNPJ', '')))
@@ -372,10 +379,21 @@ def importar():
             mensagem = f"Importação concluída! {clientes_processados} clientes processados. "
             mensagem += f"Criados: {clientes_criados}, Atualizados: {clientes_atualizados}"
             
+            if nomes_normalizados:
+                mensagem += f", Nomes normalizados: {len(nomes_normalizados)}"
+            
             if erros:
                 mensagem += f", Erros: {len(erros)}"
                 
             flash(mensagem, 'success' if not erros else 'warning')
+            
+            # Mostra normalizações (primeiros 5)
+            if nomes_normalizados:
+                flash("Nomes de operadoras normalizados para padrão do sistema:", 'info')
+                for norm in nomes_normalizados[:5]:
+                    flash(norm, 'info')
+                if len(nomes_normalizados) > 5:
+                    flash(f"... e mais {len(nomes_normalizados) - 5} normalizações", 'info')
             
             if erros:
                 # Mostra primeiros 10 erros
