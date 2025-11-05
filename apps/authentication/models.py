@@ -22,6 +22,10 @@ class Users(db.Model, UserMixin):
     password      = db.Column(db.LargeBinary)
 
     oauth_github  = db.Column(db.String(100), nullable=True)
+    
+    # Campos administrativos
+    is_admin      = db.Column(db.Boolean, default=False, nullable=False)
+    api_externa_token = db.Column(db.String(500), nullable=True)
 
     def __init__(self, **kwargs):
         for property, value in kwargs.items():

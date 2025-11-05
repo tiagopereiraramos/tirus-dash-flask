@@ -73,6 +73,32 @@
                                                     </div>
                                                 </div>
 
+                                                {% if current_user.is_admin %}
+                                                <div class="col-sm-12">
+                                                    <hr class="my-4">
+                                                    <h6 class="text-muted mb-3">
+                                                        <i class="feather icon-shield"></i> Configurações de Administrador
+                                                    </h6>
+                                                </div>
+                                                
+                                                <div class="col-sm-12 mb-4">
+                                                    <div class="form-group">
+                                                        <label for="api_token">
+                                                            <i class="feather icon-key"></i> Token JWT da API Externa
+                                                        </label>
+                                                        <input type="text" 
+                                                               class="form-control font-monospace" 
+                                                               id="api_token" 
+                                                               value="{{ current_user.api_externa_token if current_user.api_externa_token else '' }}"
+                                                               placeholder="Cole aqui o token JWT da API externa">
+                                                        <small class="form-text text-muted">
+                                                            <i class="feather icon-info"></i> 
+                                                            Este token é usado para autenticação com a API RPA externa (http://191.252.218.230:8000)
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+
                                                 <div class="col-sm-12 mb-2">
                                                     <div class="form-group">
                                                         <button type="submit" class="btn btn-primary">Submit</button>
