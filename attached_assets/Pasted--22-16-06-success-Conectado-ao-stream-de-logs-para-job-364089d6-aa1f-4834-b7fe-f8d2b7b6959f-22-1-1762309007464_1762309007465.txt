@@ -1,0 +1,12 @@
+[22:16:06] [success] Conectado ao stream de logs para job 364089d6-aa1f-4834-b7fe-f8d2b7b6959f
+[22:16:06] [ERROR] Erro interno: Working outside of application context. This typically means that you attempted to use functionality that needed the current application. To solve this, set up an application context with app.app_context(). See the documentation for more information.
+[22:16:10] [success] Conectado ao stream de logs para job 364089d6-aa1f-4834-b7fe-f8d2b7b6959f
+[22:16:10] [ERROR] Erro interno: Working outside of application context. This typically means that you attempted to use functionality that needed the current application. To solve this, set up an application context with app.app_context(). See the documentation for more information.
+[22:16:13] [success] Conectado ao stream de logs para job 364089d6-aa1f-4834-b7fe-f8d2b7b6959f
+[22:16:13] [ERROR] Erro interno: Working outside of application context. This typically means that you attempted to use functionality that needed the current application. To solve this, set up an application context with app.app_context(). See the documentation for more information.
+[22:16:16] [success] Conectado ao stream de logs para job 364089d6-aa1f-4834-b7fe-f8d2b7b6959f
+[22:16:16] [ERROR] Erro interno: Working outside of application context. This typically means that you attempted to use functionality that needed the current application. To solve this, set up an application context with app.app_context(). See the documentation for more information.
+[22:16:19] [success] Conectado ao stream de logs para job 364089d6-aa1f-4834-b7fe-f8d2b7b6959f
+[22:16:19] [ERROR] Erro interno: Working outside of application context. This typically means that you attempted to use functionality that needed the current application. To solve this, set up an application context with app.app_context(). See the documentation for more information.
+[22:16:22] [success] Conectado ao stream de logs para job 364089d6-aa1f-4834-b7fe-f8d2b7b6959f
+[22:16:22] [ERROR] Erro interno: Working outside of application context. This typically means that you attempted to use functionality that needed the current application. To solve this, set up an application context with app.app_context(). See the documentation for more information.

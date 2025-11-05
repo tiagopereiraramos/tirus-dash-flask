@@ -32,23 +32,21 @@ def get_api_token() -> str:
         raise
 
 
-def stream_logs_filtrados(job_id: str) -> Generator[str, None, None]:
+def stream_logs_filtrados(job_id: str, api_url: str, token: str) -> Generator[str, None, None]:
     """
     Stream de logs filtrados por job_id da API externa
 
     Args:
         job_id: ID do job para filtrar logs
+        api_url: URL base da API externa
+        token: Token JWT para autenticação
 
     Yields:
         str: Dados de log formatados para SSE
     """
     try:
         # URL do endpoint de logs da API externa
-        api_url = current_app.config.get('API_EXTERNA_URL', 'http://191.252.218.230:8000')
         url = f"{api_url}/events/logs"
-
-        # Obter token JWT global
-        token = get_api_token()
 
         # Headers com autenticação
         headers = {
@@ -114,7 +112,10 @@ def stream_logs_filtrados(job_id: str) -> Generator[str, None, None]:
         yield f"data: {json.dumps(error_data)}\n\n"
 
     except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
         logger.error(f"Erro inesperado no stream de logs: {e}")
+        logger.error(f"Traceback completo:\n{tb}")
         # Enviar mensagem de erro
         error_data = {
             'type': 'error',
@@ -139,6 +140,22 @@ def stream_logs(job_id: str):
     try:
         logger.info(f"Iniciando stream de logs para job_id: {job_id}")
 
+        # IMPORTANTE: Obter configurações ANTES do generator para evitar erro de contexto
+        api_url = current_app.config.get('API_EXTERNA_URL', 'http://191.252.218.230:8000')
+        
+        # Obter token JWT diretamente para evitar erro de contexto
+        # Prioridade: 1) Admin user token, 2) Config token
+        from apps.authentication.models import Users
+        token = None
+        admin_user = Users.query.filter_by(is_admin=True).first()
+        if admin_user and admin_user.api_externa_token:
+            token = admin_user.api_externa_token
+        else:
+            token = current_app.config.get('API_EXTERNA_TOKEN')
+        
+        if not token:
+            raise ValueError("Token JWT não configurado no sistema")
+
         def generate():
             # Enviar evento de conexão
             connection_data = {
@@ -148,8 +165,8 @@ def stream_logs(job_id: str):
             }
             yield f"data: {json.dumps(connection_data)}\n\n"
 
-            # Stream de logs filtrados
-            for log_data in stream_logs_filtrados(job_id):
+            # Stream de logs filtrados (passar api_url e token como parâmetros)
+            for log_data in stream_logs_filtrados(job_id, api_url, token):
                 yield log_data
 
         return Response(
