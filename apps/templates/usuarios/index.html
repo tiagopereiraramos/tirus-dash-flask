@@ -3,23 +3,33 @@
 {% block title %} Usuários {% endblock %}
 
 {% block content %}
-<div class="pcoded-content">
-    <div class="page-header">
-        <div class="page-block">
-            <div class="row align-items-center">
-                <div class="col-md-12">
-                    <div class="page-header-title">
-                        <h5 class="m-b-10">Gerenciamento de Usuários</h5>
+
+<div class="pcoded-main-container">
+    <div class="pcoded-content">
+        <!-- [ breadcrumb ] start -->
+        <div class="page-header">
+            <div class="page-block">
+                <div class="row align-items-center">
+                    <div class="col-md-12">
+                        <div class="page-header-title">
+                            <h5 class="m-b-10">Gerenciamento de Usuários</h5>
+                        </div>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a href="{{ url_for('home_bp.index') }}">
+                                    <i class="feather icon-home"></i>
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item active" aria-current="page">Usuários</li>
+                        </ul>
                     </div>
-                    <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/index"><i class="feather icon-home"></i></a></li>
-                        <li class="breadcrumb-item"><a href="#!">Usuários</a></li>
-                    </ul>                </div>
+                </div>
             </div>
         </div>
-    </div>
-
-    <div class="row">
+        <!-- [ breadcrumb ] end -->
+        
+        <!-- [ Main Content ] start -->
+        <div class="row">
         <div class="col-sm-12">
             <div class="card">
                 <div class="card-header">
@@ -133,6 +143,7 @@
                 </div>
             </div>
         </div>
+        <!-- [ Main Content ] end -->
     </div>
 </div>
 
