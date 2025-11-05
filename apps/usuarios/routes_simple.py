@@ -26,7 +26,7 @@ def index():
     """Lista todos os usuários"""
     if not verificar_permissao_admin():
         flash('Acesso negado. Apenas administradores podem gerenciar usuários.', 'error')
-        return redirect(url_for('home_bp.index'))
+        return redirect(url_for('home.index'))
 
     page = request.args.get('page', 1, type=int)
     per_page = 20
