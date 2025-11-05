@@ -101,12 +101,21 @@
                                     <label class="form-label">Token JWT da API Externa</label>
                                     <textarea class="form-control" 
                                               name="api_externa_token" 
+                                              id="api_externa_token"
                                               rows="3" 
                                               placeholder="Cole aqui o token JWT para acesso à API externa (http://191.252.218.230:8000)">{{ usuario.api_externa_token if usuario and usuario.api_externa_token else '' }}</textarea>
                                     <small class="form-text text-muted">
                                         <i class="feather icon-info"></i> Este token é usado para autenticar requisições à API externa de RPA.
                                         Deixe em branco se não quiser alterar.
                                     </small>
+                                    
+                                    <!-- Botão e feedback de teste do JWT -->
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-sm btn-info" id="btnTestarJWT">
+                                            <i class="feather icon-check-circle"></i> Testar JWT
+                                        </button>
+                                        <div id="jwtFeedback" class="mt-2" style="display: none;"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

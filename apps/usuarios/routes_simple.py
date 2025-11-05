@@ -3,13 +3,14 @@
 Rotas SIMPLIFICADAS para gerenciamento de usuários (CRUD para modelo Users)
 """
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from apps.authentication.util import hash_pass
 
 from apps import db
 from apps.authentication.models import Users
 import logging
+import requests
 
 logger = logging.getLogger(__name__)
 usuarios_bp = Blueprint('usuarios_bp', __name__)
@@ -177,3 +178,61 @@ def excluir(user_id):
         flash('Erro ao excluir usuário. Tente novamente.', 'error')
 
     return redirect(url_for('usuarios_bp.index'))
+
+
+@usuarios_bp.route('/testar-jwt', methods=['POST'])
+@login_required
+def testar_jwt():
+    """Testa se um JWT é válido na API externa"""
+    if not verificar_permissao_admin():
+        return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+    
+    try:
+        data = request.get_json()
+        token = data.get('token', '').strip()
+        
+        if not token:
+            return jsonify({'success': False, 'error': 'Token não fornecido'}), 400
+        
+        # Testar o token na API externa
+        api_url = 'http://191.252.218.230:8000/health'
+        headers = {
+            'Authorization': f'Bearer {token}',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.get(api_url, headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            return jsonify({
+                'success': True,
+                'message': 'Token JWT válido! Conectado à API externa com sucesso.',
+                'api_status': response.json()
+            })
+        elif response.status_code == 401:
+            return jsonify({
+                'success': False,
+                'error': 'Token inválido ou expirado. Verifique se o token está correto.'
+            }), 401
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'Erro na API externa (HTTP {response.status_code})'
+            }), 500
+            
+    except requests.Timeout:
+        return jsonify({
+            'success': False,
+            'error': 'Timeout ao conectar com a API externa. Tente novamente.'
+        }), 504
+    except requests.ConnectionError:
+        return jsonify({
+            'success': False,
+            'error': 'Não foi possível conectar à API externa. Verifique a conexão.'
+        }), 503
+    except Exception as e:
+        logger.error(f"Erro ao testar JWT: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao testar token: {str(e)}'
+        }), 500
