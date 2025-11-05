@@ -68,18 +68,44 @@ Execucao (Execution)
 ### Authentication Strategy
 - **Session-based**: Flask-Login for web UI (`Users` model in `apps/authentication/models.py`)
 - **Token-based**: Custom JWT decorator (`@login_required_api`) for API endpoints
-- **Dual user models**: Legacy `Users` + new `Usuario` (being unified)
+- **User Management**: CRUD completo em `/usuarios` (apenas para administradores)
+  - **Modelo**: `Users` (username, email, password, is_admin, api_externa_token)
+  - **Acesso**: Menu "Usuários" disponível apenas para is_admin=True
+  - **Token da API Externa**: Configurável por usuário no campo `api_externa_token`
 
 ## External Dependencies
 
 ### External RPA API
 - **URL**: `http://191.252.218.230:8000` (configurable via `API_EXTERNA_URL`)
-- **Authentication**: JWT Bearer token (`API_EXTERNA_TOKEN`)
+- **Authentication**: JWT Bearer token (`API_EXTERNA_TOKEN` ou `users.api_externa_token`)
 - **Key Endpoints**:
   - `POST /executar/{operadora}` - Trigger RPA download
   - `GET /jobs/{job_id}` - Poll job status
   - `GET /jobs/{job_id}/logs` - Retrieve execution logs
 - **Integration**: `apps/api_externa/services_externos.py`
+
+**⚠️ IMPORTANTE - Configuração do Token JWT:**
+
+O sistema usa o token JWT para autenticar requisições à API externa. Existem 2 formas de configurá-lo:
+
+1. **Nível Global** (`.env`):
+   ```
+   API_EXTERNA_TOKEN=seu_token_jwt_aqui
+   ```
+
+2. **Nível por Usuário** (recomendado):
+   - Acesse `/usuarios` como administrador
+   - Edite o usuário desejado
+   - Cole o token JWT no campo "Token JWT da API Externa"
+   - O sistema usa automaticamente o token do usuário se disponível
+
+**Erro "Token inválido ou expirado"**: 
+- Verifique se o token está configurado no `.env` OU no cadastro do usuário
+- Solicite um novo token JWT válido ao administrador da API externa
+- O token deve ser um JWT válido (formato: `eyJ...`)
+
+**Para obter um novo token**:
+Contate o administrador da API externa em `http://191.252.218.230:8000` para gerar um novo token JWT de acesso.
 
 ### Database
 - **Development**: SQLite (`apps/db.sqlite3`)
