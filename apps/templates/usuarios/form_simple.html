@@ -109,11 +109,16 @@
                                         Deixe em branco se não quiser alterar.
                                     </small>
                                     
-                                    <!-- Botão e feedback de teste do JWT -->
+                                    <!-- Botões e feedback de teste/obtenção do JWT -->
                                     <div class="mt-2">
                                         <button type="button" class="btn btn-sm btn-info" id="btnTestarJWT">
                                             <i class="feather icon-check-circle"></i> Testar JWT
                                         </button>
+                                        {% if usuario %}
+                                        <button type="button" class="btn btn-sm btn-success" id="btnObterNovoJWT" data-user-id="{{ usuario.id }}">
+                                            <i class="feather icon-download"></i> Obter Novo JWT
+                                        </button>
+                                        {% endif %}
                                         <div id="jwtFeedback" class="mt-2" style="display: none;"></div>
                                     </div>
                                 </div>
@@ -135,5 +140,103 @@
         <!-- [ Main Content ] end -->
     </div>
 </div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btnTestarJWT = document.getElementById('btnTestarJWT');
+    const btnObterNovoJWT = document.getElementById('btnObterNovoJWT');
+    const tokenTextarea = document.getElementById('api_externa_token');
+    const feedbackDiv = document.getElementById('jwtFeedback');
+    
+    // Função para mostrar feedback
+    function mostrarFeedback(mensagem, tipo) {
+        feedbackDiv.style.display = 'block';
+        feedbackDiv.className = `alert alert-${tipo} mt-2`;
+        feedbackDiv.innerHTML = mensagem;
+    }
+    
+    // Testar JWT
+    if (btnTestarJWT) {
+        btnTestarJWT.addEventListener('click', function() {
+            const token = tokenTextarea.value.trim();
+            
+            if (!token) {
+                mostrarFeedback('<i class="feather icon-alert-circle"></i> Por favor, cole um token JWT no campo acima.', 'warning');
+                return;
+            }
+            
+            btnTestarJWT.disabled = true;
+            btnTestarJWT.innerHTML = '<i class="feather icon-loader"></i> Testando...';
+            
+            fetch('/usuarios/testar-jwt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ token: token })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    mostrarFeedback(`<i class="feather icon-check-circle"></i> ${data.message}`, 'success');
+                } else {
+                    mostrarFeedback(`<i class="feather icon-x-circle"></i> ${data.error}`, 'danger');
+                }
+            })
+            .catch(error => {
+                mostrarFeedback(`<i class="feather icon-x-circle"></i> Erro ao testar token: ${error.message}`, 'danger');
+            })
+            .finally(() => {
+                btnTestarJWT.disabled = false;
+                btnTestarJWT.innerHTML = '<i class="feather icon-check-circle"></i> Testar JWT';
+            });
+        });
+    }
+    
+    // Obter novo JWT
+    if (btnObterNovoJWT) {
+        btnObterNovoJWT.addEventListener('click', function() {
+            const userId = this.getAttribute('data-user-id');
+            
+            if (!confirm('Deseja obter um novo token JWT da API externa?\n\nIsso irá substituir o token atual (se existir) e salvar automaticamente no usuário.')) {
+                return;
+            }
+            
+            btnObterNovoJWT.disabled = true;
+            btnObterNovoJWT.innerHTML = '<i class="feather icon-loader"></i> Obtendo...';
+            
+            fetch(`/usuarios/obter-novo-jwt/${userId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Preencher o textarea com o novo token
+                    tokenTextarea.value = data.token;
+                    
+                    mostrarFeedback(
+                        `<i class="feather icon-check-circle"></i> ${data.message}<br>` +
+                        `<small>O token foi salvo automaticamente no banco de dados.</small>`,
+                        'success'
+                    );
+                } else {
+                    mostrarFeedback(`<i class="feather icon-x-circle"></i> ${data.error}`, 'danger');
+                }
+            })
+            .catch(error => {
+                mostrarFeedback(`<i class="feather icon-x-circle"></i> Erro ao obter token: ${error.message}`, 'danger');
+            })
+            .finally(() => {
+                btnObterNovoJWT.disabled = false;
+                btnObterNovoJWT.innerHTML = '<i class="feather icon-download"></i> Obter Novo JWT';
+            });
+        });
+    }
+});
+</script>
 
 {% endblock content %}

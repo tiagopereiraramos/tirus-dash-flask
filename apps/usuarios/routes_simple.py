@@ -236,3 +236,83 @@ def testar_jwt():
             'success': False,
             'error': f'Erro ao testar token: {str(e)}'
         }), 500
+
+
+@usuarios_bp.route('/obter-novo-jwt/<int:user_id>', methods=['POST'])
+@login_required
+def obter_novo_jwt(user_id):
+    """Obtém um novo JWT da API externa e salva no usuário"""
+    if not verificar_permissao_admin():
+        return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+    
+    try:
+        import os
+        
+        # Obter senha da secret
+        refresh_key = os.getenv('BRM_TOKEN_PASSWORD')
+        if not refresh_key:
+            return jsonify({
+                'success': False,
+                'error': 'Senha de autenticação não configurada. Configure BRM_TOKEN_PASSWORD nas Secrets.'
+            }), 500
+        
+        # Chamar API externa para obter novo token
+        api_url = 'http://191.252.218.230:8000/auth/refresh'
+        payload = {
+            'refresh_key': refresh_key
+        }
+        
+        response = requests.post(api_url, json=payload, timeout=15)
+        
+        if response.status_code == 200:
+            result = response.json()
+            novo_token = result.get('token')
+            
+            if not novo_token:
+                return jsonify({
+                    'success': False,
+                    'error': 'API não retornou token JWT'
+                }), 500
+            
+            # Salvar token no usuário
+            usuario = Users.query.get_or_404(user_id)
+            usuario.api_externa_token = novo_token
+            db.session.commit()
+            
+            logger.info(f"Novo JWT obtido e salvo para usuário {usuario.username}")
+            
+            return jsonify({
+                'success': True,
+                'message': f'Novo token JWT obtido com sucesso! Válido por {result.get("expires_in_days", 365)} dias.',
+                'token': novo_token,
+                'expires_in_days': result.get('expires_in_days', 365)
+            })
+        elif response.status_code == 401:
+            return jsonify({
+                'success': False,
+                'error': 'Senha de autenticação incorreta. Verifique BRM_TOKEN_PASSWORD.'
+            }), 401
+        else:
+            error_detail = response.json().get('detail', 'Erro desconhecido') if response.headers.get('content-type', '').startswith('application/json') else response.text
+            return jsonify({
+                'success': False,
+                'error': f'Erro na API externa: {error_detail}'
+            }), 500
+            
+    except requests.Timeout:
+        return jsonify({
+            'success': False,
+            'error': 'Timeout ao conectar com a API externa.'
+        }), 504
+    except requests.ConnectionError:
+        return jsonify({
+            'success': False,
+            'error': 'Não foi possível conectar à API externa.'
+        }), 503
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao obter novo JWT: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao obter novo token: {str(e)}'
+        }), 500
