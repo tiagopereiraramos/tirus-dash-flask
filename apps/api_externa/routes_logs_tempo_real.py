@@ -262,9 +262,9 @@ def atualizar_status_job(job_id: str):
         
         # Adicionar mensagem aos logs
         if mensagem:
-            logs_atuais = execucao.logs or ''
+            logs_atuais = execucao.mensagem_log or ''
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            execucao.logs = f"{logs_atuais}\n[{timestamp}] {mensagem}"
+            execucao.mensagem_log = f"{logs_atuais}\n[{timestamp}] {mensagem}"
         
         # Salvar no banco
         db.session.commit()
