@@ -227,7 +227,8 @@ class APIExternaService:
                 data = response.json()
                 job_response = JobResponse.from_dict(data)
 
-                # Atualizar execução com job_id
+                # Atualizar execução com job_id (campo direto para SSE)
+                execucao.job_id = job_response.job_id
                 execucao.parametros_entrada['job_id'] = job_response.job_id
                 db.session.commit()
 
@@ -305,7 +306,8 @@ class APIExternaService:
                 data = response.json()
                 job_response = JobResponse.from_dict(data)
 
-                # Atualizar execução com job_id
+                # Atualizar execução com job_id (campo direto para SSE)
+                execucao.job_id = job_response.job_id
                 execucao.parametros_entrada['job_id'] = job_response.job_id
                 db.session.commit()
 

@@ -126,6 +126,9 @@ O botão **"Obter Novo JWT (Global)"** conecta na API externa e:
 - **Production**: PostgreSQL (optional, via environment variables)
 - **Migrations**: Flask-Migrate support available
 - **Auto-fallback**: Switches to SQLite if PostgreSQL connection fails
+- **⚡ Recent Changes (Nov 5, 2025)**: 
+  - Campo `job_id` adicionado à tabela `execucoes` para rastreamento SSE
+  - Index criado em `job_id` para performance de filtros
 
 ### Third-party Libraries
 - **Flask-Login** (0.6.3): Session management
@@ -136,9 +139,21 @@ O botão **"Obter Novo JWT (Global)"** conecta na API externa e:
 - **python-dotenv** (1.0.0): Environment configuration
 - **requests**: HTTP client for external API calls
 
-### Server-Sent Events (SSE) - Logs em Tempo Real ✅
+### Server-Sent Events (SSE) - Logs em Tempo Real ✅ **COMPLETAMENTE IMPLEMENTADO**
 
-O sistema possui integração **cirúrgica e COMPLETA** com a API externa para receber logs em tempo real via SSE.
+O sistema possui integração **cirúrgica e COMPLETA** com a API externa para receber logs em tempo real via SSE. Todas as peças (backend, frontend, banco de dados) estão funcionando.
+
+#### ⚠️ IMPORTANTE - Requisitos para SSE Funcionar:
+
+1. **Campo `job_id` no modelo `Execucao`**: ✅ IMPLEMENTADO
+   - Coluna `job_id` adicionada ao banco de dados (VARCHAR(100), nullable, indexed)
+   - O campo é salvo automaticamente ao criar execuções em `apps/api_externa/services.py`
+   - Linhas 234 e 313 de `services.py` salvam o job_id no campo direto da execução
+
+2. **JavaScript no frontend**: ✅ IMPLEMENTADO
+   - Botão "Ver Logs" aparece automaticamente em execuções com job_id e status EXECUTANDO
+   - SSE auto-conecta ao carregar página com execução ativa (linha 817-821 de detalhes.html)
+   - Painel de logs aparece/desaparece automaticamente conforme necessário
 
 #### Backend + Frontend Implementados:
 

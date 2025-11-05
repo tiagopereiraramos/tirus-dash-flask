@@ -75,6 +75,14 @@ class Execucao(BaseModel):
         comment="Nome da classe RPA que foi utilizada"
     )
 
+    # ID do job na API externa (para SSE e rastreamento)
+    job_id = Column(
+        String(100),
+        nullable=True,
+        index=True,
+        comment="ID do job na API externa para rastreamento via SSE"
+    )
+
     # Dados de entrada e saída (JSON)
     parametros_entrada = Column(
         JSON,
