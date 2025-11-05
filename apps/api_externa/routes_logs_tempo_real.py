@@ -73,23 +73,27 @@ def stream_logs_filtrados(job_id: str, api_url: str, token: str) -> Generator[st
                         json_data = line[6:]  # Remove 'data: '
                         data = json.loads(json_data)
 
-                        # Filtrar logs por job_id
+                        # Filtrar RIGOROSAMENTE por job_id
                         log_job_id = data.get('job_id')
                         
-                        # Só processar logs do job atual (ou UNKNOWN/vazio)
-                        if (data.get('type') == 'log' and
-                            (log_job_id == job_id or
-                             log_job_id == 'UNKNOWN' or
-                             not log_job_id)):
+                        # CRÍTICO: Só aceitar logs do job EXATO solicitado
+                        # Logs históricos/UNKNOWN são DESCARTADOS para evitar poluição
+                        if data.get('type') == 'log' and log_job_id == job_id:
+                            
+                            # Garantir timestamp válido (fallback para agora se vazio)
+                            from datetime import datetime
+                            timestamp = data.get('timestamp')
+                            if not timestamp or timestamp == '':
+                                timestamp = datetime.utcnow().isoformat() + 'Z'
 
-                            # Formatar para SSE
+                            # Formatar para SSE (NÃO reescrever job_id!)
                             formatted_data = {
                                 'type': data.get('type', 'log'),
                                 'level': data.get('level', 'INFO'),
                                 'message': data.get('message', ''),
                                 'operadora': data.get('operadora', 'UNKNOWN'),
-                                'job_id': job_id,
-                                'timestamp': data.get('timestamp', ''),
+                                'job_id': log_job_id,  # Usar job_id ORIGINAL, não forçar
+                                'timestamp': timestamp,
                                 'service': data.get('service', 'rpa-api'),
                                 'logger': data.get('logger', 'app.main')
                             }
