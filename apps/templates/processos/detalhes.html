@@ -870,6 +870,22 @@ function iniciarLogsTempoReal(jobId) {
             } else if (log.type === 'error') {
                 adicionarLogAoContainer(log.message, 'ERROR', 'error');
                 atualizarStatusConexao('Erro', 'danger');
+            } else if (log.type === 'job_completed') {
+                // Job terminou com sucesso
+                adicionarLogAoContainer('✅ ' + log.message, 'INFO', 'success');
+                atualizarStatusExecucao(log.job_id, 'COMPLETED', log.message);
+                setTimeout(() => {
+                    pararLogsTempoReal();
+                    location.reload();
+                }, 2000);
+            } else if (log.type === 'job_failed') {
+                // Job falhou
+                adicionarLogAoContainer('❌ ' + log.message, 'ERROR', 'error');
+                atualizarStatusExecucao(log.job_id, 'FAILED', log.message);
+                setTimeout(() => {
+                    pararLogsTempoReal();
+                    location.reload();
+                }, 2000);
             }
         } catch (e) {
             console.error('Erro ao processar log:', e);
@@ -969,6 +985,39 @@ function atualizarStatusConexao(texto, tipo) {
     else if (tipo === 'warning') icone = 'alert-circle';
     
     statusBadge.innerHTML = '<i class="feather icon-' + icone + '"></i> ' + texto;
+}
+
+// ============= ATUALIZAÇÃO DE STATUS DE EXECUÇÃO =============
+
+function atualizarStatusExecucao(jobId, status, mensagem) {
+    console.log('Atualizando status do job:', jobId, 'para', status);
+    
+    fetch('/api/v2/logs-tempo-real/atualizar-status/' + jobId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            status: status,
+            mensagem: mensagem
+        })
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            console.log('Status atualizado com sucesso:', data);
+            adicionarLogAoContainer('✅ Status atualizado: ' + data.novo_status, 'INFO', 'success');
+        } else {
+            console.error('Erro ao atualizar status:', data.message);
+            adicionarLogAoContainer('⚠️ Falha ao atualizar status: ' + data.message, 'WARNING', 'warning');
+        }
+    })
+    .catch(function(error) {
+        console.error('Erro na requisição de atualização:', error);
+        adicionarLogAoContainer('❌ Erro ao comunicar com servidor', 'ERROR', 'error');
+    });
 }
 
 // ============= ATUALIZAÇÃO AUTOMÁTICA DE EXECUÇÕES =============

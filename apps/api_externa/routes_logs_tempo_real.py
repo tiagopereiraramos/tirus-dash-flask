@@ -91,6 +91,22 @@ def stream_logs_filtrados(job_id: str, api_url: str, token: str) -> Generator[st
                                 'logger': data.get('logger', 'app.main')
                             }
 
+                            # Detectar conclusão do job
+                            message = data.get('message', '').lower()
+                            level = data.get('level', 'INFO')
+                            
+                            if level == 'WARN' and 'concluído' in message and 'deve ser atualizado' in message:
+                                # Job terminou - extrair status
+                                if 'completed' in message.lower():
+                                    formatted_data['job_status'] = 'COMPLETED'
+                                    formatted_data['type'] = 'job_completed'
+                                elif 'failed' in message.lower() or 'erro' in message:
+                                    formatted_data['job_status'] = 'FAILED'
+                                    formatted_data['type'] = 'job_failed'
+                                else:
+                                    formatted_data['job_status'] = 'COMPLETED'
+                                    formatted_data['type'] = 'job_completed'
+
                             # Enviar dados formatados
                             yield f"data: {json.dumps(formatted_data)}\n\n"
 
@@ -187,6 +203,84 @@ def stream_logs(job_id: str):
             mimetype='text/event-stream',
             status=500
         )
+
+
+@api_logs_tempo_real_bp.route('/atualizar-status/<job_id>', methods=['POST'])
+@login_required
+def atualizar_status_job(job_id: str):
+    """
+    Atualiza o status de uma execução quando o job termina
+    
+    Args:
+        job_id: ID do job que terminou
+        
+    Expected JSON body:
+        {
+            "status": "COMPLETED" ou "FAILED",
+            "mensagem": "Mensagem opcional"
+        }
+    
+    Returns:
+        JSON: Resultado da atualização
+    """
+    from flask import request, jsonify
+    from apps.models.execucao import Execucao, StatusExecucao
+    from apps import db
+    from datetime import datetime
+    
+    try:
+        # Obter dados do request
+        data = request.get_json() or {}
+        novo_status = data.get('status', 'COMPLETED')
+        mensagem = data.get('mensagem', '')
+        
+        # Buscar execução pelo job_id
+        execucao = Execucao.query.filter_by(job_id=job_id).first()
+        
+        if not execucao:
+            logger.warning(f"Execução não encontrada para job_id: {job_id}")
+            return jsonify({
+                'success': False,
+                'message': f'Execução não encontrada para job_id: {job_id}'
+            }), 404
+        
+        # Atualizar status
+        if novo_status == 'COMPLETED':
+            execucao.status_execucao = StatusExecucao.CONCLUIDO.value
+            if not mensagem:
+                mensagem = 'Job concluído com sucesso'
+        elif novo_status == 'FAILED':
+            execucao.status_execucao = StatusExecucao.FALHOU.value
+            if not mensagem:
+                mensagem = 'Job falhou'
+        else:
+            execucao.status_execucao = novo_status
+        
+        # Adicionar mensagem aos logs
+        if mensagem:
+            logs_atuais = execucao.logs or ''
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            execucao.logs = f"{logs_atuais}\n[{timestamp}] {mensagem}"
+        
+        # Salvar no banco
+        db.session.commit()
+        
+        logger.info(f"Status da execução {execucao.id} atualizado para {novo_status} (job_id: {job_id})")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Status atualizado com sucesso',
+            'execucao_id': str(execucao.id),
+            'novo_status': execucao.status_execucao
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao atualizar status do job {job_id}: {e}")
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao atualizar status: {str(e)}'
+        }), 500
 
 
 @api_logs_tempo_real_bp.route('/teste-conexao')
