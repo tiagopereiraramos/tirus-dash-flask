@@ -25,24 +25,32 @@
                 </li>
                 <li data-username="Operadoras" 
                     class="nav-item {% if 'operadoras' in segment %} active {% endif %}">
-                            <a href="{{ url_for('operadoras_bp.index') }}" class="nav-link">
-                                <span class="pcoded-micon"><i class="feather icon-wifi"></i></span>
-                                <span class="pcoded-mtext">Operadoras</span>
-                            </a>
-                        </li>
-                        <li data-username="Clientes" class="nav-item {% if 'clientes' in segment %} active {% endif %}">
-                            <a href="{{ url_for('clientes_bp.index') }}" class="nav-link">
-                                <span class="pcoded-micon"><i class="feather icon-users"></i></span>
-                                <span class="pcoded-mtext">Clientes</span>
-                            </a>
-                        </li>
-                        <li data-username="Processos" 
-                            class="nav-item {% if 'processos' in segment %} active {% endif %}">
-                            <a href="{{ url_for('processos_bp.index') }}" class="nav-link">
-                                <span class="pcoded-micon"><i class="feather icon-file-text"></i></span>
-                                <span class="pcoded-mtext">Processos</span>
-                            </a>
-                        </li>
+                    <a href="{{ url_for('operadoras_bp.index') }}" class="nav-link">
+                        <span class="pcoded-micon"><i class="feather icon-wifi"></i></span>
+                        <span class="pcoded-mtext">Operadoras</span>
+                    </a>
+                </li>
+                <li data-username="Clientes" 
+                    class="nav-item {% if 'clientes' in segment %} active {% endif %}">
+                    <a href="{{ url_for('clientes_bp.index') }}" class="nav-link">
+                        <span class="pcoded-micon"><i class="feather icon-users"></i></span>
+                        <span class="pcoded-mtext">Clientes</span>
+                    </a>
+                </li>
+                <li data-username="Processos" 
+                    class="nav-item {% if 'processos' in segment %} active {% endif %}">
+                    <a href="{{ url_for('processos_bp.index') }}" class="nav-link">
+                        <span class="pcoded-micon"><i class="feather icon-file-text"></i></span>
+                        <span class="pcoded-mtext">Processos</span>
+                    </a>
+                </li>
+                <li data-username="Agendamentos" 
+                    class="nav-item {% if 'agendamentos' in segment %} active {% endif %}">
+                    <a href="#" class="nav-link">
+                        <span class="pcoded-micon"><i class="feather icon-calendar"></i></span>
+                        <span class="pcoded-mtext">Agendamentos</span>
+                    </a>
+                </li>
                 <li data-username="Execucoes" 
                     class="nav-item {% if 'execucoes' in segment %} active {% endif %}">
                     <a href="#" class="nav-link">
@@ -50,24 +58,17 @@
                         <span class="pcoded-mtext">Execuções</span>
                     </a>
                 </li>
-                <li data-username="Profile Page" 
-                    class="nav-item {% if 'profile' in segment %} active {% endif %}">
-                    <a href="/profile.html" class="nav-link">
-                        <span class="pcoded-micon"><i class="feather icon-user"></i></span>
-                            <span class="pcoded-mtext">Profile Page</span></a>
-                </li>                
-                <!-- Menu items não utilizados comentados para apresentação -->
-                <!--
+                
                 <li class="nav-item pcoded-menu-caption">
-                    <label>UI Element</label>
+                    <label>Configurações</label>
                 </li>
-                -->
-
-                <li data-username="Profile Page" 
+                
+                <li data-username="Perfil" 
                     class="nav-item {% if 'profile' in segment %} active {% endif %}">
                     <a href="/profile.html" class="nav-link">
                         <span class="pcoded-micon"><i class="feather icon-user"></i></span>
-                            <span class="pcoded-mtext">Perfil</span></a>
+                        <span class="pcoded-mtext">Perfil</span>
+                    </a>
                 </li>
 
                 <li data-username="Logout" class="nav-item">

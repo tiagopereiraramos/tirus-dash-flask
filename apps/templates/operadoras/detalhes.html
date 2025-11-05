@@ -100,17 +100,6 @@
                                     <label class="form-label text-muted">Última Atualização</label>
                                     <p class="form-control-static">{{ operadora.data_atualizacao.strftime('%d/%m/%Y às %H:%M') }}</p>
                                 </div>
-                                
-                                {% if operadora.url_portal %}
-                                    <div class="form-group">
-                                        <label class="form-label text-muted">Portal da Operadora</label>
-                                        <p class="form-control-static">
-                                            <a href="{{ operadora.url_portal }}" target="_blank" class="btn btn-outline-primary btn-sm">
-                                                <i class="feather icon-external-link"></i> Acessar Portal
-                                            </a>
-                                        </p>
-                                    </div>
-                                {% endif %}
                             </div>
                         </div>
                         
