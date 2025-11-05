@@ -1,0 +1,30 @@
+[22:31:47] [success] Conectado ao stream de logs para job 4b22b358-ecd4-468c-92e7-83d3b3595e5a
+[Invalid Date] [INFO] AsyncJobManager iniciado
+[Invalid Date] [INFO] Worker assíncrono iniciado
+[Invalid Date] [INFO] Job 9615b91e-d523-4534-8eaa-686986fe0ea7 criado para operadora DIGITALNET
+[Invalid Date] [WARN] Job 9615b91e-d523-4534-8eaa-686986fe0ea7 concluído. Processo e82c8160-0865-4b99-8f59-92caa08190bb deve ser atualizado manualmente para status: COMPLETED. URL: http://localhost:5050/processos/visualizar/e82c8160-0865-4b99-8f59-92caa08190bb
+[Invalid Date] [INFO] Job 7dd316cf-6e87-4434-8af4-9cf0ebcba4bf criado para operadora DIGITALNET
+[Invalid Date] [WARN] Job 7dd316cf-6e87-4434-8af4-9cf0ebcba4bf concluído. Processo e82c8160-0865-4b99-8f59-92caa08190bb deve ser atualizado manualmente para status: COMPLETED. URL: http://localhost:5050/processos/visualizar/e82c8160-0865-4b99-8f59-92caa08190bb
+[Invalid Date] [INFO] Job 5b6c96f8-19ec-4c44-bef5-a8bfea7339ed criado para operadora DIGITALNET
+[Invalid Date] [WARN] Job 5b6c96f8-19ec-4c44-bef5-a8bfea7339ed concluído. Processo e82c8160-0865-4b99-8f59-92caa08190bb deve ser atualizado manualmente para status: COMPLETED. URL: http://localhost:5050/processos/visualizar/e82c8160-0865-4b99-8f59-92caa08190bb
+[Invalid Date] [INFO] Job 67370729-3add-4149-968f-560ff4cd983b criado para operadora DIGITALNET
+[Invalid Date] [WARN] Job 67370729-3add-4149-968f-560ff4cd983b concluído. Processo e82c8160-0865-4b99-8f59-92caa08190bb deve ser atualizado manualmente para status: COMPLETED. URL: http://localhost:5050/processos/visualizar/e82c8160-0865-4b99-8f59-92caa08190bb
+[Invalid Date] [INFO] Job bcc4f1ef-c716-4d88-b169-6f2cb9a35acc criado para operadora OI
+[Invalid Date] [WARN] Job bcc4f1ef-c716-4d88-b169-6f2cb9a35acc concluído. Processo e11ea232-92ad-400a-8368-f8163293f007 deve ser atualizado manualmente para status: COMPLETED. URL: http://localhost:5050/processos/visualizar/e11ea232-92ad-400a-8368-f8163293f007
+[Invalid Date] [INFO] Job 4b22b358-ecd4-468c-92e7-83d3b3595e5a criado para operadora OI
+[Invalid Date] [INFO] [OI] Starting execution
+[Invalid Date] [INFO] [OI] Iniciando execução
+[22:30:33] [INFO] [OI] Iniciando execução
+[Invalid Date] [INFO] [OI] Abrindo URL de login
+[22:30:33] [INFO] [OI] Abrindo URL de login
+[Invalid Date] [INFO] [OI] Inserindo credenciais
+[22:30:42] [INFO] [OI] Inserindo credenciais
+[Invalid Date] [INFO] [OI] Login realizado, aguardando carregamento
+[22:30:48] [INFO] [OI] Login realizado, aguardando carregamento
+[Invalid Date] [INFO] [OI] Nenhuma fatura correspondente foi encontrada
+[22:31:23] [INFO] [OI] Nenhuma fatura correspondente foi encontrada
+[Invalid Date] [INFO] [OI] Fechando o navegador
+[22:31:24] [INFO] [OI] Fechando o navegador
+[Invalid Date] [INFO] [OI] Process completed successfully in 51.25 seconds.
+[Invalid Date] [INFO] [OI] Ending execution
+[Invalid Date] [WARN] Job 4b22b358-ecd4-468c-92e7-83d3b3595e5a concluído. Processo ef8a7579-3e8b-45f9-960e-c8027d06aa08 deve ser atualizado manualmente para status: COMPLETED. URL: http://localhost:5050/processos/visualizar/ef8a7579-3e8b-45f9-960e-c8027d06aa08
