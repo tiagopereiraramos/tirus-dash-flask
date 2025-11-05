@@ -78,6 +78,19 @@ def create_app(config):
         except Exception:
             return ""
 
+    # Context processor para injetar variável segment em todos os templates
+    @app.context_processor
+    def inject_segment():
+        from flask import request
+        try:
+            # Extrai o primeiro segmento após a raiz (ex: /operadoras/123 -> 'operadoras')
+            segment = request.path.split('/')[1] if len(request.path.split('/')) > 1 else 'index'
+            if not segment:
+                segment = 'index'
+            return dict(segment=segment)
+        except Exception:
+            return dict(segment='index')
+
     # Rota raiz que redireciona para o dashboard
     @app.route('/')
     def root():
