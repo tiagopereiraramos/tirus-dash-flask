@@ -136,11 +136,13 @@ O botão **"Obter Novo JWT (Global)"** conecta na API externa e:
 - **python-dotenv** (1.0.0): Environment configuration
 - **requests**: HTTP client for external API calls
 
-### Server-Sent Events (SSE) - Logs em Tempo Real
+### Server-Sent Events (SSE) - Logs em Tempo Real ✅
 
-O sistema possui integração **cirúrgica** com a API externa para receber logs em tempo real via SSE.
+O sistema possui integração **cirúrgica e COMPLETA** com a API externa para receber logs em tempo real via SSE.
 
-#### Endpoints Disponíveis:
+#### Backend + Frontend Implementados:
+
+**Backend Endpoints:**
 
 1. **`GET /api/v2/logs-tempo-real/stream/<job_id>`**
    - Stream de logs filtrados por ID do job
@@ -151,6 +153,25 @@ O sistema possui integração **cirúrgica** com a API externa para receber logs
 2. **`GET /api/v2/logs-tempo-real/teste-conexao`**
    - Testa conexão com a API externa de logs
    - Retorna status da conexão e validade do token
+
+**Frontend Implementado:**
+
+1. **Página de Detalhes do Processo** (`/processos/<id>`)
+   - ✅ Painel de logs em tempo real (exibe/esconde automaticamente)
+   - ✅ Botão "Ver Logs" nas execuções em andamento
+   - ✅ Auto-conexão SSE quando há job rodando
+   - ✅ Indicador de status de conexão (Conectado/Reconectando/Erro)
+   - ✅ Logs coloridos por nível (INFO/WARNING/ERROR)
+   - ✅ Auto-scroll para novos logs
+   - ✅ Atualização automática da tabela de execuções (5s)
+   - ✅ Botão "Parar" para encerrar stream
+
+**Recursos:**
+- **Monitoramento em Tempo Real**: Logs aparecem instantaneamente conforme o RPA executa
+- **Filtro Automático**: Apenas logs do job específico são exibidos
+- **Reconexão Automática**: Browser reconecta automaticamente se perder conexão
+- **Status Visual**: Badge mostra status da conexão (verde=conectado, amarelo=reconectando)
+- **Animação de Loading**: Ícone girando indica execução em andamento
 
 #### Como Consumir (Frontend):
 

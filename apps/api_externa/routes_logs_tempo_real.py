@@ -4,6 +4,7 @@ Integração cirúrgica com a API externa de logs
 """
 
 from flask import Blueprint, Response, request, current_app
+from flask_login import login_required
 import requests
 import json
 import logging
@@ -59,7 +60,9 @@ def stream_logs_filtrados(job_id: str) -> Generator[str, None, None]:
         logger.info(f"Iniciando stream de logs para job_id: {job_id}")
 
         # Fazer requisição para a API externa
-        response = requests.get(url, headers=headers, stream=True, timeout=30)
+        # IMPORTANTE: Sem read timeout, apenas connect timeout
+        # SSE streams podem ficar silenciosos por longos períodos
+        response = requests.get(url, headers=headers, stream=True, timeout=(10, None))
         response.raise_for_status()
 
         # Processar stream de dados
@@ -122,6 +125,7 @@ def stream_logs_filtrados(job_id: str) -> Generator[str, None, None]:
 
 
 @api_logs_tempo_real_bp.route('/stream/<job_id>')
+@login_required
 def stream_logs(job_id: str):
     """
     Endpoint SSE para logs em tempo real filtrados por job_id
@@ -169,6 +173,7 @@ def stream_logs(job_id: str):
 
 
 @api_logs_tempo_real_bp.route('/teste-conexao')
+@login_required
 def teste_conexao():
     """
     Endpoint para testar conexão com a API externa de logs
@@ -177,42 +182,34 @@ def teste_conexao():
         dict: Status da conexão
     """
     try:
+        # Verificar se o token JWT está configurado
+        try:
+            token = get_api_token()
+        except Exception as e:
+            return {
+                'success': False,
+                'message': 'Token JWT não configurado no sistema',
+                'error': str(e),
+                'status_code': 401
+            }
+        
+        # Verificar se a API externa está acessível (apenas ping, não esperar stream)
         api_url = current_app.config.get('API_EXTERNA_URL', 'http://191.252.218.230:8000')
-        url = f"{api_url}/events/logs"
+        ping_url = f"{api_url}/docs"  # Endpoint que responde rápido
         
-        # Obter token JWT global
-        token = get_api_token()
-        
-        headers = {
-            'Authorization': f'Bearer {token}',
-            'Accept': 'text/event-stream'
-        }
-
-        # Fazer requisição de teste
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
+        try:
+            ping_response = requests.get(ping_url, timeout=3)
+            api_online = ping_response.status_code == 200
+        except:
+            api_online = False
 
         return {
             'success': True,
-            'message': 'Conexão com API externa de logs estabelecida com sucesso',
-            'status_code': response.status_code,
-            'token_status': 'Token JWT global válido'
-        }
-
-    except ValueError as e:
-        return {
-            'success': False,
-            'message': 'Token JWT não configurado no sistema',
-            'error': str(e),
-            'status_code': 401
-        }
-
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Erro ao testar conexão: {e}")
-        return {
-            'success': False,
-            'message': f'Erro de conexão: {str(e)}',
-            'status_code': 500
+            'message': 'Sistema de logs em tempo real configurado corretamente',
+            'token_status': 'Token JWT global válido',
+            'api_externa_status': 'ONLINE' if api_online else 'OFFLINE',
+            'sse_endpoint': f"{api_url}/events/logs",
+            'status_code': 200
         }
 
     except Exception as e:

@@ -262,15 +262,51 @@
                                         </div>
                                     </div>
 
+                                    <!-- Logs em Tempo Real -->
+                                    <div class="card" id="logsTempoRealCard" style="display: none;">
+                                        <div class="card-header bg-primary text-white">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h5 class="mb-0">
+                                                    <i class="feather icon-activity mr-2"></i>
+                                                    Logs em Tempo Real
+                                                </h5>
+                                                <div>
+                                                    <span class="badge badge-light" id="statusConexaoSSE">
+                                                        <i class="feather icon-wifi"></i> Conectando...
+                                                    </span>
+                                                    <button class="btn btn-sm btn-light ml-2" onclick="pararLogsTempoReal()">
+                                                        <i class="feather icon-x"></i> Parar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-body p-0">
+                                            <div id="logContainer" style="font-family: 'Courier New', monospace; background: #1e1e1e; color: #dcdcdc; padding: 15px; height: 400px; overflow-y: auto; font-size: 13px;">
+                                                <div class="text-muted">Aguardando logs...</div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <small class="text-muted">
+                                                <i class="feather icon-info"></i>
+                                                Logs da API externa em tempo real via Server-Sent Events
+                                            </small>
+                                        </div>
+                                    </div>
+
                                     <!-- Histórico de Execuções -->
                                     <div class="card">
                                         <div class="card-header">
-                                            <h5>Histórico de Execuções</h5>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h5>Histórico de Execuções</h5>
+                                                <button class="btn btn-sm btn-outline-primary" onclick="atualizarExecucoes()">
+                                                    <i class="feather icon-refresh-cw"></i> Atualizar
+                                                </button>
+                                            </div>
                                         </div>
                                         <div class="card-body">
                                             {% if execucoes %}
                                             <div class="table-responsive">
-                                                <table class="table table-hover">
+                                                <table class="table table-hover" id="tabelaExecucoes">
                                                     <thead>
                                                         <tr>
                                                             <th>Tipo</th>
@@ -278,11 +314,12 @@
                                                             <th>Data/Hora</th>
                                                             <th>Duração</th>
                                                             <th>Mensagem</th>
+                                                            <th>Ações</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         {% for execucao in execucoes %}
-                                                        <tr>
+                                                        <tr data-execucao-id="{{ execucao.id }}">
                                                             <td>
                                                                 <span class="badge badge-light-info">
                                                                     {{ execucao.tipo_execucao.replace('_', ' ').title() }}
@@ -294,7 +331,10 @@
                                                                 {% elif execucao.status_execucao == 'FALHOU' %}
                                                                     <span class="badge badge-danger">Falhou</span>
                                                                 {% elif execucao.status_execucao == 'EXECUTANDO' %}
-                                                                    <span class="badge badge-warning">Executando</span>
+                                                                    <span class="badge badge-warning">
+                                                                        <i class="feather icon-loader spin-icon"></i>
+                                                                        Executando
+                                                                    </span>
                                                                 {% else %}
                                                                     <span class="badge badge-secondary">{{ execucao.status_execucao }}</span>
                                                                 {% endif %}
@@ -307,7 +347,9 @@
                                                                     {% set duracao = execucao.data_fim - execucao.data_inicio %}
                                                                     <small>{{ duracao.total_seconds()|int }}s</small>
                                                                 {% else %}
-                                                                    <small class="text-muted">-</small>
+                                                                    <small class="text-muted">
+                                                                        <i class="feather icon-clock"></i> Em andamento
+                                                                    </small>
                                                                 {% endif %}
                                                             </td>
                                                             <td>
@@ -315,6 +357,13 @@
                                                                     <small>{{ execucao.mensagem_log[:50] }}{% if execucao.mensagem_log|length > 50 %}...{% endif %}</small>
                                                                 {% else %}
                                                                     <small class="text-muted">-</small>
+                                                                {% endif %}
+                                                            </td>
+                                                            <td>
+                                                                {% if execucao.job_id and execucao.status_execucao == 'EXECUTANDO' %}
+                                                                <button class="btn btn-xs btn-primary" onclick="iniciarLogsTempoReal('{{ execucao.job_id }}')">
+                                                                    <i class="feather icon-eye"></i> Ver Logs
+                                                                </button>
                                                                 {% endif %}
                                                             </td>
                                                         </tr>
@@ -762,6 +811,225 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+    
+    // Auto-iniciar logs se houver execução em andamento
+    {% for execucao in execucoes %}
+    {% if execucao.status_execucao == 'EXECUTANDO' and execucao.job_id %}
+    setTimeout(function() {
+        iniciarLogsTempoReal('{{ execucao.job_id }}');
+    }, 1000);
+    {% endif %}
+    {% endfor %}
 });
+
+// ============= SISTEMA DE LOGS EM TEMPO REAL (SSE) =============
+
+let eventSourceGlobal = null;
+let jobIdAtual = null;
+
+function iniciarLogsTempoReal(jobId) {
+    // Parar conexão anterior se existir
+    pararLogsTempoReal();
+    
+    jobIdAtual = jobId;
+    
+    // Mostrar card de logs
+    const logsCard = document.getElementById('logsTempoRealCard');
+    if (logsCard) {
+        logsCard.style.display = 'block';
+        logsCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
+    // Limpar container de logs
+    const logContainer = document.getElementById('logContainer');
+    if (logContainer) {
+        logContainer.innerHTML = '<div class="text-success mb-2"><i class="feather icon-wifi"></i> Conectando ao stream de logs...</div>';
+    }
+    
+    // Atualizar status
+    atualizarStatusConexao('Conectando...', 'warning');
+    
+    // Criar conexão SSE
+    const url = '/api/v2/logs-tempo-real/stream/' + jobId;
+    console.log('Iniciando SSE para job:', jobId, '- URL:', url);
+    
+    eventSourceGlobal = new EventSource(url);
+    
+    // Evento: Mensagem recebida
+    eventSourceGlobal.onmessage = function(event) {
+        try {
+            const log = JSON.parse(event.data);
+            console.log('Log recebido:', log);
+            
+            // Processar diferentes tipos de eventos
+            if (log.type === 'connection') {
+                adicionarLogAoContainer(log.message, 'success', 'info');
+                atualizarStatusConexao('Conectado', 'success');
+            } else if (log.type === 'log') {
+                adicionarLogAoContainer(log.message, log.level, 'log', log);
+            } else if (log.type === 'error') {
+                adicionarLogAoContainer(log.message, 'ERROR', 'error');
+                atualizarStatusConexao('Erro', 'danger');
+            }
+        } catch (e) {
+            console.error('Erro ao processar log:', e);
+        }
+    };
+    
+    // Evento: Erro de conexão
+    eventSourceGlobal.onerror = function(event) {
+        console.error('Erro no SSE:', event);
+        atualizarStatusConexao('Reconectando...', 'warning');
+        
+        if (eventSourceGlobal.readyState === EventSource.CLOSED) {
+            adicionarLogAoContainer('⚠️ Conexão encerrada. Reconectando...', 'WARNING', 'warning');
+        }
+    };
+    
+    // Evento: Conexão aberta
+    eventSourceGlobal.onopen = function() {
+        console.log('SSE: Conexão estabelecida');
+        atualizarStatusConexao('Conectado', 'success');
+    };
+    
+    // Atualizar execuções periodicamente
+    iniciarAtualizacaoAutomatica();
+}
+
+function pararLogsTempoReal() {
+    if (eventSourceGlobal) {
+        eventSourceGlobal.close();
+        eventSourceGlobal = null;
+        console.log('SSE: Conexão encerrada');
+    }
+    
+    atualizarStatusConexao('Desconectado', 'secondary');
+    
+    // Esconder card de logs
+    const logsCard = document.getElementById('logsTempoRealCard');
+    if (logsCard) {
+        logsCard.style.display = 'none';
+    }
+    
+    pararAtualizacaoAutomatica();
+}
+
+function adicionarLogAoContainer(mensagem, nivel, tipo, dadosCompletos) {
+    const logContainer = document.getElementById('logContainer');
+    if (!logContainer) return;
+    
+    // Remover mensagem inicial
+    if (logContainer.querySelector('.text-muted')) {
+        logContainer.innerHTML = '';
+    }
+    
+    const logEntry = document.createElement('div');
+    logEntry.style.marginBottom = '8px';
+    logEntry.style.paddingLeft = '10px';
+    logEntry.style.borderLeft = '3px solid';
+    
+    // Cores por nível de log
+    let cor = '#4CAF50'; // INFO (verde)
+    if (nivel === 'ERROR' || tipo === 'error') cor = '#f44336'; // vermelho
+    else if (nivel === 'WARNING' || nivel === 'WARN') cor = '#ff9800'; // laranja
+    else if (nivel === 'DEBUG') cor = '#2196F3'; // azul
+    else if (tipo === 'success') cor = '#00bcd4'; // ciano
+    
+    logEntry.style.borderLeftColor = cor;
+    
+    // Formatar timestamp
+    const timestamp = dadosCompletos && dadosCompletos.timestamp 
+        ? new Date(dadosCompletos.timestamp).toLocaleTimeString('pt-BR')
+        : new Date().toLocaleTimeString('pt-BR');
+    
+    // Formatar operadora se disponível
+    const operadora = dadosCompletos && dadosCompletos.operadora && dadosCompletos.operadora !== 'UNKNOWN'
+        ? ` [${dadosCompletos.operadora}]`
+        : '';
+    
+    logEntry.innerHTML = `
+        <small style="color: #888;">[${timestamp}]</small>
+        <strong style="color: ${cor};">[${nivel}]</strong>${operadora}
+        <span>${mensagem}</span>
+    `;
+    
+    logContainer.appendChild(logEntry);
+    logContainer.scrollTop = logContainer.scrollHeight;
+}
+
+function atualizarStatusConexao(texto, tipo) {
+    const statusBadge = document.getElementById('statusConexaoSSE');
+    if (!statusBadge) return;
+    
+    statusBadge.className = 'badge badge-' + tipo;
+    
+    let icone = 'wifi';
+    if (tipo === 'success') icone = 'check-circle';
+    else if (tipo === 'danger') icone = 'x-circle';
+    else if (tipo === 'warning') icone = 'alert-circle';
+    
+    statusBadge.innerHTML = '<i class="feather icon-' + icone + '"></i> ' + texto;
+}
+
+// ============= ATUALIZAÇÃO AUTOMÁTICA DE EXECUÇÕES =============
+
+let intervaloAtualizacao = null;
+
+function iniciarAtualizacaoAutomatica() {
+    pararAtualizacaoAutomatica();
+    
+    // Atualizar a cada 5 segundos
+    intervaloAtualizacao = setInterval(function() {
+        atualizarExecucoes();
+    }, 5000);
+}
+
+function pararAtualizacaoAutomatica() {
+    if (intervaloAtualizacao) {
+        clearInterval(intervaloAtualizacao);
+        intervaloAtualizacao = null;
+    }
+}
+
+function atualizarExecucoes() {
+    // Recarregar apenas a tabela de execuções via AJAX
+    fetch(window.location.href, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(function(response) {
+        return response.text();
+    })
+    .then(function(html) {
+        // Extrair apenas a tabela de execuções do HTML
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const novaTabela = doc.querySelector('#tabelaExecucoes tbody');
+        const tabelaAtual = document.querySelector('#tabelaExecucoes tbody');
+        
+        if (novaTabela && tabelaAtual) {
+            tabelaAtual.innerHTML = novaTabela.innerHTML;
+            console.log('Tabela de execuções atualizada');
+        }
+    })
+    .catch(function(error) {
+        console.error('Erro ao atualizar execuções:', error);
+    });
+}
+
+// Adicionar CSS para animação de spin
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .spin-icon {
+        animation: spin 1s linear infinite;
+        display: inline-block;
+    }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %}
