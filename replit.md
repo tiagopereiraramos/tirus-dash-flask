@@ -84,28 +84,42 @@ Execucao (Execution)
   - `GET /jobs/{job_id}/logs` - Retrieve execution logs
 - **Integration**: `apps/api_externa/services_externos.py`
 
-**⚠️ IMPORTANTE - Configuração do Token JWT:**
+**⚠️ IMPORTANTE - Configuração do Token JWT (Global):**
 
-O sistema usa o token JWT para autenticar requisições à API externa. Existem 2 formas de configurá-lo:
+O sistema usa um **token JWT GLOBAL** para autenticar todas as requisições à API externa. Este token é usado por **todos os usuários do sistema**.
 
-1. **Nível Global** (`.env`):
-   ```
-   API_EXTERNA_TOKEN=seu_token_jwt_aqui
-   ```
+### Como o Sistema Funciona:
 
-2. **Nível por Usuário** (recomendado):
-   - Acesse `/usuarios` como administrador
-   - Edite o usuário desejado
-   - Cole o token JWT no campo "Token JWT da API Externa"
-   - O sistema usa automaticamente o token do usuário se disponível
+1. **Token Global**: Um único token JWT é usado por todos os usuários
+2. **Gerenciamento**: Apenas **administradores** podem visualizar, renovar ou alterar o token
+3. **Prioridade de Token**:
+   - 1º: Token salvo no campo `api_externa_token` de qualquer usuário **admin**
+   - 2º: Token configurado no `.env` (fallback)
+
+### Renovar Token JWT (Apenas Admins):
+
+1. Acesse `/usuarios` como administrador
+2. Edite um usuário com perfil **admin** (ex: seu próprio usuário)
+3. No campo "Token JWT da API Externa (Global)":
+   - **Opção 1**: Cole manualmente um token JWT válido
+   - **Opção 2**: Clique no botão **"Obter Novo JWT (Global)"** para gerar automaticamente
+4. Salve o usuário
+5. O token será usado por **todo o sistema**
+
+### Obter Novo Token Automaticamente:
+
+O botão **"Obter Novo JWT (Global)"** conecta na API externa e:
+- Usa a senha configurada em `BRM_TOKEN_PASSWORD` (secret)
+- Chama o endpoint `/auth/refresh` da API externa
+- Gera um novo token JWT válido por **365 dias**
+- Salva automaticamente no banco de dados
+- O novo token é usado por **todos os usuários** imediatamente
 
 **Erro "Token inválido ou expirado"**: 
-- Verifique se o token está configurado no `.env` OU no cadastro do usuário
-- Solicite um novo token JWT válido ao administrador da API externa
-- O token deve ser um JWT válido (formato: `eyJ...`)
-
-**Para obter um novo token**:
-Contate o administrador da API externa em `http://191.252.218.230:8000` para gerar um novo token JWT de acesso.
+- Acesse o cadastro de usuários como admin
+- Edite um usuário admin
+- Clique em "Obter Novo JWT (Global)"
+- O sistema gera automaticamente um novo token válido
 
 ### Database
 - **Development**: SQLite (`apps/db.sqlite3`)

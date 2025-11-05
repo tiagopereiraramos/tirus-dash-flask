@@ -55,19 +55,33 @@ class APIExternaAuth:
 
     @property
     def token(self) -> Optional[str]:
-        """Obtém o token atual"""
-        # SEMPRE usar token configurado primeiro
+        """Obtém o token global (usado por todos os usuários)"""
+        # 1. Verificar se há token de um admin no banco (token global)
+        try:
+            from apps.authentication.models import Users
+            admin_user = Users.query.filter_by(is_admin=True).filter(
+                Users.api_externa_token.isnot(None), 
+                Users.api_externa_token != ''
+            ).first()
+            
+            if admin_user and admin_user.api_externa_token:
+                logger.info(f"Usando token global do admin: {admin_user.username}")
+                return admin_user.api_externa_token.strip()
+        except Exception as e:
+            logger.debug(f"Não foi possível obter token global do admin: {str(e)}")
+        
+        # 2. Usar token configurado no .env como fallback
         config_token = current_app.config.get('API_EXTERNA_TOKEN')
         if config_token:
-            logger.info("Usando token configurado da API externa")
+            logger.info("Usando token configurado do .env (fallback)")
             return config_token
 
-        # Usar token interno se disponível
+        # 3. Usar token interno se disponível
         if self._token:
             logger.info("Usando token interno da API externa")
             return self._token
 
-        # Se não há token configurado, retornar None
+        # 4. Se não há token configurado, retornar None
         logger.error("Nenhum token configurado encontrado")
         return None
 

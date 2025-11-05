@@ -95,18 +95,22 @@
                             </div>
                         </div>
 
+                        {% if usuario and usuario.is_admin %}
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="form-group">
-                                    <label class="form-label">Token JWT da API Externa</label>
+                                    <label class="form-label">
+                                        Token JWT da API Externa (Global)
+                                        <span class="badge badge-warning ml-2">Apenas Admins</span>
+                                    </label>
                                     <textarea class="form-control" 
                                               name="api_externa_token" 
                                               id="api_externa_token"
                                               rows="3" 
                                               placeholder="Cole aqui o token JWT para acesso à API externa (http://191.252.218.230:8000)">{{ usuario.api_externa_token if usuario and usuario.api_externa_token else '' }}</textarea>
                                     <small class="form-text text-muted">
-                                        <i class="feather icon-info"></i> Este token é usado para autenticar requisições à API externa de RPA.
-                                        Deixe em branco se não quiser alterar.
+                                        <i class="feather icon-alert-circle"></i> <strong>Este token é usado por TODOS os usuários do sistema</strong> para autenticar requisições à API externa de RPA.
+                                        Apenas administradores podem visualizar e alterar este token.
                                     </small>
                                     
                                     <!-- Botões e feedback de teste/obtenção do JWT -->
@@ -114,16 +118,15 @@
                                         <button type="button" class="btn btn-sm btn-info" id="btnTestarJWT">
                                             <i class="feather icon-check-circle"></i> Testar JWT
                                         </button>
-                                        {% if usuario %}
                                         <button type="button" class="btn btn-sm btn-success" id="btnObterNovoJWT" data-user-id="{{ usuario.id }}">
-                                            <i class="feather icon-download"></i> Obter Novo JWT
+                                            <i class="feather icon-download"></i> Obter Novo JWT (Global)
                                         </button>
-                                        {% endif %}
                                         <div id="jwtFeedback" class="mt-2" style="display: none;"></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        {% endif %}
 
                         <div class="form-group mt-4">
                             <button type="submit" class="btn btn-primary">

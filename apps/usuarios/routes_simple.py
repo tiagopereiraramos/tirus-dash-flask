@@ -241,9 +241,17 @@ def testar_jwt():
 @usuarios_bp.route('/obter-novo-jwt/<int:user_id>', methods=['POST'])
 @login_required
 def obter_novo_jwt(user_id):
-    """Obtém um novo JWT da API externa e salva no usuário"""
+    """Obtém um novo JWT da API externa e salva globalmente (apenas admins)"""
     if not verificar_permissao_admin():
-        return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+        return jsonify({'success': False, 'error': 'Acesso negado. Apenas administradores podem renovar o token global.'}), 403
+    
+    # Verificar se o usuário sendo editado é admin
+    usuario = Users.query.get_or_404(user_id)
+    if not usuario.is_admin:
+        return jsonify({
+            'success': False,
+            'error': 'Apenas administradores podem armazenar o token JWT global.'
+        }), 403
     
     try:
         import os
@@ -274,16 +282,15 @@ def obter_novo_jwt(user_id):
                     'error': 'API não retornou token JWT'
                 }), 500
             
-            # Salvar token no usuário
-            usuario = Users.query.get_or_404(user_id)
+            # Salvar token no usuário admin (será usado como token global)
             usuario.api_externa_token = novo_token
             db.session.commit()
             
-            logger.info(f"Novo JWT obtido e salvo para usuário {usuario.username}")
+            logger.info(f"Novo JWT GLOBAL obtido e salvo via admin: {usuario.username}")
             
             return jsonify({
                 'success': True,
-                'message': f'Novo token JWT obtido com sucesso! Válido por {result.get("expires_in_days", 365)} dias.',
+                'message': f'Novo token JWT GLOBAL obtido com sucesso! Válido por {result.get("expires_in_days", 365)} dias. Este token será usado por todos os usuários do sistema.',
                 'token': novo_token,
                 'expires_in_days': result.get('expires_in_days', 365)
             })
@@ -311,7 +318,7 @@ def obter_novo_jwt(user_id):
         }), 503
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Erro ao obter novo JWT: {str(e)}")
+        logger.error(f"Erro ao obter novo JWT global: {str(e)}")
         return jsonify({
             'success': False,
             'error': f'Erro ao obter novo token: {str(e)}'
