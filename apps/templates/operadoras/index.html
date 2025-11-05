@@ -174,9 +174,8 @@
                                         <th>Nome</th>
                                         <th>RPA</th>
                                         <th>Status</th>
-                                        <th>Portal</th>
                                         <th>Data Criação</th>
-                                        <th width="120">Ações</th>
+                                        <th width="150">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -204,15 +203,6 @@
                                                 <span class="badge badge-success">Ativo</span>
                                             {% else %}
                                                 <span class="badge badge-danger">Inativo</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if operadora.url_portal %}
-                                                <a href="{{ operadora.url_portal }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                    <i class="feather icon-external-link"></i>
-                                                </a>
-                                            {% else %}
-                                                <span class="text-muted">-</span>
                                             {% endif %}
                                         </td>
                                         <td>
