@@ -281,8 +281,14 @@ def importar():
             clientes_atualizados = 0
             erros = []
 
-            # Mapeia operadoras por nome para busca rápida
-            operadoras_map = {op.nome.upper(): op for op in Operadora.query.all()}
+            # Mapeia operadoras por nome para busca rápida (normalizado)
+            operadoras_map = {}
+            for op in Operadora.query.all():
+                # Normaliza nome removendo espaços, acentos, hífens
+                nome_normalizado = op.nome.upper().replace(' ', '').replace('-', '').replace('_', '')
+                operadoras_map[nome_normalizado] = op
+                # Também mapeia nome original
+                operadoras_map[op.nome.upper()] = op
 
             for row_num, row in enumerate(csv_input, start=2):  # Start=2 por causa do header
                 try:
@@ -291,12 +297,15 @@ def importar():
                         erros.append(f"Linha {row_num}: CNPJ e OPERADORA são obrigatórios")
                         continue
 
-                    # Busca operadora
-                    operadora_nome = row.get('OPERADORA', '').strip().upper()
-                    operadora = operadoras_map.get(operadora_nome)
+                    # Busca operadora com normalização flexível
+                    operadora_csv = row.get('OPERADORA', '').strip().upper()
+                    operadora_normalizada = operadora_csv.replace(' ', '').replace('-', '').replace('_', '')
+                    
+                    # Tenta buscar com nome normalizado e depois com nome original
+                    operadora = operadoras_map.get(operadora_normalizada) or operadoras_map.get(operadora_csv)
                     
                     if not operadora:
-                        erros.append(f"Linha {row_num}: Operadora '{operadora_nome}' não encontrada")
+                        erros.append(f"Linha {row_num}: Operadora '{operadora_csv}' não encontrada. Operadoras disponíveis: {', '.join(set([o.nome for o in Operadora.query.all()]))}")
                         continue
 
                     # Limpa dados

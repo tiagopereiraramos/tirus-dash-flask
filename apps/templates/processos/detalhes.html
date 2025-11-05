@@ -876,7 +876,7 @@ function iniciarLogsTempoReal(jobId) {
                 atualizarStatusConexao('Erro', 'danger');
             } else if (log.type === 'job_completed') {
                 // Job terminou com sucesso
-                adicionarLogAoContainer('✅ ' + log.message, 'INFO', 'success');
+                adicionarLogAoContainer(log.message, 'INFO', 'success');
                 atualizarStatusExecucao(log.job_id, 'COMPLETED', log.message);
                 setTimeout(() => {
                     pararLogsTempoReal();
@@ -884,7 +884,7 @@ function iniciarLogsTempoReal(jobId) {
                 }, 2000);
             } else if (log.type === 'job_failed') {
                 // Job falhou
-                adicionarLogAoContainer('❌ ' + log.message, 'ERROR', 'error');
+                adicionarLogAoContainer(log.message, 'ERROR', 'error');
                 atualizarStatusExecucao(log.job_id, 'FAILED', log.message);
                 setTimeout(() => {
                     pararLogsTempoReal();
