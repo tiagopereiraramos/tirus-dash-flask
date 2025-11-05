@@ -284,12 +284,18 @@ def importar():
 
             # Mapeia operadoras por nome para busca rápida (normalizado)
             operadoras_map = {}
-            for op in Operadora.query.all():
-                # Normaliza nome removendo espaços, acentos, hífens
-                nome_normalizado = op.nome.upper().replace(' ', '').replace('-', '').replace('_', '')
+            operadoras_list = Operadora.query.all()
+            
+            for op in operadoras_list:
+                # Normaliza nome removendo espaços, acentos, hífens, pontos
+                nome_normalizado = op.nome.upper().replace(' ', '').replace('-', '').replace('_', '').replace('.', '')
                 operadoras_map[nome_normalizado] = op
                 # Também mapeia nome original
                 operadoras_map[op.nome.upper()] = op
+                # Mapeia primeira palavra (para casos como "OI" vs "OI S.A.")
+                primeira_palavra = op.nome.upper().split()[0]
+                if primeira_palavra not in operadoras_map:
+                    operadoras_map[primeira_palavra] = op
 
             for row_num, row in enumerate(csv_input, start=2):  # Start=2 por causa do header
                 try:
@@ -300,13 +306,21 @@ def importar():
 
                     # Busca operadora com normalização flexível
                     operadora_csv = row.get('OPERADORA', '').strip().upper()
-                    operadora_normalizada = operadora_csv.replace(' ', '').replace('-', '').replace('_', '')
+                    operadora_normalizada = operadora_csv.replace(' ', '').replace('-', '').replace('_', '').replace('.', '')
                     
-                    # Tenta buscar com nome normalizado e depois com nome original
-                    operadora = operadoras_map.get(operadora_normalizada) or operadoras_map.get(operadora_csv)
+                    # Tenta múltiplas estratégias de busca:
+                    # 1. Nome normalizado completo
+                    operadora = operadoras_map.get(operadora_normalizada)
+                    # 2. Nome original
+                    if not operadora:
+                        operadora = operadoras_map.get(operadora_csv)
+                    # 3. Primeira palavra do CSV (ex: "OI" → "OI S.A.")
+                    if not operadora:
+                        primeira_palavra_csv = operadora_csv.split()[0]
+                        operadora = operadoras_map.get(primeira_palavra_csv)
                     
                     if not operadora:
-                        erros.append(f"Linha {row_num}: Operadora '{operadora_csv}' não encontrada. Operadoras disponíveis: {', '.join(set([o.nome for o in Operadora.query.all()]))}")
+                        erros.append(f"Linha {row_num}: Operadora '{operadora_csv}' não encontrada. Operadoras disponíveis: {', '.join(sorted(set([o.nome for o in operadoras_list])))}")
                         continue
                     
                     # Registra se o nome foi normalizado
