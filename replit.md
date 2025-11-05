@@ -164,8 +164,20 @@ O sistema possui integração **cirúrgica e COMPLETA** com a API externa para r
    - Retorna eventos SSE em tempo real
    - Formato: `data: {JSON}\n\n`
    - Autenticação: Token JWT global do sistema
+   - **Detecta conclusão de jobs**: Quando job termina, envia evento `job_completed` ou `job_failed`
 
-2. **`GET /api/v2/logs-tempo-real/teste-conexao`**
+2. **`POST /api/v2/logs-tempo-real/atualizar-status/<job_id>`** ✅ NOVO (Nov 5, 2025)
+   - Atualiza status de uma execução quando o job termina
+   - Payload: `{"status": "COMPLETED" ou "FAILED", "mensagem": "..."}`
+   - Persiste `data_fim` para métricas de duração
+   - Retorna JSON com confirmação de atualização
+
+3. **`GET /api/v2/logs-tempo-real/status-job/<job_id>`** ✅ NOVO (Nov 5, 2025)
+   - Consulta status de um job individual na API externa
+   - Retorna dados completos do job (status, operadora, logs, etc.)
+   - Útil para polling quando SSE não está conectado
+
+4. **`GET /api/v2/logs-tempo-real/teste-conexao`**
    - Testa conexão com a API externa de logs
    - Retorna status da conexão e validade do token
 
@@ -180,6 +192,8 @@ O sistema possui integração **cirúrgica e COMPLETA** com a API externa para r
    - ✅ Auto-scroll para novos logs
    - ✅ Atualização automática da tabela de execuções (5s)
    - ✅ Botão "Parar" para encerrar stream
+   - ✅ **Sincronização automática de status** (Nov 5, 2025): Quando job termina, status atualiza automaticamente para CONCLUIDO ou FALHOU
+   - ✅ **Botão "Executar Novamente"** (Nov 5, 2025): Re-execução de processos que falharam ou completaram
 
 **Recursos:**
 - **Monitoramento em Tempo Real**: Logs aparecem instantaneamente conforme o RPA executa
@@ -187,6 +201,8 @@ O sistema possui integração **cirúrgica e COMPLETA** com a API externa para r
 - **Reconexão Automática**: Browser reconecta automaticamente se perder conexão
 - **Status Visual**: Badge mostra status da conexão (verde=conectado, amarelo=reconectando)
 - **Animação de Loading**: Ícone girando indica execução em andamento
+- **Sincronização Automática de Status**: Quando API externa sinaliza conclusão (WARN com "concluído"), sistema atualiza status da execução automaticamente
+- **Re-execução Facilitada**: Processos que falharam ou completaram podem ser re-executados com 1 clique
 
 #### Como Consumir (Frontend):
 

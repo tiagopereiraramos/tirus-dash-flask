@@ -85,7 +85,7 @@ def stream_logs_filtrados(job_id: str, api_url: str, token: str) -> Generator[st
                                 'level': data.get('level', 'INFO'),
                                 'message': data.get('message', ''),
                                 'operadora': data.get('operadora', 'UNKNOWN'),
-                                'job_id': data.get('job_id', job_id),
+                                'job_id': job_id,
                                 'timestamp': data.get('timestamp', ''),
                                 'service': data.get('service', 'rpa-api'),
                                 'logger': data.get('logger', 'app.main')
