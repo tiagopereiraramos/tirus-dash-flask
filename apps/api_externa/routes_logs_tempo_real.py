@@ -256,6 +256,10 @@ def atualizar_status_job(job_id: str):
         else:
             execucao.status_execucao = novo_status
         
+        # Persistir data_fim para métricas de duração
+        if not execucao.data_fim:
+            execucao.data_fim = datetime.now()
+        
         # Adicionar mensagem aos logs
         if mensagem:
             logs_atuais = execucao.logs or ''
