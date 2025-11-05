@@ -4,91 +4,61 @@ Rotas para gerenciamento de usuários
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from werkzeug.security import generate_password_hash
+from apps.authentication.util import hash_pass
 from sqlalchemy import or_
 
 from apps import db
-from apps.models.usuario import Usuario, PerfilUsuario
-from apps.usuarios.forms import UsuarioForm, FiltroUsuarioForm, AlterarSenhaForm, PerfilUsuarioForm
+from apps.authentication.models import Users
 import logging
 
 logger = logging.getLogger(__name__)
-usuarios_bp = Blueprint('usuarios', __name__)
+usuarios_bp = Blueprint('usuarios_bp', __name__)
 
 
 def verificar_permissao_admin():
     """Verifica se o usuário atual pode gerenciar usuários"""
     if not current_user.is_authenticated:
         return False
-    return current_user.eh_administrador
+    return getattr(current_user, 'is_admin', False)
 
 
 @usuarios_bp.route('/')
 @login_required
 def index():
-    """Lista todos os usuários com filtros e paginação"""
+    """Lista todos os usuários com paginação"""
 
     # Verificar permissão
     if not verificar_permissao_admin():
         flash('Acesso negado. Apenas administradores podem gerenciar usuários.', 'error')
-        return redirect(url_for('home.index'))
-
-    # Formulário de filtros
-    form_filtro = FiltroUsuarioForm()
+        return redirect(url_for('home_bp.index'))
 
     # Parâmetros de paginação
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 20, type=int)
+    per_page = 20
 
     # Query base
-    query = Usuario.query
+    query = Users.query
 
     # Aplicar filtros se fornecidos
-    if request.args.get('nome'):
-        termo_nome = f"%{request.args.get('nome')}%"
-        query = query.filter(
-            or_(
-                Usuario.nome_completo.ilike(termo_nome),
-                Usuario.username.ilike(termo_nome)
-            )
-        )
-        form_filtro.nome.data = request.args.get('nome')
+    if request.args.get('username'):
+        query = query.filter(Users.username.ilike(f"%{request.args.get('username')}%"))
 
     if request.args.get('email'):
-        query = query.filter(
-            Usuario.email.ilike(f"%{request.args.get('email')}%")
-        )
-        form_filtro.email.data = request.args.get('email')
-
-    if request.args.get('username'):
-        query = query.filter(
-            Usuario.username.ilike(f"%{request.args.get('username')}%")
-        )
-        form_filtro.username.data = request.args.get('username')
-
-    if request.args.get('perfil_usuario'):
-        query = query.filter(Usuario.perfil_usuario ==
-                             request.args.get('perfil_usuario'))
-        form_filtro.perfil_usuario.data = request.args.get('perfil_usuario')
-
-    if request.args.get('status_ativo'):
-        status = request.args.get('status_ativo') == 'True'
-        query = query.filter(Usuario.status_ativo == status)
-        form_filtro.status_ativo.data = request.args.get('status_ativo')
+        query = query.filter(Users.email.ilike(f"%{request.args.get('email')}%"))
 
     # Ordenação
-    query = query.order_by(Usuario.nome_completo)
+    query = query.order_by(Users.username)
 
     # Paginação
-    usuarios = query.paginate(
+    pagination = query.paginate(
         page=page,
         per_page=per_page,
         error_out=False
     )
 
     return render_template('usuarios/index.html',
-                           usuarios=usuarios,
-                           form_filtro=form_filtro)
+                           usuarios=pagination.items,
+                           pagination=pagination)
 
 
 @usuarios_bp.route('/novo', methods=['GET', 'POST'])

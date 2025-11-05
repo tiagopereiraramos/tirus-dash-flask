@@ -1,0 +1,115 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ 'Editar' if usuario else 'Criar' }} Usuário{% endblock %}
+
+{% block content %}
+<div class="pcoded-content">
+    <div class="page-header">
+        <div class="page-block">
+            <div class="row align-items-center">
+                <div class="col-md-12">
+                    <div class="page-header-title">
+                        <h5 class="m-b-10">{{ 'Editar' if usuario else 'Criar' }} Usuário</h5>
+                    </div>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('home_bp.index') }}"><i class="feather icon-home"></i></a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('usuarios_bp.index') }}">Usuários</a></li>
+                        <li class="breadcrumb-item"><a href="#!">{{ 'Editar' if usuario else 'Novo' }}</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Dados do Usuário</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('usuarios_bp.editar', user_id=usuario.id) if usuario else url_for('usuarios_bp.novo') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Username <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           name="username" 
+                                           value="{{ usuario.username if usuario else '' }}" 
+                                           required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Email <span class="text-danger">*</span></label>
+                                    <input type="email" 
+                                           class="form-control" 
+                                           name="email" 
+                                           value="{{ usuario.email if usuario else '' }}" 
+                                           required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Senha {{ '(deixe em branco para manter a atual)' if usuario else ''}}<span class="text-danger">*</span></label>
+                                    <input type="password" 
+                                           class="form-control" 
+                                           name="password" 
+                                           {{ '' if usuario else 'required' }}>
+                                    <small class="form-text text-muted">Mínimo 6 caracteres</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Tipo de Usuário</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               name="is_admin" 
+                                               id="is_admin"
+                                               {{ 'checked' if usuario and usuario.is_admin else '' }}>
+                                        <label class="form-check-label" for="is_admin">
+                                            Administrador (acesso total ao sistema)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="form-label">Token JWT da API Externa</label>
+                                    <textarea class="form-control" 
+                                              name="api_externa_token" 
+                                              rows="3" 
+                                              placeholder="Cole aqui o token JWT para acesso à API externa (http://191.252.218.230:8000)">{{ usuario.api_externa_token if usuario and usuario.api_externa_token else '' }}</textarea>
+                                    <small class="form-text text-muted">
+                                        <i class="feather icon-info"></i> Este token é usado para autenticar requisições à API externa de RPA.
+                                        Deixe em branco se não quiser alterar.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="feather icon-save"></i> Salvar
+                            </button>
+                            <a href="{{ url_for('usuarios_bp.index') }}" class="btn btn-secondary">
+                                <i class="feather icon-x"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

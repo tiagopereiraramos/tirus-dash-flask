@@ -63,6 +63,16 @@
                     <label>Configurações</label>
                 </li>
                 
+                {% if current_user.is_admin %}
+                <li data-username="Usuarios" 
+                    class="nav-item {% if 'usuarios' in segment %} active {% endif %}">
+                    <a href="{{ url_for('usuarios_bp.index') }}" class="nav-link">
+                        <span class="pcoded-micon"><i class="feather icon-users"></i></span>
+                        <span class="pcoded-mtext">Usuários</span>
+                    </a>
+                </li>
+                {% endif %}
+                
                 <li data-username="Perfil" 
                     class="nav-item {% if 'profile' in segment %} active {% endif %}">
                     <a href="/profile.html" class="nav-link">
