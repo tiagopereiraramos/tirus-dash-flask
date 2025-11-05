@@ -65,11 +65,13 @@ def create_app(config):
     from apps.clientes import bp as clientes_bp  
     from apps.processos import bp as processos_bp
     from apps.usuarios.routes_simple import usuarios_bp
+    from apps.api_externa.routes_logs_tempo_real import api_logs_tempo_real_bp
 
     app.register_blueprint(operadoras_bp, url_prefix='/operadoras')
     app.register_blueprint(clientes_bp, url_prefix='/clientes')
     app.register_blueprint(processos_bp, url_prefix='/processos')
     app.register_blueprint(usuarios_bp, url_prefix='/usuarios')
+    app.register_blueprint(api_logs_tempo_real_bp)
 
     # Adicionar função csrf_token ao contexto global do Jinja2
     @app.template_global()

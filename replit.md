@@ -136,6 +136,77 @@ O botão **"Obter Novo JWT (Global)"** conecta na API externa e:
 - **python-dotenv** (1.0.0): Environment configuration
 - **requests**: HTTP client for external API calls
 
+### Server-Sent Events (SSE) - Logs em Tempo Real
+
+O sistema possui integração **cirúrgica** com a API externa para receber logs em tempo real via SSE.
+
+#### Endpoints Disponíveis:
+
+1. **`GET /api/v2/logs-tempo-real/stream/<job_id>`**
+   - Stream de logs filtrados por ID do job
+   - Retorna eventos SSE em tempo real
+   - Formato: `data: {JSON}\n\n`
+   - Autenticação: Token JWT global do sistema
+
+2. **`GET /api/v2/logs-tempo-real/teste-conexao`**
+   - Testa conexão com a API externa de logs
+   - Retorna status da conexão e validade do token
+
+#### Como Consumir (Frontend):
+
+```javascript
+// Conectar ao stream de logs
+const eventSource = new EventSource(`/api/v2/logs-tempo-real/stream/${jobId}`);
+
+// Receber logs
+eventSource.onmessage = function(event) {
+    const log = JSON.parse(event.data);
+    console.log(`[${log.level}] ${log.message}`);
+    
+    // Processar diferentes tipos de eventos
+    switch(log.type) {
+        case 'connection':
+            console.log('Conectado ao stream!');
+            break;
+        case 'log':
+            // Mostrar log na tela
+            displayLog(log);
+            break;
+        case 'error':
+            console.error('Erro:', log.message);
+            break;
+    }
+};
+
+// Tratar erros de conexão
+eventSource.onerror = function(event) {
+    console.error('Erro no SSE. Reconectando...');
+    eventSource.close();
+};
+```
+
+#### Formato dos Logs (JSON):
+
+```json
+{
+  "type": "log",
+  "level": "INFO",
+  "message": "Processando RPA...",
+  "operadora": "VIVO",
+  "job_id": "abc-123",
+  "timestamp": "2025-11-05T01:53:35.123Z",
+  "service": "rpa-api",
+  "logger": "app.main"
+}
+```
+
+#### Integração com API Externa:
+
+- **Endpoint da API**: `http://191.252.218.230:8000/events/logs`
+- **Autenticação**: Usa token JWT global do sistema (via admin)
+- **Filtros**: Logs são filtrados automaticamente por `job_id`
+- **Reconexão**: Automática pelo navegador
+
 ### Configuration
 - **Environment**: `.env` file with fallback to defaults
 - **Key Settings**:
@@ -143,6 +214,7 @@ O botão **"Obter Novo JWT (Global)"** conecta na API externa e:
   - `SECRET_KEY`: Session encryption
   - `DB_ENGINE`, `DB_USERNAME`, etc.: Database connection
   - `API_EXTERNA_URL`, `API_EXTERNA_TOKEN`: RPA API credentials
+  - `BRM_TOKEN_PASSWORD`: Senha para renovação de token JWT
   - `GITHUB_ID`, `GITHUB_SECRET`: OAuth (optional)
 
 ### Deployment

@@ -16,11 +16,19 @@ logger = logging.getLogger(__name__)
 api_logs_tempo_real_bp = Blueprint(
     'api_logs_tempo_real', __name__, url_prefix='/api/v2/logs-tempo-real')
 
-# URL base da API externa
-API_EXTERNA_BASE_URL = "http://191.252.218.230:8000"
-
-# Token da API externa
-API_EXTERNA_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImVtYWlsIjoiYWRtaW5AYnJtc29sdXRpb25zLmNvbS5iciIsInJvbGUiOiJhZG1pbiIsImNyZWF0ZWRfYXQiOiIyMDI1LTA5LTA5VDE1OjEyOjAxLjAxNjQxMCIsImV4cCI6MTc2MDAyMjcyMX0.fF9z68JYx-EhVcP7F9Vk-Yz8G5O4c5dddG8dNy69CRQ"
+def get_api_token() -> str:
+    """Obtém token JWT global do sistema"""
+    try:
+        from apps.api_externa.auth import get_auth
+        auth = get_auth()
+        token = auth.token
+        if not token:
+            logger.error("Token JWT não encontrado no sistema")
+            raise ValueError("Token JWT não configurado")
+        return token
+    except Exception as e:
+        logger.error(f"Erro ao obter token JWT: {e}")
+        raise
 
 
 def stream_logs_filtrados(job_id: str) -> Generator[str, None, None]:
@@ -35,11 +43,15 @@ def stream_logs_filtrados(job_id: str) -> Generator[str, None, None]:
     """
     try:
         # URL do endpoint de logs da API externa
-        url = f"{API_EXTERNA_BASE_URL}/events/logs"
+        api_url = current_app.config.get('API_EXTERNA_URL', 'http://191.252.218.230:8000')
+        url = f"{api_url}/events/logs"
+
+        # Obter token JWT global
+        token = get_api_token()
 
         # Headers com autenticação
         headers = {
-            'Authorization': f'Bearer {API_EXTERNA_TOKEN}',
+            'Authorization': f'Bearer {token}',
             'Accept': 'text/event-stream',
             'Cache-Control': 'no-cache'
         }
@@ -165,9 +177,14 @@ def teste_conexao():
         dict: Status da conexão
     """
     try:
-        url = f"{API_EXTERNA_BASE_URL}/events/logs"
+        api_url = current_app.config.get('API_EXTERNA_URL', 'http://191.252.218.230:8000')
+        url = f"{api_url}/events/logs"
+        
+        # Obter token JWT global
+        token = get_api_token()
+        
         headers = {
-            'Authorization': f'Bearer {API_EXTERNA_TOKEN}',
+            'Authorization': f'Bearer {token}',
             'Accept': 'text/event-stream'
         }
 
@@ -178,7 +195,16 @@ def teste_conexao():
         return {
             'success': True,
             'message': 'Conexão com API externa de logs estabelecida com sucesso',
-            'status_code': response.status_code
+            'status_code': response.status_code,
+            'token_status': 'Token JWT global válido'
+        }
+
+    except ValueError as e:
+        return {
+            'success': False,
+            'message': 'Token JWT não configurado no sistema',
+            'error': str(e),
+            'status_code': 401
         }
 
     except requests.exceptions.RequestException as e:
