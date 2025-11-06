@@ -142,6 +142,7 @@ class APIExternaService:
             payload = AutomacaoPayloadSat(
                 login=login,
                 senha=senha,
+                filtro=filtro,
                 cnpj=cnpj,
                 razao=cliente.razao_social or "EMPRESA LTDA",
                 operadora=operadora.codigo if operadora else "UNK",

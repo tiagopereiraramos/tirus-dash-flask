@@ -67,6 +67,7 @@ class AutomacaoPayloadSat:
     """
     login: str
     senha: str
+    filtro: str
     cnpj: str
     razao: str
     operadora: str
@@ -83,6 +84,7 @@ class AutomacaoPayloadSat:
         payload = {
             "login": self.login,
             "senha": self.senha,
+            "filtro": self.filtro,
             "cnpj": self.cnpj,
             "razao": self.razao,
             "operadora": self.operadora,
@@ -108,6 +110,8 @@ class AutomacaoPayloadSat:
             erros.append("login é obrigatório")
         if not self.senha:
             erros.append("senha é obrigatória")
+        if not self.filtro:
+            erros.append("filtro é obrigatório")
         if not self.cnpj:
             erros.append("cnpj é obrigatório")
         if not self.razao:

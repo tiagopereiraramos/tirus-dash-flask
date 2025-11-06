@@ -133,10 +133,12 @@ class APIExternaFuncionalService:
                 login = cliente.cnpj
             
             senha = cliente.senha_portal or "senha123"
+            filtro = cliente.filtro or "fatura_mensal"
             
             payload = AutomacaoPayloadSat(
                 login=login,
                 senha=senha,
+                filtro=filtro,
                 cnpj=cliente.cnpj or "00000000000000",
                 razao=cliente.razao_social or "EMPRESA LTDA",
                 operadora=operadora.codigo,
