@@ -94,7 +94,9 @@
                                                     <div class="col-md-3">
                                                         <div class="form-group">
                                                             {{ form.data_vencimento.label(class="form-label") }}
-                                                            {{ form.data_vencimento(class="form-control") }}
+                                                            <input type="date" name="data_vencimento" id="data_vencimento" class="form-control" 
+                                                                   value="{{ form.data_vencimento.data.strftime('%Y-%m-%d') if form.data_vencimento.data else '' }}"
+                                                                   autocomplete="off">
                                                             {% if form.data_vencimento.errors %}
                                                                 {% for error in form.data_vencimento.errors %}
                                                                     <small class="text-danger">{{ error }}</small>
@@ -109,7 +111,9 @@
                                                                 <div class="input-group-prepend">
                                                                     <span class="input-group-text">R$</span>
                                                                 </div>
-                                                                {{ form.valor_fatura(class="form-control") }}
+                                                                <input type="number" name="valor_fatura" id="valor_fatura" class="form-control" 
+                                                                       value="{{ form.valor_fatura.data if form.valor_fatura.data else '' }}"
+                                                                       step="0.01" min="0" placeholder="0.00" autocomplete="off">
                                                             </div>
                                                             {% if form.valor_fatura.errors %}
                                                                 {% for error in form.valor_fatura.errors %}
@@ -262,19 +266,6 @@
 {% block javascripts %}
 <script>
 $(document).ready(function() {
-    // Configurar campo de data para tipo date (picker nativo)
-    if ($('#data_vencimento').length) {
-        $('#data_vencimento').attr('type', 'date');
-    }
-    
-    // Configurar campo de valor para tipo number (input nativo)
-    if ($('#valor_fatura').length) {
-        $('#valor_fatura').attr('type', 'number')
-                          .attr('step', '0.01')
-                          .attr('min', '0')
-                          .attr('placeholder', '0.00');
-    }
-    
     // Atualizar label do input file quando arquivo for selecionado
     if ($('#faturaUpload').length) {
         $('#faturaUpload').on('change', function() {
@@ -282,10 +273,6 @@ $(document).ready(function() {
             $(this).next('.custom-file-label').html(fileName || 'Escolher arquivo...');
         });
     }
-    
-    console.log('Página de detalhes carregada');
-    console.log('jQuery está disponível');
-    console.log('Bootstrap modal está disponível');
 });
 </script>
 {% endblock javascripts %}
