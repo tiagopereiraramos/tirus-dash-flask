@@ -178,7 +178,7 @@
                                             </div>
                                             {% endif %}
                                             
-                                            <form method="POST" action="{{ url_for('processos.upload_fatura_manual', id_processo=processo.id_processo) }}" enctype="multipart/form-data">
+                                            <form method="POST" action="{{ url_for('processos_bp.upload_fatura_manual', id_processo=processo.id_processo) }}" enctype="multipart/form-data">
                                                 <div class="form-group">
                                                     <label class="form-label">Selecione a fatura (PDF)</label>
                                                     <div class="custom-file">
@@ -211,7 +211,7 @@
                                             {% endif %}
                                             
                                             {% if processo.status_processo in ['AGUARDANDO_ENVIO_SAT', 'APROVADO'] %}
-                                            <form method="POST" action="{{ url_for('processos.upload_sat', id_processo=processo.id_processo) }}" onsubmit="return confirm('Confirma o envio desta fatura para o SAT?');">
+                                            <form method="POST" action="{{ url_for('processos_bp.upload_sat', id_processo=processo.id_processo) }}" onsubmit="return confirm('Confirma o envio desta fatura para o SAT?');">
                                                 <p class="mb-3">
                                                     O processo está <strong>aprovado</strong> e pronto para ser enviado ao sistema SAT.
                                                     {% if processo.fatura_filename %}
