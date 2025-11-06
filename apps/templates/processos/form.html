@@ -104,8 +104,8 @@
                                                                 {% set data_valor = '' %}
                                                             {% endif %}
                                                             <input type="date" name="data_vencimento" id="data_vencimento" class="form-control no-mask" 
-                                                                   value="{{ data_valor }}"
-                                                                   autocomplete="off" data-mask="false">
+                                                                   data-original-value="{{ data_valor }}"
+                                                                   autocomplete="off">
                                                             {% if form.data_vencimento.errors %}
                                                                 {% for error in form.data_vencimento.errors %}
                                                                     <small class="text-danger">{{ error }}</small>
@@ -126,8 +126,8 @@
                                                                     {% set valor_formatado = '' %}
                                                                 {% endif %}
                                                                 <input type="number" name="valor_fatura" id="valor_fatura" class="form-control no-mask" 
-                                                                       value="{{ valor_formatado }}"
-                                                                       step="0.01" min="0" placeholder="0.00" autocomplete="off" data-mask="false">
+                                                                       data-original-value="{{ valor_formatado }}"
+                                                                       step="0.01" min="0" placeholder="0.00" autocomplete="off">
                                                             </div>
                                                             {% if form.valor_fatura.errors %}
                                                                 {% for error in form.valor_fatura.errors %}
@@ -280,20 +280,38 @@
 {% block javascripts %}
 <script>
 $(document).ready(function() {
-    // Remover TODAS as máscaras dos campos de data e valor
-    // Isso previne conflitos com inputs HTML5 nativos
-    $('#data_vencimento, #valor_fatura').each(function() {
-        // Remover qualquer máscara jQuery aplicada
-        if ($(this).data('mask')) {
-            $(this).unmask();
-        }
-        if ($(this).data('maskMoney')) {
-            $(this).maskMoney('destroy');
-        }
-        
-        // Remover atributos readonly/disabled que possam bloquear digitação
-        $(this).removeAttr('readonly').removeAttr('disabled');
-    });
+    // Função para forçar valores originais após máscaras serem aplicadas
+    function forcarValoresOriginais() {
+        $('#data_vencimento, #valor_fatura').each(function() {
+            var originalValue = $(this).attr('data-original-value');
+            
+            // Remover qualquer máscara jQuery aplicada
+            if ($(this).data('mask')) {
+                $(this).unmask();
+            }
+            if ($(this).data('maskMoney')) {
+                $(this).maskMoney('destroy');
+            }
+            
+            // Remover atributos readonly/disabled que possam bloquear digitação
+            $(this).removeAttr('readonly').removeAttr('disabled');
+            
+            // FORÇAR o valor original se existir
+            if (originalValue && originalValue !== '') {
+                this.value = originalValue;
+                console.log('✅ Valor forçado em ' + this.id + ':', originalValue);
+            }
+        });
+    }
+    
+    // Executar imediatamente
+    forcarValoresOriginais();
+    
+    // Executar novamente após 100ms (garante que override qualquer script do injected.js)
+    setTimeout(forcarValoresOriginais, 100);
+    
+    // Executar novamente após 500ms (segunda garantia)
+    setTimeout(forcarValoresOriginais, 500);
     
     // Prevenir aplicação futura de máscaras
     $('#data_vencimento, #valor_fatura').on('focus', function() {
