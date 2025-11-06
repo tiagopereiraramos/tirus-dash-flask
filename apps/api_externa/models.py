@@ -63,15 +63,13 @@ class AutomacaoPayloadSat:
     Payload para execução de RPA no SAT
     
     Endpoint: POST /executar/sat
-    Documentação: Seção 4.2.3
     
-    WORKAROUND TEMPORÁRIO: API externa exige login/senha na validação HTTP,
-    mas o executor RPA (classe Sat) pode rejeitar esses campos.
-    Aguardando correção na API externa.
+    A classe Sat da API externa recebe apenas:
+    - cnpj, razao, operadora, nome_filtro, unidade, servico, 
+      dados_sat, nome_arquivo, data_vencimento
+    
+    NÃO recebe login/senha/filtro (vêm de variáveis de ambiente na API)
     """
-    login: str
-    senha: str
-    filtro: str
     cnpj: str
     razao: str
     operadora: str
@@ -86,9 +84,6 @@ class AutomacaoPayloadSat:
     def to_dict(self) -> Dict[str, Any]:
         """Converte para dicionário para envio à API"""
         payload = {
-            "login": self.login,
-            "senha": self.senha,
-            "filtro": self.filtro,
             "cnpj": self.cnpj,
             "razao": self.razao,
             "operadora": self.operadora,
@@ -110,12 +105,6 @@ class AutomacaoPayloadSat:
         """Valida campos obrigatórios"""
         erros = []
         
-        if not self.login:
-            erros.append("login é obrigatório")
-        if not self.senha:
-            erros.append("senha é obrigatória")
-        if not self.filtro:
-            erros.append("filtro é obrigatório")
         if not self.cnpj:
             erros.append("cnpj é obrigatório")
         if not self.razao:

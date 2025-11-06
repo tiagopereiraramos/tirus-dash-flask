@@ -124,19 +124,15 @@ class APIExternaFuncionalService:
                 data_venc = datetime.now() + timedelta(days=15)
                 data_vencimento = data_venc.strftime("%d/%m/%Y")
 
-            # WORKAROUND: Passar vazios para mitigar erro na API externa
-            login = ""
-            senha = ""
+            # Valores com fallback
             filtro = cliente.filtro or "fatura_mensal"
             
+            # Criar payload SAT (sem login/senha/filtro - vêm de ENV na API externa)
             payload = AutomacaoPayloadSat(
-                login=login,
-                senha=senha,
-                filtro=filtro,
                 cnpj=cliente.cnpj or "00000000000000",
                 razao=cliente.razao_social or "EMPRESA LTDA",
                 operadora=operadora.codigo,
-                nome_filtro=f"{operadora.codigo} FIXO",
+                nome_filtro=filtro,
                 unidade=cliente.unidade or "MATRIZ",
                 servico=cliente.servico or "TELEFONIA",
                 dados_sat=cliente.dados_sat or f"{cliente.nome_sat}|INTERNET|DEDICADA",

@@ -116,13 +116,9 @@ class APIExternaService:
             cliente = processo.cliente
             operadora = processo.cliente.operadora
 
-            # WORKAROUND: Passar vazios para mitigar erro na API externa
-            login = ""
-            senha = ""
-            
             # Valores com fallback
-            filtro = cliente.filtro or "fatura_mensal"
             cnpj = cliente.cnpj or "00000000000000"
+            filtro = cliente.filtro or "fatura_mensal"
 
             # Gerar nome do arquivo
             nome_arquivo = f"fatura_{processo.mes_ano.replace('/', '_')}.pdf"
@@ -133,11 +129,8 @@ class APIExternaService:
             else:
                 data_vencimento = "15/08/2025"
 
-            # Criar payload (WORKAROUND: API externa exige login/senha na validação)
+            # Criar payload SAT (sem login/senha/filtro - vêm de ENV na API externa)
             payload = AutomacaoPayloadSat(
-                login=login,
-                senha=senha,
-                filtro=filtro,
                 cnpj=cnpj,
                 razao=cliente.razao_social or "EMPRESA LTDA",
                 operadora=operadora.codigo if operadora else "UNK",
