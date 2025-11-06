@@ -94,7 +94,15 @@
                                                     <div class="col-md-3">
                                                         <div class="form-group">
                                                             {{ form.data_vencimento.label(class="form-label") }}
-                                                            {% set data_valor = form.data_vencimento.data.strftime('%Y-%m-%d') if form.data_vencimento.data else '' %}
+                                                            {% if processo and processo.data_vencimento %}
+                                                                {% if processo.data_vencimento is string %}
+                                                                    {% set data_valor = processo.data_vencimento %}
+                                                                {% else %}
+                                                                    {% set data_valor = processo.data_vencimento.strftime('%Y-%m-%d') %}
+                                                                {% endif %}
+                                                            {% else %}
+                                                                {% set data_valor = '' %}
+                                                            {% endif %}
                                                             <input type="date" name="data_vencimento" id="data_vencimento" class="form-control no-mask" 
                                                                    value="{{ data_valor }}"
                                                                    autocomplete="off" data-mask="false">
@@ -112,8 +120,8 @@
                                                                 <div class="input-group-prepend">
                                                                     <span class="input-group-text">R$</span>
                                                                 </div>
-                                                                {% if form.valor_fatura.data %}
-                                                                    {% set valor_formatado = "%.2f"|format(form.valor_fatura.data|float) %}
+                                                                {% if processo and processo.valor_fatura %}
+                                                                    {% set valor_formatado = "%.2f"|format(processo.valor_fatura|float) %}
                                                                 {% else %}
                                                                     {% set valor_formatado = '' %}
                                                                 {% endif %}
