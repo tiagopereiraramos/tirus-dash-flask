@@ -10,7 +10,7 @@ import json
 import logging
 
 from apps import db
-from apps.models import Agendamento, TipoAgendamento
+from apps.models import Agendamento, TipoAgendamento, Operadora
 from apps.agendamentos.forms import AgendamentoForm, FiltroAgendamentoForm, CronHelper
 
 logger = logging.getLogger(__name__)
@@ -218,9 +218,6 @@ def editar(id):
     """Editar agendamento existente"""
     agendamento = Agendamento.query.get_or_404(id)
     form = AgendamentoForm(obj=agendamento)
-
-    # Definir o objeto sendo editado para as validações
-    form._obj = agendamento
 
     # Preencher campos amigáveis de cron baseado na expressão cron existente
     if agendamento.cron_expressao:
