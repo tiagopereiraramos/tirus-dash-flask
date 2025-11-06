@@ -160,6 +160,93 @@
                                             </form>
                                         </div>
                                     </div>
+                                    
+                                    {% if processo %}
+                                    <!-- [ Upload Manual de Fatura ] start -->
+                                    <div class="card mt-3">
+                                        <div class="card-header">
+                                            <h5><i class="feather icon-upload"></i> Upload Manual de Fatura</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            {% if processo.fatura_filename %}
+                                            <div class="alert alert-success mb-3">
+                                                <i class="feather icon-check-circle"></i> 
+                                                <strong>Fatura atual:</strong> {{ processo.fatura_filename }}
+                                                {% if processo.data_upload_manual %}
+                                                <br><small>Uploaded em {{ processo.data_upload_manual.strftime('%d/%m/%Y %H:%M') }}</small>
+                                                {% endif %}
+                                            </div>
+                                            {% endif %}
+                                            
+                                            <form method="POST" action="{{ url_for('processos.upload_fatura_manual', id_processo=processo.id_processo) }}" enctype="multipart/form-data">
+                                                <div class="form-group">
+                                                    <label class="form-label">Selecione a fatura (PDF)</label>
+                                                    <div class="custom-file">
+                                                        <input type="file" name="fatura" class="custom-file-input" id="faturaUpload" accept=".pdf" required>
+                                                        <label class="custom-file-label" for="faturaUpload">Escolher arquivo...</label>
+                                                    </div>
+                                                    <small class="form-text text-muted">
+                                                        Apenas arquivos PDF são permitidos. A fatura será armazenada no MinIO S3 e o processo mudará para status <strong>AGUARDANDO_APROVACAO</strong>.
+                                                    </small>
+                                                </div>
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="feather icon-upload"></i> Fazer Upload da Fatura
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    <!-- [ Upload Manual de Fatura ] end -->
+                                    
+                                    <!-- [ Upload para SAT ] start -->
+                                    <div class="card mt-3">
+                                        <div class="card-header">
+                                            <h5><i class="feather icon-send"></i> Enviar Fatura para SAT</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            {% if processo.data_envio_sat %}
+                                            <div class="alert alert-info mb-3">
+                                                <i class="feather icon-info"></i> 
+                                                <strong>Enviado para SAT em:</strong> {{ processo.data_envio_sat.strftime('%d/%m/%Y %H:%M') }}
+                                            </div>
+                                            {% endif %}
+                                            
+                                            {% if processo.status_processo in ['AGUARDANDO_ENVIO_SAT', 'APROVADO'] %}
+                                            <form method="POST" action="{{ url_for('processos.upload_sat', id_processo=processo.id_processo) }}" onsubmit="return confirm('Confirma o envio desta fatura para o SAT?');">
+                                                <p class="mb-3">
+                                                    O processo está <strong>aprovado</strong> e pronto para ser enviado ao sistema SAT.
+                                                    {% if processo.fatura_filename %}
+                                                    <br><small class="text-muted">Fatura: {{ processo.fatura_filename }}</small>
+                                                    {% endif %}
+                                                </p>
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="feather icon-send"></i> Enviar para SAT
+                                                </button>
+                                            </form>
+                                            {% elif not processo.fatura_s3_key and not processo.url_fatura %}
+                                            <div class="alert alert-warning">
+                                                <i class="feather icon-alert-triangle"></i> 
+                                                Este processo não possui fatura para enviar ao SAT. Faça o upload manual ou aguarde o download automático.
+                                            </div>
+                                            {% elif processo.status_processo == 'AGUARDANDO_APROVACAO' %}
+                                            <div class="alert alert-warning">
+                                                <i class="feather icon-alert-circle"></i> 
+                                                Este processo precisa ser aprovado antes de enviar ao SAT.
+                                            </div>
+                                            {% elif processo.status_processo == 'UPLOAD_REALIZADO' %}
+                                            <div class="alert alert-success">
+                                                <i class="feather icon-check-circle"></i> 
+                                                Fatura já foi enviada ao SAT com sucesso!
+                                            </div>
+                                            {% else %}
+                                            <div class="alert alert-info">
+                                                <i class="feather icon-info"></i> 
+                                                Status atual: <strong>{{ processo.status_processo }}</strong>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <!-- [ Upload para SAT ] end -->
+                                    {% endif %}
                                 </div>
                             </div>
                             <!-- [ Main Content ] end -->
@@ -187,6 +274,12 @@ $(document).ready(function() {
         thousands: '.',
         decimal: ',',
         affixesStay: false
+    });
+    
+    // Atualizar label do input file quando arquivo for selecionado
+    $('#faturaUpload').on('change', function() {
+        var fileName = $(this).val().split('\\').pop();
+        $(this).next('.custom-file-label').html(fileName || 'Escolher arquivo...');
     });
 });
 </script>
