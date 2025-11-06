@@ -264,23 +264,42 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-maskmoney/3.0.2/jquery.maskMoney.min.js"></script>
 <script>
 $(document).ready(function() {
-    // Máscara para o campo Mês/Ano
-    $('#mes_ano').mask('00/0000', {placeholder: 'MM/AAAA'});
-    
-    // Máscara para valor monetário
-    $('#valor_fatura').maskMoney({
-        prefix: '',
-        allowNegative: false,
-        thousands: '.',
-        decimal: ',',
-        affixesStay: false
-    });
-    
-    // Atualizar label do input file quando arquivo for selecionado
-    $('#faturaUpload').on('change', function() {
-        var fileName = $(this).val().split('\\').pop();
-        $(this).next('.custom-file-label').html(fileName || 'Escolher arquivo...');
-    });
+    try {
+        // Máscara para o campo Mês/Ano
+        if ($('#mes_ano').length) {
+            $('#mes_ano').mask('00/0000', {placeholder: 'MM/AAAA'});
+        }
+        
+        // Máscara para valor monetário
+        if ($('#valor_fatura').length && typeof $.fn.maskMoney === 'function') {
+            $('#valor_fatura').maskMoney({
+                prefix: '',
+                allowNegative: false,
+                thousands: '.',
+                decimal: ',',
+                affixesStay: false
+            });
+        }
+        
+        // Configurar campo de data para tipo date
+        if ($('#data_vencimento').length) {
+            $('#data_vencimento').attr('type', 'date');
+        }
+        
+        // Atualizar label do input file quando arquivo for selecionado
+        $('#faturaUpload').on('change', function() {
+            try {
+                var fileName = $(this).val().split('\\').pop();
+                $(this).next('.custom-file-label').html(fileName || 'Escolher arquivo...');
+            } catch(e) {
+                console.error('Erro ao atualizar nome do arquivo:', e);
+            }
+        });
+        
+        console.log('Máscaras aplicadas com sucesso');
+    } catch(e) {
+        console.error('Erro ao aplicar máscaras:', e);
+    }
 });
 </script>
 {% endblock javascripts %}
