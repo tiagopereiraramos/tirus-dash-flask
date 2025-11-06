@@ -260,46 +260,32 @@
 {% endblock content %}
 
 {% block javascripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-maskmoney/3.0.2/jquery.maskMoney.min.js"></script>
 <script>
 $(document).ready(function() {
-    try {
-        // Máscara para o campo Mês/Ano
-        if ($('#mes_ano').length) {
-            $('#mes_ano').mask('00/0000', {placeholder: 'MM/AAAA'});
-        }
-        
-        // Máscara para valor monetário
-        if ($('#valor_fatura').length && typeof $.fn.maskMoney === 'function') {
-            $('#valor_fatura').maskMoney({
-                prefix: '',
-                allowNegative: false,
-                thousands: '.',
-                decimal: ',',
-                affixesStay: false
-            });
-        }
-        
-        // Configurar campo de data para tipo date
-        if ($('#data_vencimento').length) {
-            $('#data_vencimento').attr('type', 'date');
-        }
-        
-        // Atualizar label do input file quando arquivo for selecionado
-        $('#faturaUpload').on('change', function() {
-            try {
-                var fileName = $(this).val().split('\\').pop();
-                $(this).next('.custom-file-label').html(fileName || 'Escolher arquivo...');
-            } catch(e) {
-                console.error('Erro ao atualizar nome do arquivo:', e);
-            }
-        });
-        
-        console.log('Máscaras aplicadas com sucesso');
-    } catch(e) {
-        console.error('Erro ao aplicar máscaras:', e);
+    // Configurar campo de data para tipo date (picker nativo)
+    if ($('#data_vencimento').length) {
+        $('#data_vencimento').attr('type', 'date');
     }
+    
+    // Configurar campo de valor para tipo number (input nativo)
+    if ($('#valor_fatura').length) {
+        $('#valor_fatura').attr('type', 'number')
+                          .attr('step', '0.01')
+                          .attr('min', '0')
+                          .attr('placeholder', '0.00');
+    }
+    
+    // Atualizar label do input file quando arquivo for selecionado
+    if ($('#faturaUpload').length) {
+        $('#faturaUpload').on('change', function() {
+            var fileName = $(this).val().split('\\').pop();
+            $(this).next('.custom-file-label').html(fileName || 'Escolher arquivo...');
+        });
+    }
+    
+    console.log('Página de detalhes carregada');
+    console.log('jQuery está disponível');
+    console.log('Bootstrap modal está disponível');
 });
 </script>
 {% endblock javascripts %}
