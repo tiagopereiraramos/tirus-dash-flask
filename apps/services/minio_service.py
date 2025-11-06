@@ -69,8 +69,12 @@ class MinIOService:
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             filename = secure_filename(file.filename)
             
+            # Obter operadora através do cliente
+            operadora_nome = processo.cliente.operadora.codigo if processo.cliente.operadora else 'SEM_OPERADORA'
+            cliente_nome = processo.cliente.razao_social.replace(' ', '_')[:50]  # Limita tamanho
+            
             # Padrão: pdfs/{operadora}/{cliente}_{ano}_{mes}_{timestamp}_{filename}
-            object_key = f"{self.pdf_folder}/{processo.operadora.nome_operadora}/{processo.cliente.nome_cliente}_{processo.ano}_{processo.mes:02d}_{timestamp}_{filename}"
+            object_key = f"{self.pdf_folder}/{operadora_nome}/{cliente_nome}_{processo.ano}_{processo.mes:02d}_{timestamp}_{filename}"
             
             # Upload para MinIO
             self.s3_client.upload_fileobj(
@@ -80,9 +84,9 @@ class MinIOService:
                 ExtraArgs={
                     'ContentType': 'application/pdf',
                     'Metadata': {
-                        'processo_id': str(processo.id_processo),
-                        'cliente_id': str(processo.id_cliente),
-                        'operadora_id': str(processo.id_operadora),
+                        'processo_id': str(processo.id),
+                        'cliente_id': str(processo.cliente_id),
+                        'operadora_id': str(processo.cliente.operadora_id) if processo.cliente.operadora_id else '',
                         'ano': str(processo.ano),
                         'mes': str(processo.mes),
                         'uploaded_at': datetime.now().isoformat()
