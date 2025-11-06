@@ -41,7 +41,7 @@ The frontend uses Jinja2 templates with Bootstrap 4 (Datta Able theme), jQuery, 
 
 - **External RPA API**: `http://191.252.218.230:8000` for triggering RPA downloads (`POST /executar/{operadora}`), polling job status (`GET /jobs/{job_id}`), and retrieving logs (`GET /jobs/{job_id}/logs`). Authenticated via a global JWT Bearer token.
 - **Database**: SQLite (development), PostgreSQL (production).
-- **MinIO S3 Storage**: `https://tirus-minio.cqojac.easypanel.host` for storing invoice PDFs. Credentials in `docs/credentials (1).json`, bucket 'beg', folder 'pdfs'.
+- **MinIO S3 Storage**: `https://tirus-minio.cqojac.easypanel.host` for storing invoice PDFs. Credentials configured via environment variables (`MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`), bucket 'beg', folder 'pdfs'.
 - **Third-party Libraries**:
     - `Flask-Login`: Session management.
     - `Flask-SQLAlchemy`: ORM.
@@ -184,7 +184,7 @@ O sistema permite upload manual de faturas em PDF diretamente para o MinIO S3, o
 - Bucket: `beg`
 - Pasta: `pdfs`
 
-**Valores originais em:** `docs/credentials (1).json` (não versionado)
+**IMPORTANTE:** As credenciais devem ser configuradas no arquivo `.env` (não versionado) ou nos Replit Secrets.
 
 ### Fluxo de Upload Manual
 
