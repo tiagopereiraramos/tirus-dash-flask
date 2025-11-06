@@ -6,7 +6,6 @@ import boto3
 from botocore.client import Config
 from botocore.exceptions import ClientError
 import logging
-import json
 import os
 from datetime import datetime
 from werkzeug.utils import secure_filename

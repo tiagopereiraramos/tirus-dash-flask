@@ -177,11 +177,14 @@ O sistema permite upload manual de faturas em PDF diretamente para o MinIO S3, o
 ### Configuração MinIO
 
 **Endpoint:** `https://tirus-minio.cqojac.easypanel.host`
-**Credenciais:** Armazenadas em `docs/credentials (1).json`
-- `accessKey`: Chave de acesso S3
-- `secretKey`: Chave secreta S3
+**Credenciais:** Configuradas via variáveis de ambiente (`.env` ou Replit Secrets)
+- `MINIO_ACCESS_KEY`: Chave de acesso S3
+- `MINIO_SECRET_KEY`: Chave secreta S3
+- `MINIO_ENDPOINT`: URL do servidor MinIO (opcional, padrão: https://tirus-minio.cqojac.easypanel.host)
 - Bucket: `beg`
 - Pasta: `pdfs`
+
+**Valores originais em:** `docs/credentials (1).json` (não versionado)
 
 ### Fluxo de Upload Manual
 
@@ -242,8 +245,9 @@ bucket: beg
 
 **Erro ao conectar MinIO:**
 - Verificar endpoint: `https://tirus-minio.cqojac.easypanel.host`
-- Confirmar credenciais em `docs/credentials (1).json`
+- Confirmar que variáveis `MINIO_ACCESS_KEY` e `MINIO_SECRET_KEY` estão configuradas
 - Verificar se bucket 'beg' existe
+- Checar logs para erro específico de conexão S3
 
 **Upload falha:**
 - Validar tipo de arquivo (apenas PDF)

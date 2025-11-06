@@ -18,6 +18,10 @@ venv
 # other
 .DS_Store
 
+# credentials
+docs/credentials*.json
+.env
+
 # sphinx docs 
 _build
 _static
