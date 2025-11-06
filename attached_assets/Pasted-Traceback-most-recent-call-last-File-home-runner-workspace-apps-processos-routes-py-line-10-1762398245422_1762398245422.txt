@@ -1,0 +1,57 @@
+Traceback (most recent call last):
+  File "/home/runner/workspace/apps/processos/routes.py", line 1026, in upload_fatura_manual
+    minio_service = MinIOService()
+                    ^^^^^^^^^^^^^^
+  File "/home/runner/workspace/apps/services/minio_service.py", line 29, in __init__
+    raise ValueError(
+ValueError: Credenciais do MinIO não configuradas. Configure as variáveis de ambiente MINIO_ACCESS_KEY e MINIO_SECRET_KEY
+172.31.87.194 - - [06/Nov/2025 03:03:36] "POST /processos/upload_fatura/83a04213-ca55-4977-8f46-624c2a863bcf HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/home/runner/workspace/apps/processos/routes.py", line 1026, in upload_fatura_manual
+    minio_service = MinIOService()
+                    ^^^^^^^^^^^^^^
+  File "/home/runner/workspace/apps/services/minio_service.py", line 29, in __init__
+    raise ValueError(
+ValueError: Credenciais do MinIO não configuradas. Configure as variáveis de ambiente MINIO_ACCESS_KEY e MINIO_SECRET_KEY
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/flask/app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/flask/app.py", line 2193, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/apps/authentication/util.py", line 57, in decorated_function
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/apps/processos/routes.py", line 1051, in upload_fatura_manual
+    return redirect(url_for('processos_bp.editar', id_processo=id_processo))
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/flask/helpers.py", line 225, in url_for
+    return current_app.url_for(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/flask/app.py", line 1697, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/flask/app.py", line 1686, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/werkzeug/routing/map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'processos_bp.editar' with values ['id_processo']. Did you forget to specify values ['id']?
+172.31.87.194 - - [06/Nov/2025 03:03:36] "GET /processos/upload_fatura/83a04213-ca55-4977-8f46-624c2a863bcf?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 304 -
+172.31.87.194 - - [06/Nov/2025 03:03:36] "GET /processos/upload_fatura/83a04213-ca55-4977-8f46-624c2a863bcf?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 304 -
