@@ -79,6 +79,24 @@ class Processo(BaseModel):
         nullable=True,
         comment="Caminho da fatura armazenada no S3/MinIO"
     )
+    
+    fatura_s3_key = Column(
+        String(500),
+        nullable=True,
+        comment="Chave (key) do arquivo no S3/MinIO"
+    )
+    
+    fatura_filename = Column(
+        String(255),
+        nullable=True,
+        comment="Nome original do arquivo da fatura"
+    )
+    
+    data_upload_manual = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="Data e hora do upload manual da fatura"
+    )
 
     data_vencimento = Column(
         Date,

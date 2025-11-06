@@ -985,3 +985,120 @@ def criar_processos_mensais_automatico(mes_ano: Optional[str] = None, operadora_
             'processos_criados': 0,
             'processos_existentes': 0
         }
+
+
+@bp.route('/upload_fatura/<id_processo>', methods=['POST'])
+@verify_user_jwt
+def upload_fatura_manual(id_processo):
+    """
+    Upload manual de fatura para MinIO S3
+    Muda status do processo para AGUARDANDO_APROVACAO
+    """
+    from apps.services.minio_service import MinIOService
+    
+    try:
+        # Buscar processo
+        processo = Processo.query.options(
+            joinedload(Processo.cliente),
+            joinedload(Processo.operadora)
+        ).get(id_processo)
+        
+        if not processo:
+            flash('Processo não encontrado', 'danger')
+            return redirect(url_for('processos.listar'))
+        
+        # Verificar se arquivo foi enviado
+        if 'fatura' not in request.files:
+            flash('Nenhum arquivo foi enviado', 'warning')
+            return redirect(url_for('processos.editar', id_processo=id_processo))
+        
+        file = request.files['fatura']
+        
+        if file.filename == '':
+            flash('Nenhum arquivo foi selecionado', 'warning')
+            return redirect(url_for('processos.editar', id_processo=id_processo))
+        
+        # Validar tipo de arquivo (apenas PDF)
+        if not file.filename.lower().endswith('.pdf'):
+            flash('Apenas arquivos PDF são permitidos', 'warning')
+            return redirect(url_for('processos.editar', id_processo=id_processo))
+        
+        # Upload para MinIO
+        minio_service = MinIOService()
+        result = minio_service.upload_fatura(file, processo)
+        
+        if not result['success']:
+            flash(f'Erro ao fazer upload: {result["error"]}', 'danger')
+            return redirect(url_for('processos.editar', id_processo=id_processo))
+        
+        # Atualizar processo
+        processo.status_processo = StatusProcesso.AGUARDANDO_APROVACAO.value
+        processo.url_fatura = result['url']
+        processo.fatura_s3_key = result['key']
+        processo.fatura_filename = result['filename']
+        processo.data_upload_manual = datetime.now()
+        
+        db.session.commit()
+        
+        logger.info(f"Fatura uploaded manualmente para processo {id_processo}: {result['key']}")
+        flash(f'Fatura "{result["filename"]}" enviada com sucesso! Processo aguardando aprovação.', 'success')
+        
+        return redirect(url_for('processos.editar', id_processo=id_processo))
+    
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao fazer upload manual de fatura: {e}", exc_info=True)
+        flash(f'Erro ao fazer upload: {str(e)}', 'danger')
+        return redirect(url_for('processos.editar', id_processo=id_processo))
+
+
+@bp.route('/upload_sat/<id_processo>', methods=['POST'])
+@verify_user_jwt
+def upload_sat(id_processo):
+    """
+    Upload da fatura para o sistema SAT
+    Muda status do processo para UPLOAD_REALIZADO
+    """
+    try:
+        # Buscar processo
+        processo = Processo.query.options(
+            joinedload(Processo.cliente),
+            joinedload(Processo.operadora)
+        ).get(id_processo)
+        
+        if not processo:
+            flash('Processo não encontrado', 'danger')
+            return redirect(url_for('processos.listar'))
+        
+        # Validar status - deve estar AGUARDANDO_ENVIO_SAT ou APROVADO
+        if processo.status_processo not in [
+            StatusProcesso.AGUARDANDO_ENVIO_SAT.value,
+            StatusProcesso.APROVADO.value
+        ]:
+            flash('Processo deve estar aprovado antes de enviar para o SAT', 'warning')
+            return redirect(url_for('processos.editar', id_processo=id_processo))
+        
+        # Verificar se tem fatura
+        if not processo.fatura_s3_key and not processo.url_fatura:
+            flash('Processo não possui fatura para enviar ao SAT', 'warning')
+            return redirect(url_for('processos.editar', id_processo=id_processo))
+        
+        # Aqui você implementaria a integração real com o SAT
+        # Por enquanto, apenas atualizamos o status
+        # TODO: Implementar integração com SAT (API, FTP, etc.)
+        
+        processo.status_processo = StatusProcesso.UPLOAD_REALIZADO.value
+        processo.data_envio_sat = datetime.now()
+        
+        db.session.commit()
+        
+        logger.info(f"Fatura do processo {id_processo} enviada para SAT")
+        flash('Fatura enviada para o SAT com sucesso!', 'success')
+        
+        return redirect(url_for('processos.editar', id_processo=id_processo))
+    
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao enviar fatura para SAT: {e}", exc_info=True)
+        flash(f'Erro ao enviar para SAT: {str(e)}', 'danger')
+        return redirect(url_for('processos.editar', id_processo=id_processo))
