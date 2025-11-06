@@ -1,0 +1,13 @@
+.31.67.194 - - [06/Nov/2025 12:27:02] "GET /static/assets/plugins/bootstrap/css/bootstrap.min.css.map HTTP/1.1" 404 -
+172.31.67.194 - - [06/Nov/2025 12:27:02] "GET /static/assets/plugins/bootstrap/js/bootstrap.min.js.map HTTP/1.1" 404 -
+[2025-11-06 12:27:12,487] INFO in routes: Iniciando execução de upload SAT para processo 83a04213-ca55-4977-8f46-624c2a863bcf
+[2025-11-06 12:27:12,487] INFO in services: APIExternaService inicializado: http://191.252.218.230:8000
+[2025-11-06 12:27:12,487] INFO in services: Executando SAT para processo 83a04213-ca55-4977-8f46-624c2a863bcf
+[2025-11-06 12:27:12,590] INFO in services: Payload SAT criado para processo 83a04213-ca55-4977-8f46-624c2a863bcf
+[2025-11-06 12:27:12,593] INFO in auth: Usando token global do admin: admin
+[2025-11-06 12:27:12,593] DEBUG in services: POST http://191.252.218.230:8000/executar/sat
+[2025-11-06 12:27:12,911] ERROR in services: Erro HTTP 422: {"detail":[{"type":"missing","loc":["body","filtro"],"msg":"Field required","input":{"login":"84718741000100","senha":"bgtele005","cnpj":"84718741000100","razao":"RICAL - RACK INDUSTRIA E COMERCIO DE ARROZ LTDA","operadora":"EMBRATEL","nome_filtro":"00052488515-0000_24","unidade":"Ji-Paraná-RO","servico":"JIP/IP/00438","dados_sat":"Link Dedicado","nome_arquivo":"fatura_11_2025.pdf","data_vencimento":"17/11/2025","processo_id":"83a04213-ca55-4977-8f46-624c2a863bcf"}}]}
+[2025-11-06 12:27:12,911] ERROR in services: Erro ao executar SAT: Erro HTTP 422: {"detail":[{"type":"missing","loc":["body","filtro"],"msg":"Field required","input":{"login":"84718741000100","senha":"bgtele005","cnpj":"84718741000100","razao":"RICAL - RACK INDUSTRIA E COMERCIO DE ARROZ LTDA","operadora":"EMBRATEL","nome_filtro":"00052488515-0000_24","unidade":"Ji-Paraná-RO","servico":"JIP/IP/00438","dados_sat":"Link Dedicado","nome_arquivo":"fatura_11_2025.pdf","data_vencimento":"17/11/2025","processo_id":"83a04213-ca55-4977-8f46-624c2a863bcf"}}]}
+[2025-11-06 12:27:12,961] ERROR in routes: Erro ao executar upload SAT: Erro HTTP 422: {"detail":[{"type":"missing","loc":["body","filtro"],"msg":"Field required","input":{"login":"84718741000100","senha":"bgtele005","cnpj":"84718741000100","razao":"RICAL - RACK INDUSTRIA E COMERCIO DE ARROZ LTDA","operadora":"EMBRATEL","nome_filtro":"00052488515-0000_24","unidade":"Ji-Paraná-RO","servico":"JIP/IP/00438","dados_sat":"Link Dedicado","nome_arquivo":"fatura_11_2025.pdf","data_vencimento":"17/11/2025","processo_id":"83a04213-ca55-4977-8f46-624c2a863bcf"}}]}
+172.31.67.194 - - [06/Nov/2025 12:27:12] "POST /processos/executar-upload-sat/83a04213-ca55-4977-8f46-624c2a863bcf HTTP/1.1" 500 -
+172.31.67.194 - - [06/Nov/2025 12:27:24] "GET /processos/sse/status HTTP/1.1" 200 -
