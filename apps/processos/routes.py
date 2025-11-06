@@ -893,3 +893,95 @@ def enviar_evento_sse(evento: Dict[str, Any]):
             q.put_nowait(evento)
         except queue.Full:
             pass
+
+
+def criar_processos_mensais_automatico(mes_ano: Optional[str] = None, operadora_id: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Cria processos mensais automaticamente (usado por agendamentos)
+    
+    Args:
+        mes_ano: Mês/ano no formato MM/AAAA (padrão: mês atual)
+        operadora_id: ID da operadora para filtrar (opcional)
+    
+    Returns:
+        Dicion ário com resultado da operação
+    """
+    try:
+        # Usar mês/ano atual se não especificado
+        if not mes_ano:
+            agora = datetime.now()
+            mes_ano = agora.strftime('%m/%Y')
+        
+        # Validar formato
+        if not Processo.validar_formato_mes_ano(mes_ano):
+            return {
+                'success': False,
+                'error': 'Formato de mês/ano inválido. Use MM/AAAA.',
+                'processos_criados': 0,
+                'processos_existentes': 0
+            }
+        
+        # Query base para clientes ativos
+        query_clientes = Cliente.query.filter(Cliente.status_ativo == True)
+        
+        # Filtrar por operadora se especificado
+        if operadora_id:
+            query_clientes = query_clientes.filter(Cliente.operadora_id == operadora_id)
+        
+        clientes = query_clientes.all()
+        
+        if not clientes:
+            return {
+                'success': False,
+                'error': 'Nenhum cliente ativo encontrado',
+                'processos_criados': 0,
+                'processos_existentes': 0
+            }
+        
+        processos_criados = 0
+        processos_existentes = 0
+        
+        for cliente in clientes:
+            # Verificar se já existe processo para este cliente no mês/ano
+            processo_existente = Processo.query.filter(
+                and_(
+                    Processo.cliente_id == cliente.id,
+                    Processo.mes_ano == mes_ano
+                )
+            ).first()
+            
+            if processo_existente:
+                processos_existentes += 1
+                continue
+            
+            # Criar novo processo
+            processo = Processo(
+                cliente_id=cliente.id,
+                mes_ano=mes_ano,
+                status_processo=StatusProcesso.AGUARDANDO_DOWNLOAD.value,
+                criado_automaticamente=True
+            )
+            
+            db.session.add(processo)
+            processos_criados += 1
+        
+        db.session.commit()
+        
+        logger.info(f"Processos mensais criados automaticamente: {processos_criados} (existentes: {processos_existentes})")
+        
+        return {
+            'success': True,
+            'processos_criados': processos_criados,
+            'processos_existentes': processos_existentes,
+            'mes_ano': mes_ano
+        }
+    
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao criar processos mensais automaticamente: {e}", exc_info=True)
+        return {
+            'success': False,
+            'error': str(e),
+            'processos_criados': 0,
+            'processos_existentes': 0
+        }

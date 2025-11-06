@@ -14,3 +14,4 @@ Flask-SQLAlchemy==3.0.5
 flask-wtf
 requests
 SQLAlchemy==2.0.21
+croniter
