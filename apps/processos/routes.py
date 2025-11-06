@@ -720,6 +720,7 @@ def aprovar(id):
     """
     try:
         from flask_login import current_user
+        from apps.models.usuario import Usuario
         
         processo = Processo.query.get_or_404(id)
         
@@ -731,10 +732,18 @@ def aprovar(id):
         
         observacoes = request.form.get('observacoes', request.json.get('observacoes', '') if request.is_json else '')
         
-        processo.aprovar(current_user.id, observacoes)
+        # Buscar o UUID do usuário atual
+        usuario = Usuario.query.filter_by(username=current_user.username).first()
+        if not usuario:
+            return jsonify({
+                'success': False,
+                'message': 'Usuário não encontrado'
+            }), 404
+        
+        processo.aprovar(usuario.id, observacoes)
         db.session.commit()
         
-        logger.info(f"Processo {id} aprovado por usuário {current_user.id}")
+        logger.info(f"Processo {id} aprovado por usuário {usuario.id}")
         
         enviar_evento_sse({
             'type': 'status_changed',
