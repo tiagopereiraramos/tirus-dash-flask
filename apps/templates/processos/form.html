@@ -94,8 +94,9 @@
                                                     <div class="col-md-3">
                                                         <div class="form-group">
                                                             {{ form.data_vencimento.label(class="form-label") }}
+                                                            {% set data_valor = form.data_vencimento.data.strftime('%Y-%m-%d') if form.data_vencimento.data else '' %}
                                                             <input type="date" name="data_vencimento" id="data_vencimento" class="form-control no-mask" 
-                                                                   value="{{ form.data_vencimento.data.strftime('%Y-%m-%d') if form.data_vencimento.data else '' }}"
+                                                                   value="{{ data_valor }}"
                                                                    autocomplete="off" data-mask="false">
                                                             {% if form.data_vencimento.errors %}
                                                                 {% for error in form.data_vencimento.errors %}
@@ -111,8 +112,13 @@
                                                                 <div class="input-group-prepend">
                                                                     <span class="input-group-text">R$</span>
                                                                 </div>
+                                                                {% if form.valor_fatura.data %}
+                                                                    {% set valor_formatado = "%.2f"|format(form.valor_fatura.data|float) %}
+                                                                {% else %}
+                                                                    {% set valor_formatado = '' %}
+                                                                {% endif %}
                                                                 <input type="number" name="valor_fatura" id="valor_fatura" class="form-control no-mask" 
-                                                                       value="{{ '%.2f' | format(form.valor_fatura.data|float) if form.valor_fatura.data else '' }}"
+                                                                       value="{{ valor_formatado }}"
                                                                        step="0.01" min="0" placeholder="0.00" autocomplete="off" data-mask="false">
                                                             </div>
                                                             {% if form.valor_fatura.errors %}
