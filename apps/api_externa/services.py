@@ -140,6 +140,8 @@ class APIExternaService:
 
             # Criar payload
             payload = AutomacaoPayloadSat(
+                login=login,
+                senha=senha,
                 cnpj=cnpj,
                 razao=cliente.razao_social or "EMPRESA LTDA",
                 operadora=operadora.codigo if operadora else "UNK",
@@ -148,7 +150,8 @@ class APIExternaService:
                 servico=cliente.servico or "INTERNET_DEDICADA",
                 dados_sat=cliente.dados_sat or f"{cliente.nome_sat or cliente.razao_social}|INTERNET|DEDICADA",
                 nome_arquivo=nome_arquivo,
-                data_vencimento=data_vencimento
+                data_vencimento=data_vencimento,
+                processo_id=str(processo.id)
             )
 
             # Validar

@@ -124,7 +124,19 @@ class APIExternaFuncionalService:
                 data_venc = datetime.now() + timedelta(days=15)
                 data_vencimento = data_venc.strftime("%d/%m/%Y")
 
+            # Determinar login e senha (mesma lógica do download)
+            if cliente.login_portal:
+                login = cliente.login_portal
+            elif operadora.codigo == 'OI':
+                login = cliente.filtro or cliente.cnpj
+            else:
+                login = cliente.cnpj
+            
+            senha = cliente.senha_portal or "senha123"
+            
             payload = AutomacaoPayloadSat(
+                login=login,
+                senha=senha,
                 cnpj=cliente.cnpj or "00000000000000",
                 razao=cliente.razao_social or "EMPRESA LTDA",
                 operadora=operadora.codigo,
@@ -133,7 +145,8 @@ class APIExternaFuncionalService:
                 servico=cliente.servico or "TELEFONIA",
                 dados_sat=cliente.dados_sat or f"{cliente.nome_sat}|INTERNET|DEDICADA",
                 nome_arquivo=nome_arquivo,
-                data_vencimento=data_vencimento
+                data_vencimento=data_vencimento,
+                processo_id=str(processo.id)
             )
 
             # Validar payload
@@ -409,6 +422,17 @@ class APIExternaFuncionalService:
 
             # Se assíncrono, adicionar ao monitor
             if not sincrono and isinstance(resultado, JobResponse):
+                # IMPORTANTE: Armazenar o resultado do job na execução para que possa ser listado
+                execucao.resultado_saida = {
+                    'job_id': resultado.job_id,
+                    'status': resultado.status,
+                    'tipo': 'sat',
+                    'operadora': 'SAT',
+                    'processo_id': str(processo.id),
+                    'timestamp_criacao': datetime.now().isoformat(),
+                    'assincrono': True
+                }
+
                 self.monitor.add_job(
                     job_id=resultado.job_id,
                     processo_id=str(processo.id),
@@ -427,21 +451,30 @@ class APIExternaFuncionalService:
                 logger.info(
                     f"Job SAT {resultado.job_id} criado e adicionado ao monitor")
 
-                # Atualizar execução com sucesso
-                execucao.finalizar_com_sucesso(
-                    resultado={
-                        "job_id": resultado.job_id,
-                        "status": resultado.status,
-                        "message": resultado.message,
-                        "status_url": resultado.status_url
-                    },
-                    mensagem=f"Job SAT criado com sucesso: {resultado.job_id}"
-                )
+                # Para execução assíncrona, NÃO finalizar a execução ainda
+                # A execução só será finalizada quando o job for concluído
+                execucao.adicionar_log(
+                    f"Job SAT criado com sucesso: {resultado.job_id}")
+                execucao.adicionar_log(f"Status inicial: {resultado.status}")
+                execucao.adicionar_log("Aguardando conclusão do job SAT...")
                 db.session.commit()
 
             # Atualizar status do processo
             if sincrono:
-                processo.status_processo = "SAT_CONCLUIDO"
+                # Para execução síncrona, verificar resultado
+                if hasattr(resultado, 'result') and resultado.result:
+                    processo.status_processo = "UPLOAD_REALIZADO"
+                    execucao.finalizar_com_sucesso(
+                        resultado=resultado.to_dict() if hasattr(resultado, 'to_dict') else resultado,
+                        mensagem=f"Upload SAT concluído com sucesso"
+                    )
+                else:
+                    processo.status_processo = "ERRO_SAT"
+                    execucao.finalizar_com_erro(
+                        erro=Exception("Upload SAT não retornou resultado"),
+                        detalhes_adicionais={
+                            "tipo": "erro_sat_sem_resultado", "resultado": resultado}
+                    )
             else:
                 processo.status_processo = "SAT_EM_ANDAMENTO"
 

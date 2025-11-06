@@ -65,6 +65,8 @@ class AutomacaoPayloadSat:
     Endpoint: POST /executar/sat
     Documentação: Seção 4.2.3
     """
+    login: str
+    senha: str
     cnpj: str
     razao: str
     operadora: str
@@ -74,10 +76,13 @@ class AutomacaoPayloadSat:
     dados_sat: str
     nome_arquivo: str
     data_vencimento: str  # Formato: DD/MM/YYYY
+    processo_id: str = None  # Para rastreamento
 
     def to_dict(self) -> Dict[str, Any]:
         """Converte para dicionário para envio à API"""
-        return {
+        payload = {
+            "login": self.login,
+            "senha": self.senha,
             "cnpj": self.cnpj,
             "razao": self.razao,
             "operadora": self.operadora,
@@ -88,11 +93,21 @@ class AutomacaoPayloadSat:
             "nome_arquivo": self.nome_arquivo,
             "data_vencimento": self.data_vencimento
         }
+        
+        # Adicionar processo_id se fornecido (para rastreamento)
+        if self.processo_id:
+            payload["processo_id"] = self.processo_id
+            
+        return payload
 
     def validate(self) -> List[str]:
         """Valida campos obrigatórios"""
         erros = []
         
+        if not self.login:
+            erros.append("login é obrigatório")
+        if not self.senha:
+            erros.append("senha é obrigatória")
         if not self.cnpj:
             erros.append("cnpj é obrigatório")
         if not self.razao:
