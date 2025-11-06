@@ -89,12 +89,8 @@ function aplicarMascaras() {
         });
 
         // Aplicar máscaras específicas
-        const dataVencimento = document.getElementById('data_vencimento');
-        const valorFatura = document.getElementById('valor_fatura');
         const mesAno = document.getElementById('mes_ano');
 
-        if (dataVencimento) $('#data_vencimento').mask('00/00/0000');
-        if (valorFatura) $('#valor_fatura').mask('#.##0,00', {reverse: true});
         if (mesAno) $('#mes_ano').mask('00/0000');
 
         console.log('Máscaras aplicadas com sucesso');
