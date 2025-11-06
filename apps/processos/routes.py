@@ -468,7 +468,7 @@ def editar(id):
             try:
                 if not Processo.validar_formato_mes_ano(form.mes_ano.data):
                     flash('Formato de mês/ano inválido. Use MM/AAAA.', 'danger')
-                    return render_template('processos/form.html', form=form, titulo="Editar Processo")
+                    return render_template('processos/form.html', form=form, titulo="Editar Processo", processo=processo)
 
                 # Verificar se não há outro processo com mesmo cliente/mes_ano (exceto o atual)
                 processo_existente = db.session.query(Processo).filter(
@@ -481,7 +481,7 @@ def editar(id):
 
                 if processo_existente:
                     flash('Já existe um processo para este cliente no mês/ano informado.', 'danger')
-                    return render_template('processos/form.html', form=form, titulo="Editar Processo")
+                    return render_template('processos/form.html', form=form, titulo="Editar Processo", processo=processo)
 
                 # Atualizar dados
                 processo.cliente_id = form.cliente_id.data
@@ -509,7 +509,7 @@ def editar(id):
                 logger.error("Erro ao editar processo: %s", str(e))
                 flash('Erro ao editar processo. Tente novamente.', 'danger')
 
-        return render_template('processos/form.html', form=form, titulo="Editar Processo")
+        return render_template('processos/form.html', form=form, titulo="Editar Processo", processo=processo)
     
     except Exception as e:
         logger.error("Erro ao carregar processo para edição: %s", str(e))
