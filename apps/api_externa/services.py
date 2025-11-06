@@ -116,16 +116,11 @@ class APIExternaService:
             cliente = processo.cliente
             operadora = processo.cliente.operadora
 
-            # Determinar login (workaround temporário)
-            if cliente.login_portal:
-                login = cliente.login_portal
-            elif operadora.codigo == 'OI':
-                login = cliente.filtro or cliente.cnpj
-            else:
-                login = cliente.cnpj
-
+            # WORKAROUND: Passar vazios para mitigar erro na API externa
+            login = ""
+            senha = ""
+            
             # Valores com fallback
-            senha = cliente.senha_portal or "senha_padrao"
             filtro = cliente.filtro or "fatura_mensal"
             cnpj = cliente.cnpj or "00000000000000"
 

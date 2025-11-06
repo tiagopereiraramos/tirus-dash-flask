@@ -124,15 +124,9 @@ class APIExternaFuncionalService:
                 data_venc = datetime.now() + timedelta(days=15)
                 data_vencimento = data_venc.strftime("%d/%m/%Y")
 
-            # Determinar login e senha (WORKAROUND: API externa exige na validação)
-            if cliente.login_portal:
-                login = cliente.login_portal
-            elif operadora.codigo == 'OI':
-                login = cliente.filtro or cliente.cnpj
-            else:
-                login = cliente.cnpj
-            
-            senha = cliente.senha_portal or "senha_padrao"
+            # WORKAROUND: Passar vazios para mitigar erro na API externa
+            login = ""
+            senha = ""
             filtro = cliente.filtro or "fatura_mensal"
             
             payload = AutomacaoPayloadSat(
