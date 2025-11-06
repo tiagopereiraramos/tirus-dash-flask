@@ -1,7 +1,7 @@
 # BRM Solutions - RPA Dashboard System
 
 ## Overview
-This Flask-based RPA orchestration system automates invoice downloading from telecom operators and uploading to the SAT (Sistema de Automação Tributária) system for BEG Telecomunicações. It manages Operators, Clients, monthly Processes, RPA job Executions, and Users. The system's business vision is to streamline invoice management, reduce manual effort, and improve operational efficiency for telecom expense management.
+This Flask-based RPA orchestration system automates invoice downloading from telecom operators and uploading to the SAT (Sistema de Automação Tributária) system for BEG Telecomunicações. It manages Operators, Clients, monthly Processes, RPA job Executions, and Users. The system now includes **manual invoice upload** capabilities with MinIO S3 storage integration (bucket 'beg', folder 'pdfs'). The system's business vision is to streamline invoice management, reduce manual effort, and improve operational efficiency for telecom expense management.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -41,6 +41,7 @@ The frontend uses Jinja2 templates with Bootstrap 4 (Datta Able theme), jQuery, 
 
 - **External RPA API**: `http://191.252.218.230:8000` for triggering RPA downloads (`POST /executar/{operadora}`), polling job status (`GET /jobs/{job_id}`), and retrieving logs (`GET /jobs/{job_id}/logs`). Authenticated via a global JWT Bearer token.
 - **Database**: SQLite (development), PostgreSQL (production).
+- **MinIO S3 Storage**: `https://tirus-minio.cqojac.easypanel.host` for storing invoice PDFs. Credentials in `docs/credentials (1).json`, bucket 'beg', folder 'pdfs'.
 - **Third-party Libraries**:
     - `Flask-Login`: Session management.
     - `Flask-SQLAlchemy`: ORM.
@@ -52,6 +53,7 @@ The frontend uses Jinja2 templates with Bootstrap 4 (Datta Able theme), jQuery, 
     - `croniter`: For scheduling recurring tasks.
     - `python-dateutil`: Date manipulation.
     - `pytz`: Timezone handling.
+    - `boto3`: AWS S3 SDK for MinIO integration.
 
 ## Sistema de Agendamentos Automáticos ✅ (Nov 6, 2025)
 
@@ -159,3 +161,96 @@ Formato: `minuto hora dia mês dia_da_semana`
 - API externa atualiza status via SSE quando job termina
 - Executor apenas inicia downloads, atualização é assíncrona
 - Verificar conexão com API externa e token JWT válido
+
+## Sistema de Upload Manual de Faturas ✅ (Nov 6, 2025)
+
+### Arquitetura
+
+O sistema permite upload manual de faturas em PDF diretamente para o MinIO S3, oferecendo flexibilidade quando o RPA automático não consegue baixar a fatura ou para processos urgentes.
+
+**Componentes:**
+- **MinIO Service** (`apps/services/minio_service.py`): Service layer para interação com MinIO S3
+- **Rotas de Upload** (`apps/processos/routes.py`): `/upload_fatura/<id>` e `/upload_sat/<id>`
+- **Interface Web** (`/processos/editar/<id>`): Cards de upload manual e envio SAT
+- **Storage**: MinIO S3 no bucket 'beg', pasta 'pdfs'
+
+### Configuração MinIO
+
+**Endpoint:** `https://tirus-minio.cqojac.easypanel.host`
+**Credenciais:** Armazenadas em `docs/credentials (1).json`
+- `accessKey`: Chave de acesso S3
+- `secretKey`: Chave secreta S3
+- Bucket: `beg`
+- Pasta: `pdfs`
+
+### Fluxo de Upload Manual
+
+1. **Seleção de Arquivo**: Usuário seleciona PDF na tela de edição do processo
+2. **Upload para MinIO**: Arquivo enviado para `pdfs/{operadora}/{cliente}_{ano}_{mes}_{timestamp}_{filename}.pdf`
+3. **Atualização de Status**: Processo muda automaticamente para `AGUARDANDO_APROVACAO`
+4. **Metadados Salvos**: `fatura_s3_key`, `fatura_filename`, `url_fatura`, `data_upload_manual`
+5. **Aprovação**: Processo segue fluxo normal (aprovação → envio SAT)
+
+### Campos Adicionados ao Modelo Processo
+
+```python
+fatura_s3_key: String(500)          # Chave do arquivo no S3
+fatura_filename: String(255)        # Nome original do arquivo
+data_upload_manual: DateTime        # Data/hora do upload manual
+```
+
+### Upload para SAT
+
+**Botão disponível quando:**
+- Status: `AGUARDANDO_ENVIO_SAT` ou `APROVADO`
+- Tem fatura (manual ou RPA)
+
+**Ação:**
+- Muda status para `UPLOAD_REALIZADO`
+- Registra `data_envio_sat`
+- TODO: Implementar integração real com SAT (atualmente apenas atualiza status)
+
+### Validações e Regras
+
+1. **Tipo de Arquivo**: Apenas PDFs são aceitos
+2. **Vínculos Preservados**: Cliente e operadora mantidos do processo original
+3. **Unicidade**: Arquivo nomeado com timestamp para evitar conflitos
+4. **Segurança**: Upload requer autenticação (decorator `@verify_user_jwt`)
+
+### Organização no MinIO
+
+```
+bucket: beg
+└── pdfs/
+    ├── OI/
+    │   ├── ClienteA_2025_10_20251106_143052_fatura.pdf
+    │   └── ClienteB_2025_10_20251106_151233_invoice.pdf
+    ├── VIVO/
+    │   └── ClienteC_2025_11_20251106_160415_conta.pdf
+    └── EMBRATEL/
+        └── ClienteD_2025_11_20251106_171045_billing.pdf
+```
+
+### Integração com Fluxo RPA
+
+- **Upload Manual** e **Download RPA** usam os mesmos campos no modelo `Processo`
+- Ambos resultam em status `AGUARDANDO_APROVACAO`
+- Sistema de aprovação não diferencia origem da fatura
+- Histórico preservado via campo `data_upload_manual` (NULL para RPA)
+
+### Troubleshooting
+
+**Erro ao conectar MinIO:**
+- Verificar endpoint: `https://tirus-minio.cqojac.easypanel.host`
+- Confirmar credenciais em `docs/credentials (1).json`
+- Verificar se bucket 'beg' existe
+
+**Upload falha:**
+- Validar tipo de arquivo (apenas PDF)
+- Verificar permissões S3 (write access ao bucket)
+- Checar logs para erro específico do boto3
+
+**Arquivo não aparece:**
+- Confirmar que `fatura_s3_key` foi salvo no banco
+- Verificar pasta correta: `pdfs/{operadora}/`
+- Usar ferramenta MinIO console para inspeção direta

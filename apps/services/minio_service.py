@@ -18,28 +18,26 @@ class MinIOService:
     """Service para gerenciar uploads no MinIO S3"""
     
     def __init__(self):
-        """Inicializa conexão com MinIO usando credenciais do arquivo"""
+        """Inicializa conexão com MinIO usando variáveis de ambiente"""
         try:
-            # Carregar credenciais
-            credentials_path = os.path.join(
-                os.path.dirname(__file__), 
-                '../../docs/credentials (1).json'
-            )
+            # Carregar credenciais de variáveis de ambiente
+            access_key = os.environ.get('MINIO_ACCESS_KEY')
+            secret_key = os.environ.get('MINIO_SECRET_KEY')
+            endpoint_url = os.environ.get('MINIO_ENDPOINT', 'https://tirus-minio.cqojac.easypanel.host')
             
-            with open(credentials_path, 'r') as f:
-                credentials = json.load(f)
-            
-            # Extrair endpoint base da URL
-            # URL: https://console-tirus-minio.cqojac.easypanel.host/api/v1/service-account-credentials
-            # Endpoint: https://console-tirus-minio.cqojac.easypanel.host
-            endpoint_url = credentials['url'].split('/api/')[0]
+            # Validar credenciais
+            if not access_key or not secret_key:
+                raise ValueError(
+                    "Credenciais do MinIO não configuradas. "
+                    "Configure as variáveis de ambiente MINIO_ACCESS_KEY e MINIO_SECRET_KEY"
+                )
             
             # Configurar cliente S3 para MinIO
             self.s3_client = boto3.client(
                 's3',
                 endpoint_url=endpoint_url,
-                aws_access_key_id=credentials['accessKey'],
-                aws_secret_access_key=credentials['secretKey'],
+                aws_access_key_id=access_key,
+                aws_secret_access_key=secret_key,
                 config=Config(signature_version='s3v4'),
                 region_name='us-east-1'  # MinIO não usa region, mas boto3 requer
             )
@@ -49,6 +47,9 @@ class MinIOService:
             
             logger.info(f"MinIO S3 client inicializado com endpoint: {endpoint_url}")
             
+        except ValueError as e:
+            logger.error(f"Erro de configuração do MinIO: {str(e)}")
+            raise
         except Exception as e:
             logger.error(f"Erro ao inicializar MinIO client: {str(e)}")
             raise
