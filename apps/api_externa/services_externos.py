@@ -124,20 +124,10 @@ class APIExternaFuncionalService:
                 data_venc = datetime.now() + timedelta(days=15)
                 data_vencimento = data_venc.strftime("%d/%m/%Y")
 
-            # Determinar login e senha (mesma lógica do download)
-            if cliente.login_portal:
-                login = cliente.login_portal
-            elif operadora.codigo == 'OI':
-                login = cliente.filtro or cliente.cnpj
-            else:
-                login = cliente.cnpj
-            
-            senha = cliente.senha_portal or "senha123"
+            # SAT não usa login/senha, apenas filtro
             filtro = cliente.filtro or "fatura_mensal"
             
             payload = AutomacaoPayloadSat(
-                login=login,
-                senha=senha,
                 filtro=filtro,
                 cnpj=cliente.cnpj or "00000000000000",
                 razao=cliente.razao_social or "EMPRESA LTDA",
