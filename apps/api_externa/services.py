@@ -116,7 +116,16 @@ class APIExternaService:
             cliente = processo.cliente
             operadora = processo.cliente.operadora
 
+            # Determinar login (workaround temporário)
+            if cliente.login_portal:
+                login = cliente.login_portal
+            elif operadora.codigo == 'OI':
+                login = cliente.filtro or cliente.cnpj
+            else:
+                login = cliente.cnpj
+
             # Valores com fallback
+            senha = cliente.senha_portal or "senha_padrao"
             filtro = cliente.filtro or "fatura_mensal"
             cnpj = cliente.cnpj or "00000000000000"
 
@@ -129,8 +138,10 @@ class APIExternaService:
             else:
                 data_vencimento = "15/08/2025"
 
-            # Criar payload (SAT não usa login/senha, apenas filtro)
+            # Criar payload (WORKAROUND: API externa exige login/senha na validação)
             payload = AutomacaoPayloadSat(
+                login=login,
+                senha=senha,
                 filtro=filtro,
                 cnpj=cnpj,
                 razao=cliente.razao_social or "EMPRESA LTDA",
