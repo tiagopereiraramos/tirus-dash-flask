@@ -148,7 +148,10 @@ class APIExternaService:
             if erros:
                 raise ValueError(f"Payload SAT inválido: {', '.join(erros)}")
 
+            # DEBUG: Log do payload completo
+            import json
             logger.info(f"Payload SAT criado para processo {processo.id}")
+            logger.debug(f"Payload SAT JSON: {json.dumps(payload.to_dict(), indent=2, ensure_ascii=False)}")
             return payload
 
         except Exception as e:

@@ -234,7 +234,11 @@ class APIExternaClient:
             endpoint += "/sync"
 
         try:
-            response = self._make_request('POST', endpoint, payload.to_dict())
+            import json
+            payload_dict = payload.to_dict()
+            logger.info(f"🔍 DEBUG - Payload SAT enviado para {endpoint}:")
+            logger.info(f"🔍 {json.dumps(payload_dict, indent=2, ensure_ascii=False)}")
+            response = self._make_request('POST', endpoint, payload_dict)
 
             if response.status_code == 200:
                 data = response.json()
