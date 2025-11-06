@@ -30,10 +30,9 @@ if not DEBUG:
     Minify(app=app, html=True, js=False, cssless=False)
 
 # Iniciar executor de agendamentos em background
-with app.app_context():
-    from apps.agendamentos.executor import iniciar_executor
-    iniciar_executor()
-    app.logger.info('Executor de agendamentos iniciado em background')
+from apps.agendamentos.executor import iniciar_executor
+iniciar_executor(app)
+app.logger.info('Executor de agendamentos iniciado em background')
     
 if DEBUG:
     app.logger.info('DEBUG            = ' + str(DEBUG))

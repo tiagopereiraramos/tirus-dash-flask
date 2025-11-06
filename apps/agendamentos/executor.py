@@ -24,16 +24,18 @@ class AgendamentoExecutor:
     Executor responsável por verificar e executar agendamentos
     """
     
-    def __init__(self, intervalo_verificacao: int = 60):
+    def __init__(self, intervalo_verificacao: int = 60, app=None):
         """
         Inicializa o executor de agendamentos
         
         Args:
             intervalo_verificacao: Intervalo em segundos entre verificações (padrão: 60s)
+            app: Instância do Flask app para contexto de aplicação
         """
         self.intervalo_verificacao = intervalo_verificacao
         self.executando = False
         self.thread: Optional[threading.Thread] = None
+        self.app = app
         
         logger.info(f"AgendamentoExecutor inicializado (intervalo: {intervalo_verificacao}s)")
     
@@ -57,14 +59,19 @@ class AgendamentoExecutor:
     
     def _loop_verificacao(self):
         """Loop principal que verifica agendamentos periodicamente"""
-        while self.executando:
-            try:
-                self.verificar_e_executar_agendamentos()
-            except Exception as e:
-                logger.error(f"Erro no loop de verificação de agendamentos: {e}", exc_info=True)
-            
-            # Aguardar intervalo antes da próxima verificação
-            time.sleep(self.intervalo_verificacao)
+        if not self.app:
+            logger.error("App não configurado no executor. Não é possível executar agendamentos.")
+            return
+        
+        with self.app.app_context():
+            while self.executando:
+                try:
+                    self.verificar_e_executar_agendamentos()
+                except Exception as e:
+                    logger.error(f"Erro no loop de verificação de agendamentos: {e}", exc_info=True)
+                
+                # Aguardar intervalo antes da próxima verificação
+                time.sleep(self.intervalo_verificacao)
     
     def verificar_e_executar_agendamentos(self):
         """
@@ -202,11 +209,18 @@ class AgendamentoExecutor:
                     if resultado.get('success'):
                         execucoes_criadas += 1
                         logger.info(f"Download iniciado para processo {processo.id} (job: {resultado.get('job_id')})")
+                        
+                        # Atualizar status do processo após download iniciado
+                        # Nota: A API externa criará a execução automaticamente via executar_operadora
+                        # Aqui só precisamos garantir que o processo está no status correto
+                        # O status será atualizado para AGUARDANDO_APROVACAO quando o job terminar com sucesso
+                        db.session.commit()
                     else:
                         logger.warning(f"Falha ao iniciar download para processo {processo.id}: {resultado.get('error')}")
                 
                 except Exception as e:
                     logger.error(f"Erro ao executar download para processo {processo.id}: {e}")
+                    db.session.rollback()
                     continue
             
             logger.info(f"Downloads automáticos executados: {execucoes_criadas}/{len(processos_pendentes)}")
@@ -266,30 +280,45 @@ class AgendamentoExecutor:
 _executor_instance: Optional[AgendamentoExecutor] = None
 
 
-def obter_executor() -> AgendamentoExecutor:
+def obter_executor(app=None) -> Optional[AgendamentoExecutor]:
     """
     Retorna a instância global do executor (singleton)
     
+    Args:
+        app: Instância do Flask app (necessária apenas na primeira chamada)
+    
     Returns:
-        Instância do AgendamentoExecutor
+        Instância do AgendamentoExecutor ou None se não inicializado
     """
     global _executor_instance
     
-    if _executor_instance is None:
-        _executor_instance = AgendamentoExecutor()
+    if _executor_instance is None and app is not None:
+        _executor_instance = AgendamentoExecutor(app=app)
     
     return _executor_instance
 
 
-def iniciar_executor():
-    """Inicia o executor de agendamentos"""
-    executor = obter_executor()
-    executor.iniciar()
-    logger.info("Executor de agendamentos iniciado via função global")
+def iniciar_executor(app):
+    """
+    Inicia o executor de agendamentos
+    
+    Args:
+        app: Instância do Flask app
+    """
+    executor = obter_executor(app)
+    if executor:
+        executor.iniciar()
+        logger.info("Executor de agendamentos iniciado via função global")
+    else:
+        logger.error("Não foi possível iniciar executor: app não fornecido")
 
 
 def parar_executor():
-    """Para o executor de agendamentos"""
-    executor = obter_executor()
-    executor.parar()
-    logger.info("Executor de agendamentos parado via função global")
+    """Para o executor de agendamentos (shutdown gracioso)"""
+    global _executor_instance
+    
+    if _executor_instance is not None:
+        _executor_instance.parar()
+        logger.info("Executor de agendamentos parado via função global")
+    else:
+        logger.warning("Tentativa de parar executor que não foi inicializado")
