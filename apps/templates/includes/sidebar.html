@@ -53,7 +53,7 @@
                 </li>
                 <li data-username="Execucoes" 
                     class="nav-item {% if 'execucoes' in segment %} active {% endif %}">
-                    <a href="#" class="nav-link">
+                    <a href="{{ url_for('execucoes_bp.index') }}" class="nav-link">
                         <span class="pcoded-micon"><i class="feather icon-play"></i></span>
                         <span class="pcoded-mtext">Execuções</span>
                     </a>

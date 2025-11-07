@@ -1,0 +1,420 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Detalhes da Execução {% endblock %}
+
+{% block stylesheets %}
+<style>
+.info-label {
+    font-weight: 600;
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+.info-value {
+    font-size: 1rem;
+    color: #343a40;
+}
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -24px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #4680ff;
+    border: 2px solid #fff;
+}
+.log-container {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+.dark-mode .log-container {
+    background: #1a1d24;
+    border-color: #30363d;
+    color: #c9d1d9;
+}
+.json-viewer {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+}
+.dark-mode .json-viewer {
+    background: #1a1d24;
+    border-color: #30363d;
+    color: #c9d1d9;
+}
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="pcoded-main-container">
+    <div class="pcoded-wrapper">
+        <div class="pcoded-content">
+            <div class="pcoded-inner-content">
+                <!-- [ breadcrumb ] start -->
+                <div class="page-header">
+                    <div class="page-block">
+                        <div class="row align-items-center">
+                            <div class="col-md-12">
+                                <div class="page-header-title">
+                                    <h5 class="m-b-10">Detalhes da Execução</h5>
+                                </div>
+                                <ul class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{{ url_for('home_blueprint.index') }}"><i class="feather icon-home"></i></a></li>
+                                    <li class="breadcrumb-item"><a href="{{ url_for('execucoes_bp.index') }}">Execuções</a></li>
+                                    <li class="breadcrumb-item active">Detalhes</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- [ breadcrumb ] end -->
+
+                <div class="main-body">
+                    <div class="page-wrapper">
+                        <!-- [ Informações Gerais ] start -->
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Informações da Execução</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <p class="info-label mb-1">ID da Execução</p>
+                                                <p class="info-value"><code>{{ execucao.id }}</code></p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p class="info-label mb-1">Job ID</p>
+                                                <p class="info-value">
+                                                    {% if execucao.job_id %}
+                                                        <code>{{ execucao.job_id }}</code>
+                                                    {% else %}
+                                                        <span class="text-muted">-</span>
+                                                    {% endif %}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <p class="info-label mb-1">Tipo</p>
+                                                <p class="info-value">
+                                                    {% if execucao.tipo_execucao == 'DOWNLOAD_FATURA' %}
+                                                        <span class="badge badge-primary">
+                                                            <i class="feather icon-download"></i> Download de Fatura
+                                                        </span>
+                                                    {% elif execucao.tipo_execucao == 'UPLOAD_SAT' %}
+                                                        <span class="badge badge-success">
+                                                            <i class="feather icon-upload"></i> Upload SAT
+                                                        </span>
+                                                    {% elif execucao.tipo_execucao == 'UPLOAD_MANUAL' %}
+                                                        <span class="badge badge-info">
+                                                            <i class="feather icon-file-plus"></i> Upload Manual
+                                                        </span>
+                                                    {% endif %}
+                                                </p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <p class="info-label mb-1">Status</p>
+                                                <p class="info-value">
+                                                    {% if execucao.status_execucao == 'EXECUTANDO' %}
+                                                        <span class="badge badge-warning">
+                                                            <i class="feather icon-play-circle"></i> Executando
+                                                        </span>
+                                                    {% elif execucao.status_execucao == 'CONCLUIDO' %}
+                                                        <span class="badge badge-success">
+                                                            <i class="feather icon-check-circle"></i> Concluído
+                                                        </span>
+                                                    {% elif execucao.status_execucao == 'FALHOU' %}
+                                                        <span class="badge badge-danger">
+                                                            <i class="feather icon-x-circle"></i> Falhou
+                                                        </span>
+                                                    {% elif execucao.status_execucao == 'CANCELADO' %}
+                                                        <span class="badge badge-secondary">
+                                                            <i class="feather icon-slash"></i> Cancelado
+                                                        </span>
+                                                    {% elif execucao.status_execucao == 'TIMEOUT' %}
+                                                        <span class="badge badge-dark">
+                                                            <i class="feather icon-clock"></i> Timeout
+                                                        </span>
+                                                    {% endif %}
+                                                </p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <p class="info-label mb-1">Tentativa</p>
+                                                <p class="info-value">
+                                                    <span class="badge badge-light">#{{ execucao.numero_tentativa }}</span>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <hr>
+
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <p class="info-label mb-1">Cliente</p>
+                                                <p class="info-value">{{ execucao.processo.cliente.razao_social }}</p>
+                                                <small class="text-muted">{{ execucao.processo.cliente.cnpj }}</small>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p class="info-label mb-1">Operadora</p>
+                                                <p class="info-value">{{ execucao.processo.cliente.operadora.nome }}</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <p class="info-label mb-1">Data/Hora Início</p>
+                                                <p class="info-value">{{ execucao.data_inicio.strftime('%d/%m/%Y %H:%M:%S') }}</p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <p class="info-label mb-1">Data/Hora Fim</p>
+                                                <p class="info-value">
+                                                    {% if execucao.data_fim %}
+                                                        {{ execucao.data_fim.strftime('%d/%m/%Y %H:%M:%S') }}
+                                                    {% else %}
+                                                        <span class="text-muted">Em andamento</span>
+                                                    {% endif %}
+                                                </p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <p class="info-label mb-1">Duração</p>
+                                                <p class="info-value">
+                                                    {% if execucao.duracao_segundos %}
+                                                        {{ "%.2f"|format(execucao.duracao_segundos) }} segundos
+                                                    {% else %}
+                                                        <span class="text-muted">-</span>
+                                                    {% endif %}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {% if execucao.executor %}
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <p class="info-label mb-1">Executado por</p>
+                                                <p class="info-value">{{ execucao.executor.nome }}</p>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Logs -->
+                                {% if execucao.mensagem_log %}
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Logs da Execução</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="log-container">
+                                            <pre class="mb-0">{{ execucao.mensagem_log }}</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Detalhes do Erro -->
+                                {% if execucao.detalhes_erro %}
+                                <div class="card border-danger">
+                                    <div class="card-header bg-danger text-white">
+                                        <h5 class="mb-0"><i class="feather icon-alert-triangle"></i> Detalhes do Erro</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="json-viewer">
+                                            <pre class="mb-0">{{ execucao.detalhes_erro | tojson(indent=2) }}</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Sidebar -->
+                            <div class="col-lg-4">
+                                <!-- Ações -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Ações</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <a href="{{ url_for('processos_bp.visualizar', id=execucao.processo_id) }}" 
+                                           class="btn btn-primary btn-block mb-2">
+                                            <i class="feather icon-file-text"></i> Ver Processo
+                                        </a>
+
+                                        {% if execucao.falhou %}
+                                        <button class="btn btn-warning btn-block mb-2" id="btn-retentar">
+                                            <i class="feather icon-refresh-cw"></i> Retentar Execução
+                                        </button>
+                                        {% endif %}
+
+                                        {% if execucao.esta_em_andamento %}
+                                        <button class="btn btn-danger btn-block" id="btn-cancelar">
+                                            <i class="feather icon-x-circle"></i> Cancelar Execução
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Outras Execuções do Processo -->
+                                {% if outras_execucoes %}
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Outras Execuções</h5>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="list-group list-group-flush">
+                                            {% for exec in outras_execucoes %}
+                                            <a href="{{ url_for('execucoes_bp.detalhes', execucao_id=exec.id) }}" 
+                                               class="list-group-item list-group-item-action">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <small>
+                                                            {% if exec.tipo_execucao == 'DOWNLOAD_FATURA' %}
+                                                                <i class="feather icon-download text-primary"></i>
+                                                            {% elif exec.tipo_execucao == 'UPLOAD_SAT' %}
+                                                                <i class="feather icon-upload text-success"></i>
+                                                            {% elif exec.tipo_execucao == 'UPLOAD_MANUAL' %}
+                                                                <i class="feather icon-file-plus text-info"></i>
+                                                            {% endif %}
+                                                            Tentativa #{{ exec.numero_tentativa }}
+                                                        </small><br>
+                                                        <small class="text-muted">{{ exec.data_inicio.strftime('%d/%m/%Y %H:%M') }}</small>
+                                                    </div>
+                                                    <div>
+                                                        {% if exec.status_execucao == 'CONCLUIDO' %}
+                                                            <i class="feather icon-check-circle text-success"></i>
+                                                        {% elif exec.status_execucao == 'FALHOU' %}
+                                                            <i class="feather icon-x-circle text-danger"></i>
+                                                        {% elif exec.status_execucao == 'EXECUTANDO' %}
+                                                            <i class="feather icon-play-circle text-warning"></i>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </a>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Parâmetros de Entrada -->
+                                {% if execucao.parametros_entrada %}
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Parâmetros de Entrada</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="json-viewer">
+                                            <pre class="mb-0" style="font-size: 0.75rem;">{{ execucao.parametros_entrada | tojson(indent=2) }}</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Resultado -->
+                                {% if execucao.resultado_saida %}
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Resultado</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="json-viewer">
+                                            <pre class="mb-0" style="font-size: 0.75rem;">{{ execucao.resultado_saida | tojson(indent=2) }}</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <!-- [ Informações Gerais ] end -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Retentar execução
+    $('#btn-retentar').click(function() {
+        if (!confirm('Deseja realmente criar uma nova tentativa para esta execução?')) {
+            return;
+        }
+
+        $.ajax({
+            url: `/execucoes/retentar/{{ execucao.id }}`,
+            method: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    window.location.href = response.redirect_url;
+                } else {
+                    alert('Erro: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                const response = xhr.responseJSON || {};
+                alert('Erro ao retentar execução: ' + (response.message || 'Erro desconhecido'));
+            }
+        });
+    });
+
+    // Cancelar execução
+    $('#btn-cancelar').click(function() {
+        const motivo = prompt('Motivo do cancelamento (opcional):');
+        
+        if (motivo === null) {
+            return; // Usuário cancelou
+        }
+
+        $.ajax({
+            url: `/execucoes/cancelar/{{ execucao.id }}`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ motivo: motivo }),
+            success: function(response) {
+                if (response.success) {
+                    alert('Execução cancelada com sucesso');
+                    location.reload();
+                } else {
+                    alert('Erro: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                const response = xhr.responseJSON || {};
+                alert('Erro ao cancelar execução: ' + (response.message || 'Erro desconhecido'));
+            }
+        });
+    });
+});
+</script>
+{% endblock content %}

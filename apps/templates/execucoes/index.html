@@ -1,0 +1,379 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Execuções {% endblock %}
+
+{% block stylesheets %}
+<style>
+.table-compact th, .table-compact td {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.875rem;
+}
+.btn-xs {
+    padding: 0.15rem 0.3rem;
+    font-size: 0.75rem;
+}
+.badge-sm {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+}
+.stat-card {
+    border-left: 3px solid;
+    transition: transform 0.2s;
+}
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="pcoded-main-container">
+    <div class="pcoded-wrapper">
+        <div class="pcoded-content">
+            <div class="pcoded-inner-content">
+                <!-- [ breadcrumb ] start -->
+                <div class="page-header">
+                    <div class="page-block">
+                        <div class="row align-items-center">
+                            <div class="col-md-12">
+                                <div class="page-header-title">
+                                    <h5 class="m-b-10">Execuções RPA</h5>
+                                </div>
+                                <ul class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{{ url_for('home_blueprint.index') }}"><i class="feather icon-home"></i></a></li>
+                                    <li class="breadcrumb-item active">Execuções</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- [ breadcrumb ] end -->
+
+                <div class="main-body">
+                    <div class="page-wrapper">
+                        <!-- [ Estatísticas ] start -->
+                        <div class="row">
+                            <div class="col-md-6 col-xl-3">
+                                <div class="card stat-card" style="border-left-color: #4680ff;">
+                                    <div class="card-body">
+                                        <h6 class="mb-4">Total de Execuções</h6>
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <h3 class="mb-0">{{ stats.total }}</h3>
+                                            <i class="feather icon-activity text-primary" style="font-size: 2rem;"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-xl-3">
+                                <div class="card stat-card" style="border-left-color: #2ed8b6;">
+                                    <div class="card-body">
+                                        <h6 class="mb-4">Taxa de Sucesso</h6>
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <h3 class="mb-0">{{ stats.taxa_sucesso }}%</h3>
+                                            <i class="feather icon-check-circle text-success" style="font-size: 2rem;"></i>
+                                        </div>
+                                        <small class="text-muted">{{ stats.concluidas }} concluídas</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-xl-3">
+                                <div class="card stat-card" style="border-left-color: #FFB64D;">
+                                    <div class="card-body">
+                                        <h6 class="mb-4">Em Execução</h6>
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <h3 class="mb-0">{{ stats.executando }}</h3>
+                                            <i class="feather icon-play-circle text-warning" style="font-size: 2rem;"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-xl-3">
+                                <div class="card stat-card" style="border-left-color: #FF5370;">
+                                    <div class="card-body">
+                                        <h6 class="mb-4">Falhadas</h6>
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <h3 class="mb-0">{{ stats.falhadas }}</h3>
+                                            <i class="feather icon-x-circle text-danger" style="font-size: 2rem;"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estatísticas por tipo -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <i class="feather icon-download text-primary" style="font-size: 2.5rem;"></i>
+                                        <h4 class="mt-3">{{ stats.downloads }}</h4>
+                                        <p class="text-muted mb-0">Downloads de Fatura</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <i class="feather icon-upload text-success" style="font-size: 2.5rem;"></i>
+                                        <h4 class="mt-3">{{ stats.uploads_sat }}</h4>
+                                        <p class="text-muted mb-0">Uploads SAT</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <i class="feather icon-file-plus text-info" style="font-size: 2.5rem;"></i>
+                                        <h4 class="mt-3">{{ stats.uploads_manual }}</h4>
+                                        <p class="text-muted mb-0">Uploads Manuais</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- [ Estatísticas ] end -->
+
+                        <!-- [ Filtros ] start -->
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Filtros de Busca</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form method="GET">
+                                            <div class="row">
+                                                <div class="col-md-3 col-sm-6">
+                                                    {{ form.busca.label(class="form-label") }}
+                                                    {{ form.busca(class="form-control") }}
+                                                </div>
+                                                <div class="col-md-2 col-sm-6">
+                                                    {{ form.status.label(class="form-label") }}
+                                                    {{ form.status(class="form-control") }}
+                                                </div>
+                                                <div class="col-md-2 col-sm-6">
+                                                    {{ form.tipo.label(class="form-label") }}
+                                                    {{ form.tipo(class="form-control") }}
+                                                </div>
+                                                <div class="col-md-2 col-sm-6">
+                                                    {{ form.operadora.label(class="form-label") }}
+                                                    {{ form.operadora(class="form-control") }}
+                                                </div>
+                                                <div class="col-md-3 col-sm-12 d-flex align-items-end mt-3 mt-md-0">
+                                                    <button type="submit" class="btn btn-primary mr-2">
+                                                        <i class="feather icon-search"></i> Buscar
+                                                    </button>
+                                                    <a href="{{ url_for('execucoes_bp.index') }}" class="btn btn-secondary">
+                                                        <i class="feather icon-x"></i> Limpar
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3">
+                                                <div class="col-md-3 col-sm-6">
+                                                    {{ form.data_inicio.label(class="form-label") }}
+                                                    {{ form.data_inicio(class="form-control") }}
+                                                </div>
+                                                <div class="col-md-3 col-sm-6">
+                                                    {{ form.data_fim.label(class="form-label") }}
+                                                    {{ form.data_fim(class="form-control") }}
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- [ Filtros ] end -->
+
+                        <!-- [ Lista de Execuções ] start -->
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>
+                                            Execuções 
+                                            <span class="badge badge-primary ml-2">{{ pagination.total }}</span>
+                                        </h5>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        {% if execucoes %}
+                                        <div class="table-responsive">
+                                            <table class="table table-hover table-compact mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th width="25%">Cliente / Operadora</th>
+                                                        <th width="15%">Tipo</th>
+                                                        <th width="15%">Status</th>
+                                                        <th class="text-center" width="10%">Tentativa</th>
+                                                        <th class="text-center" width="15%">Data/Hora</th>
+                                                        <th class="text-center" width="10%">Duração</th>
+                                                        <th class="text-center" width="10%">Ações</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for execucao in execucoes %}
+                                                    <tr>
+                                                        <td>
+                                                            <div class="d-flex flex-column">
+                                                                <strong class="small">{{ execucao.processo.cliente.razao_social[:35] }}{% if execucao.processo.cliente.razao_social|length > 35 %}...{% endif %}</strong>
+                                                                <small class="text-muted">{{ execucao.processo.cliente.operadora.nome }}</small>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            {% if execucao.tipo_execucao == 'DOWNLOAD_FATURA' %}
+                                                                <span class="badge badge-primary badge-sm">
+                                                                    <i class="feather icon-download"></i> Download
+                                                                </span>
+                                                            {% elif execucao.tipo_execucao == 'UPLOAD_SAT' %}
+                                                                <span class="badge badge-success badge-sm">
+                                                                    <i class="feather icon-upload"></i> Upload SAT
+                                                                </span>
+                                                            {% elif execucao.tipo_execucao == 'UPLOAD_MANUAL' %}
+                                                                <span class="badge badge-info badge-sm">
+                                                                    <i class="feather icon-file-plus"></i> Manual
+                                                                </span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>
+                                                            {% if execucao.status_execucao == 'EXECUTANDO' %}
+                                                                <span class="badge badge-warning badge-sm">
+                                                                    <i class="feather icon-play-circle"></i> Executando
+                                                                </span>
+                                                            {% elif execucao.status_execucao == 'CONCLUIDO' %}
+                                                                <span class="badge badge-success badge-sm">
+                                                                    <i class="feather icon-check-circle"></i> Concluído
+                                                                </span>
+                                                            {% elif execucao.status_execucao == 'FALHOU' %}
+                                                                <span class="badge badge-danger badge-sm">
+                                                                    <i class="feather icon-x-circle"></i> Falhou
+                                                                </span>
+                                                            {% elif execucao.status_execucao == 'CANCELADO' %}
+                                                                <span class="badge badge-secondary badge-sm">
+                                                                    <i class="feather icon-slash"></i> Cancelado
+                                                                </span>
+                                                            {% elif execucao.status_execucao == 'TIMEOUT' %}
+                                                                <span class="badge badge-dark badge-sm">
+                                                                    <i class="feather icon-clock"></i> Timeout
+                                                                </span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <span class="badge badge-light">
+                                                                #{{ execucao.numero_tentativa }}
+                                                            </span>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <small>{{ execucao.data_inicio.strftime('%d/%m/%Y') }}</small><br>
+                                                            <small class="text-muted">{{ execucao.data_inicio.strftime('%H:%M:%S') }}</small>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            {% if execucao.duracao_segundos %}
+                                                                <small>{{ "%.1f"|format(execucao.duracao_segundos) }}s</small>
+                                                            {% else %}
+                                                                <span class="text-muted">-</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <div class="btn-group btn-group-sm" role="group">
+                                                                <a href="{{ url_for('execucoes_bp.detalhes', execucao_id=execucao.id) }}" 
+                                                                   class="btn btn-info btn-xs" 
+                                                                   title="Ver Detalhes">
+                                                                    <i class="feather icon-eye"></i>
+                                                                </a>
+                                                                {% if execucao.falhou %}
+                                                                <button class="btn btn-warning btn-xs btn-retentar" 
+                                                                        data-execucao-id="{{ execucao.id }}"
+                                                                        title="Retentar">
+                                                                    <i class="feather icon-refresh-cw"></i>
+                                                                </button>
+                                                                {% endif %}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <!-- Paginação -->
+                                        {% if pagination.pages > 1 %}
+                                        <div class="card-footer">
+                                            <nav>
+                                                <ul class="pagination justify-content-center mb-0">
+                                                    {% if pagination.has_prev %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('execucoes_bp.index', page=pagination.prev_num, **request.args) }}">
+                                                            <i class="feather icon-chevron-left"></i>
+                                                        </a>
+                                                    </li>
+                                                    {% endif %}
+
+                                                    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                                                        {% if page_num %}
+                                                            <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                                                                <a class="page-link" href="{{ url_for('execucoes_bp.index', page=page_num, **request.args) }}">{{ page_num }}</a>
+                                                            </li>
+                                                        {% else %}
+                                                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                                                        {% endif %}
+                                                    {% endfor %}
+
+                                                    {% if pagination.has_next %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('execucoes_bp.index', page=pagination.next_num, **request.args) }}">
+                                                            <i class="feather icon-chevron-right"></i>
+                                                        </a>
+                                                    </li>
+                                                    {% endif %}
+                                                </ul>
+                                            </nav>
+                                        </div>
+                                        {% endif %}
+
+                                        {% else %}
+                                        <div class="card-body text-center py-5">
+                                            <i class="feather icon-info text-muted" style="font-size: 3rem;"></i>
+                                            <h5 class="mt-3">Nenhuma execução encontrada</h5>
+                                            <p class="text-muted">Tente ajustar os filtros de busca</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- [ Lista de Execuções ] end -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Retentar execução
+    $('.btn-retentar').click(function() {
+        const execucaoId = $(this).data('execucao-id');
+        
+        if (!confirm('Deseja realmente criar uma nova tentativa para esta execução?')) {
+            return;
+        }
+
+        $.ajax({
+            url: `/execucoes/retentar/${execucaoId}`,
+            method: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    window.location.href = response.redirect_url;
+                } else {
+                    alert('Erro: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                const response = xhr.responseJSON || {};
+                alert('Erro ao retentar execução: ' + (response.message || 'Erro desconhecido'));
+            }
+        });
+    });
+});
+</script>
+{% endblock content %}
