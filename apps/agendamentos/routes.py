@@ -42,10 +42,6 @@ def index():
             query = query.filter(
                 Agendamento.tipo_agendamento == request.args.get('tipo'))
 
-        if request.args.get('operadora'):
-            query = query.filter(Agendamento.operadora_id ==
-                                 request.args.get('operadora'))
-
         if request.args.get('status'):
             if request.args.get('status') == 'ativo':
                 query = query.filter(Agendamento.status_ativo == True)
@@ -172,6 +168,10 @@ def novo():
                     'incluir_graficos': True,
                     'destinatarios': ['admin@begtelecomunicacoes.com.br']
                 }
+            
+            # Se houver operadora selecionada, incluir nos parâmetros
+            if form.operadora.data:
+                parametros['operadora_id'] = form.operadora.data
 
             logger.info(f"Parâmetros de execução: {parametros}")
 
@@ -181,7 +181,6 @@ def novo():
                 cron_expressao=form.cron_expressao.data,
                 tipo_agendamento=form.tipo_agendamento.data,
                 status_ativo=form.status_ativo.data,
-                operadora_id=form.operadora.data if form.operadora.data else None,
                 parametros_execucao=parametros
             )
 
@@ -243,13 +242,16 @@ def editar(id):
                     'incluir_graficos': True,
                     'destinatarios': ['admin@begtelecomunicacoes.com.br']
                 }
+            
+            # Se houver operadora selecionada, incluir nos parâmetros
+            if form.operadora.data:
+                parametros['operadora_id'] = form.operadora.data
 
             agendamento.nome_agendamento = form.nome_agendamento.data
             agendamento.descricao = form.descricao.data
             agendamento.cron_expressao = form.cron_expressao.data
             agendamento.tipo_agendamento = form.tipo_agendamento.data
             agendamento.status_ativo = form.status_ativo.data
-            agendamento.operadora_id = form.operadora.data if form.operadora.data else None
             agendamento.parametros_execucao = parametros
 
             db.session.commit()
